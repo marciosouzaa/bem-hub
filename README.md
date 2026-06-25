@@ -2,6 +2,7 @@
 
 SaaS de IA corporativa para PMEs brasileiras. O MVP combina workspace multiempresa, assistentes por area, chat com IA, base de conhecimento, automacoes manuais, uso/auditoria e billing por plano.
 
+
 ## Stack
 
 - Next.js App Router, React, TypeScript.
