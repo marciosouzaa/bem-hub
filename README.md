@@ -1,36 +1,47 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BEM HUB
 
-## Getting Started
+SaaS de IA corporativa para PMEs brasileiras. O MVP combina workspace multiempresa, assistentes por area, chat com IA, base de conhecimento, automacoes manuais, uso/auditoria e billing por plano.
 
-First, run the development server:
+## Stack
+
+- Next.js App Router, React, TypeScript.
+- Tailwind CSS and shadcn-style local components.
+- Supabase Auth, PostgreSQL, Storage, RLS, pgvector.
+- Vercel AI SDK with OpenAI provider first.
+- Zod, React Hook Form, TanStack Query, Zustand.
+
+## Local Setup
 
 ```bash
+npm install
+cp .env.example .env.local
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The app builds without Supabase/OpenAI credentials, but `/api/chat` requires `OPENAI_API_KEY` to return a real streamed answer.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Project Structure
 
-## Learn More
+```txt
+src/app              Routes, pages, route handlers
+src/components       Shared UI and marketing preview
+src/features         Product domains
+src/lib              Infrastructure helpers
+src/types            Shared TypeScript types
+supabase/migrations  Database schema and RLS policies
+docs                 Product, roadmap, risks, backlog
+```
 
-To learn more about Next.js, take a look at the following resources:
+## First Implementation Tasks
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Supabase Auth and organization bootstrap.
+2. Assistants CRUD.
+3. Chat persistence and streaming UI.
+4. Knowledge base ingestion.
+5. RAG answering with sources.
+6. Manual automation templates.
+7. Billing limits and subscription state.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+See [docs/codex-backlog.md](docs/codex-backlog.md) for task-level scope, acceptance criteria, and verification.
