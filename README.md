@@ -14,14 +14,19 @@ SaaS de IA corporativa para PMEs brasileiras. O MVP combina workspace multiempre
 ## Local Setup
 
 ```bash
-npm install
+bun install
 cp .env.example .env.local
-npm run dev
+bun run dev
 ```
 
 Open `http://localhost:3000`.
 
 The app builds without Supabase/OpenAI credentials, but `/api/chat` requires `OPENAI_API_KEY` to return a real streamed answer.
+
+## Environment
+
+Copy `.env.example` to `.env.local` and fill the Supabase project URL and
+publishable key. OpenAI can stay empty until chat streaming is tested.
 
 ## Project Structure
 

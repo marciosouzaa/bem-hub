@@ -1,0 +1,4 @@
+interface:
+  display_name: "BEM HUB Frontend Design"
+  short_description: "Apply BEM HUB's dark green AI operating-system UI language."
+  default_prompt: "Use the BEM HUB frontend design skill to design or review this UI against the repository design system."

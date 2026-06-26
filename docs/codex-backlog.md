@@ -4,6 +4,9 @@ Each task should be implemented in a small PR-sized change with acceptance crite
 
 ## 1. Supabase Auth and Organization Bootstrap
 
+Status: implemented as the initial foundation. Keep hardening RLS and manual
+two-user verification on the follow-up list.
+
 Scope:
 - Add login, signup, logout screens.
 - Create organization after first signup.
@@ -23,11 +26,13 @@ Acceptance:
 - Owner can invite or add a member placeholder.
 
 Verification:
-- `npm run lint`
-- `npm run build`
+- `bun run lint`
+- `bun run build`
 - Manual test with two Supabase users.
 
 ## 2. Assistants CRUD
+
+Status: next recommended implementation step.
 
 Scope:
 - List assistants.

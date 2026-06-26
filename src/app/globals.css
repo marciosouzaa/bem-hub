@@ -1,29 +1,42 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f7f8fa;
-  --foreground: #15171a;
-  --muted: #6b7280;
-  --panel: #ffffff;
-  --panel-border: #dfe3e8;
-  --primary: #0f766e;
-  --primary-foreground: #ffffff;
-  --accent: #2563eb;
-  --warning: #f97316;
-  --success: #16a34a;
+  --background: #0d0f0f;
+  --foreground: #ebecea;
+  --muted: #a5ada7;
+  --muted-strong: #c5ccc7;
+  --panel: #151716;
+  --panel-elevated: #1c1e1d;
+  --panel-subtle: #111413;
+  --panel-border: #242a27;
+  --primary: #4ee3a3;
+  --primary-foreground: #08110d;
+  --accent: #24c78b;
+  --warning: #f2c94c;
+  --danger: #ff6b6b;
+  --success: #4ee3a3;
+  --sidebar: #101212;
+  --sidebar-active: #103b2c;
+  --shadow-glow: 0 0 34px rgb(78 227 163 / 16%);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
+  --color-muted-strong: var(--muted-strong);
   --color-panel: var(--panel);
+  --color-panel-elevated: var(--panel-elevated);
+  --color-panel-subtle: var(--panel-subtle);
   --color-panel-border: var(--panel-border);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-accent: var(--accent);
   --color-warning: var(--warning);
+  --color-danger: var(--danger);
   --color-success: var(--success);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-active: var(--sidebar-active);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -43,6 +56,20 @@ select {
 }
 
 ::selection {
-  background: #cdeee9;
-  color: #083f3a;
+  background: #46e0a0;
+  color: #06110c;
+}
+
+.os-grid {
+  background-image:
+    linear-gradient(rgb(255 255 255 / 3%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 3%) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.os-panel-glow {
+  background:
+    radial-gradient(circle at 82% 26%, rgb(78 227 163 / 14%), transparent 32%),
+    linear-gradient(135deg, rgb(255 255 255 / 3%), transparent 38%),
+    var(--panel);
 }

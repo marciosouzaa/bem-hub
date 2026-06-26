@@ -227,7 +227,7 @@ returns table (
 )
 language sql
 security definer
-set search_path = public
+set search_path = public, extensions
 stable
 as $$
   select
