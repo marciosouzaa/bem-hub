@@ -38,6 +38,19 @@ Shape and spacing:
 - Desktop app shell uses a 256px sidebar and a dense topbar.
 - Main content max width should stay around 1120px for dashboards.
 
+Motion:
+
+- Use `framer-motion` through the local primitives in
+  `src/components/ui/motion.tsx`; do not import motion directly in pages unless a
+  component needs a custom interaction.
+- Default entrance motion is subtle: opacity plus 8-10px vertical movement.
+- Use staggered reveals for dashboard sections, repeated cards, and list rows.
+- Use `MotionSurface` for interactive panels/cards that can lift by 2px on
+  hover and compress slightly on tap.
+- Keep timings operational: 160ms for hover/tap, 240ms for standard elements,
+  360ms for section entrance, and 55ms for stagger.
+- Always respect reduced motion through the shared primitives.
+
 ## Components
 
 Sidebar:

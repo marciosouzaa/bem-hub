@@ -110,6 +110,34 @@ export type Database = {
           created_at?: string;
         }
       >;
+      assistants: TableDefinition<
+        {
+          id: string;
+          organization_id: string;
+          name: string;
+          description: string | null;
+          area: string | null;
+          instructions: string;
+          model: string;
+          temperature: number;
+          is_default: boolean;
+          created_by: string;
+          created_at: string;
+        },
+        {
+          id?: string;
+          organization_id: string;
+          name: string;
+          description?: string | null;
+          area?: string | null;
+          instructions: string;
+          model?: string;
+          temperature?: number;
+          is_default?: boolean;
+          created_by: string;
+          created_at?: string;
+        }
+      >;
     };
     Views: Record<string, never>;
     Functions: {

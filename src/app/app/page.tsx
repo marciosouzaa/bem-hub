@@ -22,9 +22,16 @@ import {
   Zap,
 } from "lucide-react";
 import Link from "next/link";
+import { UserMenu } from "@/components/app/user-menu";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  MotionItem,
+  MotionPage,
+  MotionSection,
+  MotionSurface,
+} from "@/components/ui/motion";
 import { getRequiredWorkspace } from "@/features/organizations/queries";
 
 const navItems = [
@@ -90,7 +97,7 @@ export default async function WorkspacePage() {
 
           <nav className="mt-10 space-y-1">
             {navItems.map(({ icon: Icon, label, active }) => (
-              <button
+              <Link
                 key={label}
                 className={[
                   "flex h-10 w-full items-center gap-3 rounded-md px-3 text-left text-sm transition",
@@ -98,10 +105,11 @@ export default async function WorkspacePage() {
                     ? "bg-sidebar-active text-primary"
                     : "text-muted-strong hover:bg-panel-subtle hover:text-foreground",
                 ].join(" ")}
+                href={label === "Assistentes" ? "/app/assistants" : "/app"}
               >
                 <Icon className="size-4 shrink-0" />
                 <span className="truncate">{label}</span>
-              </button>
+              </Link>
             ))}
           </nav>
 
@@ -129,22 +137,17 @@ export default async function WorkspacePage() {
               <Bell className="size-5" />
             </Button>
             <div className="hidden h-8 w-px bg-panel-border md:block" />
-            <div className="hidden items-center gap-3 md:flex">
-              <span className="flex size-8 items-center justify-center rounded-full border border-[#315041] bg-sidebar-active text-xs font-semibold text-primary">
-                {firstName.slice(0, 2).toUpperCase()}
-              </span>
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium">{firstName}</p>
-                <p className="truncate text-xs text-muted">
-                  {workspace.organization.name}
-                </p>
-              </div>
-            </div>
+            <UserMenu
+              email={workspace.profile.email}
+              name={firstName}
+              organization={workspace.organization.name}
+              role={workspace.membership.role}
+            />
           </header>
 
-          <div className="mx-auto grid max-w-6xl gap-6 px-5 py-8 md:px-8 lg:grid-cols-[1fr_282px]">
+          <MotionPage className="mx-auto grid max-w-6xl gap-6 px-5 py-8 md:px-8 lg:grid-cols-[1fr_282px]">
             <section className="min-w-0 space-y-6">
-              <div className="py-4">
+              <MotionSection className="py-4">
                 <h1 className="text-4xl font-semibold tracking-normal md:text-[42px]">
                   Bom dia, {firstName}.
                 </h1>
@@ -155,9 +158,10 @@ export default async function WorkspacePage() {
                   <span className="text-primary">3 conversas prioritárias</span>{" "}
                   aguardando revisão.
                 </p>
-              </div>
+              </MotionSection>
 
               <div className="grid gap-5 md:grid-cols-2">
+                <MotionSurface>
                 <Card className="os-panel-glow min-h-40">
                   <CardContent className="p-5">
                     <div className="flex items-start justify-between">
@@ -172,7 +176,9 @@ export default async function WorkspacePage() {
                     </p>
                   </CardContent>
                 </Card>
+                </MotionSurface>
 
+                <MotionSurface>
                 <Card className="min-h-40">
                   <CardContent className="p-5">
                     <p className="text-sm text-muted-strong">Eficiência ativa</p>
@@ -195,7 +201,9 @@ export default async function WorkspacePage() {
                     </p>
                   </CardContent>
                 </Card>
+                </MotionSurface>
 
+                <MotionSurface>
                 <Card>
                   <CardHeader className="flex-row items-center justify-between space-y-0">
                     <CardTitle>Assistentes ativos</CardTitle>
@@ -221,7 +229,9 @@ export default async function WorkspacePage() {
                     ))}
                   </CardContent>
                 </Card>
+                </MotionSurface>
 
+                <MotionSurface>
                 <Card>
                   <CardHeader className="flex-row items-center justify-between space-y-0">
                     <CardTitle>Agentes em execução</CardTitle>
@@ -248,8 +258,10 @@ export default async function WorkspacePage() {
                     ))}
                   </CardContent>
                 </Card>
+                </MotionSurface>
               </div>
 
+              <MotionSurface>
               <Card>
                 <CardHeader className="flex-row items-center justify-between space-y-0">
                   <div className="flex items-center gap-4">
@@ -262,7 +274,7 @@ export default async function WorkspacePage() {
                 </CardHeader>
                 <CardContent className="space-y-5">
                   {recentConversations.map(({ icon: Icon, title, excerpt, time }) => (
-                    <div
+                    <MotionItem
                       key={title}
                       className="grid grid-cols-[40px_1fr_auto] items-center gap-4"
                     >
@@ -276,13 +288,15 @@ export default async function WorkspacePage() {
                         </p>
                       </div>
                       <span className="text-xs text-muted">{time}</span>
-                    </div>
+                    </MotionItem>
                   ))}
                 </CardContent>
               </Card>
+              </MotionSurface>
             </section>
 
             <aside className="space-y-6">
+              <MotionSurface>
               <Card>
                 <CardHeader>
                   <CardTitle className="text-sm uppercase tracking-[0.12em]">
@@ -308,7 +322,9 @@ export default async function WorkspacePage() {
                   ))}
                 </CardContent>
               </Card>
+              </MotionSurface>
 
+              <MotionSurface>
               <Card>
                 <CardHeader className="flex-row items-center justify-between space-y-0">
                   <CardTitle className="text-sm uppercase tracking-[0.12em]">
@@ -332,7 +348,9 @@ export default async function WorkspacePage() {
                   </div>
                 </CardContent>
               </Card>
+              </MotionSurface>
 
+              <MotionSurface>
               <Card className="border-primary/70 bg-[#102019]">
                 <CardContent className="p-5">
                   <Badge>Todos os sistemas nominais</Badge>
@@ -352,7 +370,9 @@ export default async function WorkspacePage() {
                   </dl>
                 </CardContent>
               </Card>
+              </MotionSurface>
 
+              <MotionSurface>
               <Card className="os-grid overflow-hidden">
                 <CardContent className="p-5">
                   <Grid2X2 className="size-5 text-primary" />
@@ -371,8 +391,9 @@ export default async function WorkspacePage() {
                   </div>
                 </CardContent>
               </Card>
+              </MotionSurface>
             </aside>
-          </div>
+          </MotionPage>
         </section>
       </div>
     </main>

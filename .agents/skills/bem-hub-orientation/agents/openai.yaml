@@ -1,0 +1,4 @@
+interface:
+  display_name: "BEM HUB Orientation"
+  short_description: "Retomar contexto e proximo passo do BEM HUB"
+  default_prompt: "Use $bem-hub-orientation para retomar o contexto do projeto BEM HUB e indicar o proximo passo."
