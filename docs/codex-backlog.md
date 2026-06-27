@@ -33,7 +33,7 @@ Verification:
 
 ## 2. Assistants CRUD
 
-Status: next recommended implementation step.
+Status: implemented.
 
 Scope:
 - List assistants.
@@ -45,7 +45,14 @@ Acceptance:
 - Assistants are scoped by organization.
 - Member can use assistants; owner/admin can manage them.
 
+Verification:
+- `bun run lint`
+- `bun run build`
+- Production smoke test on Vercel.
+
 ## 3. Chat Persistence and Streaming
+
+Status: next recommended implementation step.
 
 Scope:
 - Persist conversations and messages.
