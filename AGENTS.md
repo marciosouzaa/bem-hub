@@ -166,7 +166,8 @@ are missing and which manual checks remain.
 - The app can build without Supabase/OpenAI credentials.
 - `/api/chat` requires `OPENAI_API_KEY` for a real streamed answer.
 - `OPENAI_CHAT_MODEL` should remain configurable.
-- `src/proxy.ts` should be added only when Supabase session refresh is wired.
+- `src/proxy.ts` wires Supabase SSR session refresh and should stay aligned
+  with `@supabase/ssr` guidance.
 - Advanced integrations, WhatsApp, autonomous agents, marketplace, white-label,
   recurring scheduled automations, and granular permission matrices are out of
   scope for the MVP.

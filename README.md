@@ -26,7 +26,15 @@ The app builds without Supabase/OpenAI credentials, but `/api/chat` requires `OP
 ## Environment
 
 Copy `.env.example` to `.env.local` and fill the Supabase project URL and
-publishable key. OpenAI can stay empty until chat streaming is tested.
+publishable key:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+```
+
+`NEXT_PUBLIC_SUPABASE_ANON_KEY` is supported only as a legacy fallback for old
+local environments. OpenAI can stay empty until chat streaming is tested.
 
 ## Project Structure
 
@@ -51,3 +59,9 @@ docs                 Product, roadmap, risks, backlog
 7. Billing limits and subscription state.
 
 See [docs/codex-backlog.md](docs/codex-backlog.md) for task-level scope, acceptance criteria, and verification.
+
+## Deployment
+
+Use [docs/deployment-vercel.md](docs/deployment-vercel.md) for the Vercel
+production checklist, including Bun, Node.js version, Supabase publishable key,
+Auth redirect URLs, and post-deploy checks.

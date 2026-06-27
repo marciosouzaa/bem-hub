@@ -11,6 +11,7 @@
   - `/auth/login`
   - `/auth/signup`
   - `/auth/logout`
+- Added `src/proxy.ts` for Supabase SSR session refresh.
 - Implemented authenticated `/app` workspace bootstrap:
   - profile upsert
   - organization creation/recovery
@@ -18,6 +19,9 @@
   - free subscription creation
 - Updated `/app` to use the dark green AI operating-system design language.
 - Added `.env.example`.
+- Updated Supabase environment docs to prefer publishable keys via
+  `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`; `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+  remains a legacy fallback in code only.
 
 ## Verified
 

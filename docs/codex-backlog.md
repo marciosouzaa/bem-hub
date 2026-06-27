@@ -12,7 +12,7 @@ Scope:
 - Create organization after first signup.
 - Store user membership.
 - Add server checks for authenticated routes.
-- Add `src/proxy.ts` only when Supabase session refresh is wired.
+- Wire `src/proxy.ts` for Supabase SSR session refresh.
 
 Likely files:
 - `src/app/auth/*`
@@ -24,6 +24,7 @@ Acceptance:
 - User can sign up, log in, create organization, and access the workspace.
 - User A cannot read organization B data.
 - Owner can invite or add a member placeholder.
+- Supabase SSR auth refresh runs through `src/proxy.ts`.
 
 Verification:
 - `bun run lint`
