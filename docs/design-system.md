@@ -408,6 +408,17 @@ When refactoring existing UI, do not extract a poor component merely because it
 is repeated. First define the desired component contract, then migrate call
 sites.
 
+Implemented layout primitives live in `src/components/app`:
+
+- `PageLayout`: page container with standard responsive padding and max width.
+- `PageHeader`: responsive title, description, eyebrow, and action row.
+- `SectionHeader`: compact section heading with optional marker and actions.
+- `ContentGrid`: responsive card grid for 1 to 4 columns.
+- `SplitPanel`: main content plus left or right context rail.
+- `ContextPanel`: stacked side rail with optional desktop sticky behavior.
+- `CommandSearch`: shared command/search input for shell and future command UI.
+- `MobileShell`: mobile navigation drawer for the workspace shell.
+
 ## Core Components
 
 Required reusable primitives:

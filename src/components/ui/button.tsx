@@ -4,18 +4,20 @@ import type { ButtonHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition disabled:pointer-events-none disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
+  "inline-flex items-center justify-center gap-2 rounded-[var(--radius-control)] text-sm font-medium transition duration-200 disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
   {
     variants: {
       variant: {
         primary:
-          "bg-primary text-primary-foreground shadow-[var(--shadow-glow)] hover:bg-[#65ebb2]",
+          "bg-primary text-primary-foreground shadow-[var(--shadow-glow)] hover:brightness-110 active:scale-[0.99]",
         secondary:
-          "border border-panel-border bg-panel-elevated text-foreground hover:border-[#355344] hover:bg-[#232625]",
+          "border border-panel-border bg-panel-elevated text-foreground shadow-[var(--shadow-card)] hover:border-primary/40 hover:bg-panel",
         ghost:
           "text-muted hover:bg-sidebar-active hover:text-primary",
+        outline:
+          "border border-panel-border bg-transparent text-foreground hover:border-primary/50 hover:bg-panel-subtle",
         danger:
-          "border border-[#3c302f] bg-[#282321] text-foreground hover:border-danger hover:text-danger",
+          "border border-danger/25 bg-danger/10 text-foreground hover:border-danger hover:text-danger",
       },
       size: {
         sm: "h-9 px-3",

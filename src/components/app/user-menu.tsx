@@ -33,8 +33,8 @@ export function UserMenu({
 
   return (
     <details className={cn("group relative", className)}>
-      <summary className="flex h-10 cursor-pointer list-none items-center gap-3 rounded-md px-2 transition hover:bg-panel [&::-webkit-details-marker]:hidden">
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-[#315041] bg-sidebar-active text-xs font-semibold text-primary">
+      <summary className="flex h-10 cursor-pointer list-none items-center gap-3 rounded-[var(--radius-control)] px-2 transition hover:bg-panel focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45 [&::-webkit-details-marker]:hidden">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-primary/25 bg-sidebar-active text-xs font-semibold text-primary">
           {initials}
         </span>
         <span className="hidden min-w-0 text-left md:block">
@@ -46,10 +46,10 @@ export function UserMenu({
         <ChevronDown className="hidden size-4 shrink-0 text-muted transition group-open:rotate-180 md:block" />
       </summary>
 
-      <div className="absolute right-0 z-50 mt-2 w-72 rounded-md border border-panel-border bg-panel-elevated p-2 shadow-[0_22px_70px_rgb(0_0_0/35%)]">
+      <div className="absolute right-0 z-50 mt-2 w-72 rounded-[var(--radius-panel)] border border-panel-border bg-panel-elevated p-2 shadow-[var(--shadow-popover)]">
         <div className="px-3 py-3">
           <div className="flex items-start gap-3">
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-sidebar-active text-primary">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-[var(--radius-control)] bg-sidebar-active text-primary">
               <UserRound className="size-4" />
             </span>
             <div className="min-w-0">
@@ -59,11 +59,11 @@ export function UserMenu({
               ) : null}
             </div>
           </div>
-          <div className="mt-3 flex items-center gap-2 rounded-md border border-panel-border bg-panel px-3 py-2 text-xs text-muted-strong">
+          <div className="mt-3 flex items-center gap-2 rounded-[var(--radius-control)] border border-panel-border bg-panel px-3 py-2 text-xs text-muted-strong">
             <Building2 className="size-4 text-primary" />
             <span className="min-w-0 truncate">{organization}</span>
             {role ? (
-              <span className="ml-auto rounded bg-sidebar-active px-1.5 py-0.5 font-mono text-[10px] uppercase text-primary">
+              <span className="ml-auto rounded-[6px] bg-sidebar-active px-1.5 py-0.5 font-mono text-[10px] uppercase text-primary">
                 {role}
               </span>
             ) : null}
@@ -72,7 +72,7 @@ export function UserMenu({
 
         <div className="border-t border-panel-border pt-2">
           <button
-            className="flex h-10 w-full items-center gap-3 rounded-md px-3 text-left text-sm text-muted-strong transition hover:bg-sidebar-active hover:text-primary"
+            className="flex h-10 w-full items-center gap-3 rounded-[var(--radius-control)] px-3 text-left text-sm text-muted-strong transition hover:bg-sidebar-active hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45"
             onClick={toggleTheme}
             type="button"
           >
@@ -84,7 +84,7 @@ export function UserMenu({
             {isDark ? "Ativar tema claro" : "Ativar tema escuro"}
           </button>
           <Link
-            className="flex h-10 items-center gap-3 rounded-md px-3 text-sm text-muted-strong transition hover:bg-[#2a1f1f] hover:text-danger"
+            className="flex h-10 items-center gap-3 rounded-[var(--radius-control)] px-3 text-sm text-muted-strong transition hover:bg-danger/10 hover:text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/40"
             href="/auth/logout"
           >
             <LogOut className="size-4" />

@@ -1,6 +1,8 @@
-import { Bell, Search, Sparkles, TerminalSquare } from "lucide-react";
+import { Bell, Sparkles, TerminalSquare } from "lucide-react";
 import Link from "next/link";
 import { AppNav } from "@/components/app/app-nav";
+import { CommandSearch } from "@/components/app/command-search";
+import { MobileShell } from "@/components/app/mobile-shell";
 import { UserMenu } from "@/components/app/user-menu";
 import { Button } from "@/components/ui/button";
 import { getRequiredWorkspace } from "@/features/organizations/queries";
@@ -15,10 +17,15 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <div className="grid min-h-screen lg:grid-cols-[256px_1fr]">
+      <MobileShell
+        canManage={canManage}
+        organization={workspace.organization.name}
+      />
+
+      <div className="grid min-h-[calc(100vh-64px)] lg:min-h-screen lg:grid-cols-[256px_1fr]">
         <aside className="hidden min-h-screen flex-col border-r border-panel-border bg-sidebar px-5 py-6 lg:flex">
           <Link href="/app" className="flex items-center gap-3">
-            <span className="flex size-9 items-center justify-center rounded-md bg-primary text-primary-foreground">
+            <span className="flex size-10 items-center justify-center rounded-[var(--radius-control)] bg-primary text-primary-foreground shadow-[var(--shadow-glow)]">
               <TerminalSquare className="size-5" />
             </span>
             <span>
@@ -26,7 +33,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
                 BEM HUB
               </span>
               <span className="mt-1 block text-xs uppercase tracking-[0.12em] text-muted">
-                AI Operating System
+                Sistema operacional de IA
               </span>
             </span>
           </Link>
@@ -40,7 +47,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
                 Perguntar à IA
               </Link>
             </Button>
-            <div className="rounded-md border border-panel-border bg-panel p-4">
+            <div className="rounded-[var(--radius-card)] border border-panel-border bg-panel p-4 shadow-[var(--shadow-card)]">
               <p className="text-xs uppercase tracking-[0.12em] text-muted">
                 Workspace
               </p>
@@ -55,14 +62,8 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
         </aside>
 
         <section className="min-w-0">
-          <header className="flex h-16 items-center gap-4 border-b border-panel-border bg-background/95 px-5 md:px-8">
-            <div className="relative max-w-3xl flex-1">
-              <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted" />
-              <input
-                className="h-10 w-full rounded-lg border border-panel-border bg-panel px-11 text-sm text-foreground outline-none transition placeholder:text-muted focus:border-primary"
-                placeholder="Buscar no sistema operacional..."
-              />
-            </div>
+          <header className="hidden h-16 items-center gap-4 border-b border-panel-border bg-background/95 px-5 backdrop-blur md:px-8 lg:flex">
+            <CommandSearch containerClassName="max-w-3xl" />
             <Button aria-label="Abrir terminal" size="icon" variant="ghost">
               <TerminalSquare className="size-5" />
             </Button>

@@ -39,11 +39,15 @@ const navItems: NavItem[] = [
   { icon: Settings, label: "Configurações", href: "/app" },
 ];
 
-export function AppNav() {
+type AppNavProps = {
+  className?: string;
+};
+
+export function AppNav({ className }: AppNavProps) {
   const pathname = usePathname();
 
   return (
-    <nav className="mt-10 space-y-1">
+    <nav className={cn("mt-10 space-y-1", className)}>
       {navItems.map(({ icon: Icon, label, href, exact }) => {
         const active = exact
           ? pathname === href
@@ -52,9 +56,9 @@ export function AppNav() {
         return (
           <Link
             className={cn(
-              "flex h-10 w-full items-center gap-3 rounded-md px-3 text-left text-sm transition",
+              "flex h-10 w-full items-center gap-3 rounded-[var(--radius-control)] px-3 text-left text-sm transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45 focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar",
               active
-                ? "bg-sidebar-active text-primary"
+                ? "bg-sidebar-active text-primary shadow-[inset_3px_0_0_var(--primary)]"
                 : "text-muted-strong hover:bg-panel-subtle hover:text-foreground",
             )}
             href={href}
