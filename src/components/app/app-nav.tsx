@@ -3,7 +3,6 @@
 import {
   BarChart3,
   Bot,
-  CreditCard,
   Database,
   FileText,
   LayoutDashboard,
@@ -35,8 +34,7 @@ const navItems: NavItem[] = [
   { icon: FileText, label: "Documentos", href: "/app" },
   { icon: BarChart3, label: "Analytics", href: "/app" },
   { icon: Users, label: "Time", href: "/app" },
-  { icon: CreditCard, label: "Plano", href: "/app/upgrade" },
-  { icon: Settings, label: "Configurações", href: "/app" },
+  { icon: Settings, label: "Configurações", href: "/app/settings" },
 ];
 
 type AppNavProps = {

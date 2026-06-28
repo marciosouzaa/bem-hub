@@ -9,6 +9,11 @@ import {
   requireLimitAvailable,
 } from "@/features/billing/entitlements";
 import { getOrCreateWorkspace } from "@/features/organizations/bootstrap";
+import {
+  AI_PROVIDER_DEFINITIONS,
+  isSupportedProvider,
+  type AiProvider,
+} from "@/lib/ai/providers";
 import { DEFAULT_OPENAI_MODEL } from "@/lib/ai/models";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -37,6 +42,11 @@ const assistantFormSchema = z.object({
     .trim()
     .min(10, "Descreva instrucoes com pelo menos 10 caracteres.")
     .max(4000, "Use no maximo 4000 caracteres."),
+  provider: z.string().refine(isSupportedProvider, "Provider inválido."),
+  providerConnectionId: z
+    .string()
+    .uuid("Conexão de IA inválida.")
+    .nullable(),
   model: z
     .string()
     .trim()
@@ -98,6 +108,17 @@ export async function createAssistantAction(
     };
   }
 
+  const providerConnectionValidation = await validateProviderConnection(
+    supabase,
+    workspace.organization.id,
+    parsed.data.provider,
+    parsed.data.providerConnectionId,
+  );
+
+  if (!providerConnectionValidation.ok) {
+    return providerConnectionValidation.state;
+  }
+
   const shouldBeDefault = parsed.data.isDefault || count === 0;
 
   if (shouldBeDefault) {
@@ -110,6 +131,8 @@ export async function createAssistantAction(
     description: parsed.data.description,
     area: parsed.data.area,
     instructions: parsed.data.instructions,
+    provider: parsed.data.provider,
+    provider_connection_id: parsed.data.providerConnectionId,
     model: parsed.data.model,
     temperature: parsed.data.temperature,
     is_default: shouldBeDefault,
@@ -149,6 +172,16 @@ export async function updateAssistantAction(
   const { supabase, workspace } = await getAdminWorkspace();
   const entitlements = await getEntitlements(supabase, workspace.organization.id);
   requireFeature(entitlements, "assistants");
+  const providerConnectionValidation = await validateProviderConnection(
+    supabase,
+    workspace.organization.id,
+    parsed.data.provider,
+    parsed.data.providerConnectionId,
+  );
+
+  if (!providerConnectionValidation.ok) {
+    return providerConnectionValidation.state;
+  }
 
   if (parsed.data.isDefault) {
     await unsetDefaultAssistants(supabase, workspace.organization.id);
@@ -161,6 +194,8 @@ export async function updateAssistantAction(
       description: parsed.data.description,
       area: parsed.data.area,
       instructions: parsed.data.instructions,
+      provider: parsed.data.provider,
+      provider_connection_id: parsed.data.providerConnectionId,
       model: parsed.data.model,
       temperature: parsed.data.temperature,
       is_default: parsed.data.isDefault,
@@ -254,7 +289,16 @@ function parseAssistantForm(formData: FormData) {
     description: formData.get("description"),
     area: formData.get("area"),
     instructions: formData.get("instructions"),
-    model: formData.get("model") || DEFAULT_OPENAI_MODEL,
+    provider: formData.get("provider") || "openai",
+    providerConnectionId: formData.get("providerConnectionId") || null,
+    model:
+      formData.get("model") ||
+      AI_PROVIDER_DEFINITIONS[
+        isSupportedProvider(String(formData.get("provider")))
+          ? (formData.get("provider") as AiProvider)
+          : "openai"
+      ].defaultModel ||
+      DEFAULT_OPENAI_MODEL,
     temperature: formData.get("temperature"),
     isDefault: formData.get("isDefault") === "on",
   });
@@ -278,6 +322,77 @@ async function getAdminWorkspace() {
   }
 
   return { supabase, workspace };
+}
+
+async function validateProviderConnection(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  organizationId: string,
+  provider: AiProvider,
+  providerConnectionId: string | null,
+): Promise<
+  | { ok: true }
+  | {
+      ok: false;
+      state: AssistantFormState;
+    }
+> {
+  if (!providerConnectionId) {
+    return { ok: true };
+  }
+
+  const { data, error } = await supabase
+    .from("ai_provider_connections")
+    .select("id,provider,status")
+    .eq("id", providerConnectionId)
+    .eq("organization_id", organizationId)
+    .maybeSingle();
+
+  if (error) {
+    return {
+      ok: false,
+      state: {
+        ok: false,
+        message: `Falha ao validar conexão de IA: ${error.message}`,
+      },
+    };
+  }
+
+  if (!data) {
+    return {
+      ok: false,
+      state: {
+        ok: false,
+        message: "Conexão de IA não encontrada nesta organização.",
+        errors: { providerConnectionId: ["Selecione uma conexão válida."] },
+      },
+    };
+  }
+
+  if (data.provider !== provider) {
+    return {
+      ok: false,
+      state: {
+        ok: false,
+        message: "A conexão selecionada pertence a outro provider.",
+        errors: {
+          providerConnectionId: ["Selecione uma conexão compatível."],
+        },
+      },
+    };
+  }
+
+  if (data.status !== "active") {
+    return {
+      ok: false,
+      state: {
+        ok: false,
+        message: "A conexão selecionada não está ativa.",
+        errors: { providerConnectionId: ["Use uma conexão ativa."] },
+      },
+    };
+  }
+
+  return { ok: true };
 }
 
 async function unsetDefaultAssistants(

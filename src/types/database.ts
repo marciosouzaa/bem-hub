@@ -118,6 +118,8 @@ export type Database = {
           description: string | null;
           area: string | null;
           instructions: string;
+          provider: Database["public"]["Enums"]["ai_provider"];
+          provider_connection_id: string | null;
           model: string;
           temperature: number;
           is_default: boolean;
@@ -131,11 +133,63 @@ export type Database = {
           description?: string | null;
           area?: string | null;
           instructions: string;
+          provider?: Database["public"]["Enums"]["ai_provider"];
+          provider_connection_id?: string | null;
           model?: string;
           temperature?: number;
           is_default?: boolean;
           created_by: string;
           created_at?: string;
+        }
+      >;
+      ai_provider_connections: TableDefinition<
+        {
+          id: string;
+          organization_id: string;
+          provider: Database["public"]["Enums"]["ai_provider"];
+          name: string;
+          status: Database["public"]["Enums"]["ai_provider_connection_status"];
+          encrypted_api_key: string;
+          key_hint: string | null;
+          default_model: string | null;
+          available_models: Json;
+          is_default: boolean;
+          created_by: string;
+          validated_at: string | null;
+          created_at: string;
+          updated_at: string;
+        },
+        {
+          id?: string;
+          organization_id: string;
+          provider: Database["public"]["Enums"]["ai_provider"];
+          name: string;
+          status?: Database["public"]["Enums"]["ai_provider_connection_status"];
+          encrypted_api_key: string;
+          key_hint?: string | null;
+          default_model?: string | null;
+          available_models?: Json;
+          is_default?: boolean;
+          created_by: string;
+          validated_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        },
+        {
+          id?: string;
+          organization_id?: string;
+          provider?: Database["public"]["Enums"]["ai_provider"];
+          name?: string;
+          status?: Database["public"]["Enums"]["ai_provider_connection_status"];
+          encrypted_api_key?: string;
+          key_hint?: string | null;
+          default_model?: string | null;
+          available_models?: Json;
+          is_default?: boolean;
+          created_by?: string;
+          validated_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
         }
       >;
       conversations: TableDefinition<
@@ -243,6 +297,8 @@ export type Database = {
         | "past_due"
         | "canceled"
         | "manual";
+      ai_provider: "openai" | "anthropic" | "gemini" | "open-source";
+      ai_provider_connection_status: "active" | "needs_attention" | "disabled";
     };
     CompositeTypes: Record<string, never>;
   };

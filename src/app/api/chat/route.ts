@@ -1,4 +1,3 @@
-import { openai } from "@ai-sdk/openai";
 import { streamText, type ModelMessage } from "ai";
 import { z } from "zod";
 import {
@@ -10,7 +9,11 @@ import {
   requireLimitAvailable,
 } from "@/features/billing/entitlements";
 import { getOrCreateWorkspace } from "@/features/organizations/bootstrap";
-import { DEFAULT_OPENAI_MODEL } from "@/lib/ai/models";
+import {
+  AiRuntimeError,
+  resolveAssistantRuntime,
+} from "@/lib/ai/runtime";
+import { isMissingColumnError } from "@/lib/supabase/schema-errors";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const maxDuration = 30;
@@ -44,16 +47,6 @@ class ChatHttpError extends Error {
 }
 
 export async function POST(request: Request) {
-  if (!process.env.OPENAI_API_KEY) {
-    return Response.json(
-      {
-        error:
-          "OPENAI_API_KEY não configurada. Copie .env.example para .env.local e informe sua chave.",
-      },
-      { status: 400 },
-    );
-  }
-
   const body = chatRequestSchema.safeParse(await request.json());
 
   if (!body.success) {
@@ -117,6 +110,11 @@ export async function POST(request: Request) {
       );
     }
 
+    const runtime = await resolveAssistantRuntime(
+      supabase,
+      organizationId,
+      assistant,
+    );
     const conversation = await resolveConversation(supabase, {
       assistantId: assistant.id,
       conversationId: body.data.conversationId,
@@ -143,8 +141,12 @@ export async function POST(request: Request) {
       conversation_id: conversation.id,
       role: "user",
       content: body.data.message,
-      model: assistant.model,
-      metadata: { assistant_id: assistant.id },
+      model: runtime.model,
+      metadata: {
+        assistant_id: assistant.id,
+        provider: runtime.provider,
+        provider_connection_id: runtime.providerConnectionId,
+      },
     });
 
     if (messageError) {
@@ -159,11 +161,9 @@ export async function POST(request: Request) {
       organizationId,
       conversation.id,
     );
-    const model =
-      assistant.model || process.env.OPENAI_CHAT_MODEL || DEFAULT_OPENAI_MODEL;
 
     const result = streamText({
-      model: openai.responses(model),
+      model: runtime.languageModel,
       system:
         assistant.instructions ||
         "Você é um assistente corporativo do BEM HUB. Responda com clareza, cite limites quando faltar contexto e evite inventar dados.",
@@ -177,11 +177,13 @@ export async function POST(request: Request) {
             conversation_id: conversation.id,
             role: "assistant",
             content: text,
-            model,
+            model: runtime.model,
             tokens_input: usage.inputTokens ?? null,
             tokens_output: usage.outputTokens ?? null,
             metadata: {
               assistant_id: assistant.id,
+              provider: runtime.provider,
+              provider_connection_id: runtime.providerConnectionId,
               finish_reason: finishReason,
             },
           });
@@ -201,12 +203,14 @@ export async function POST(request: Request) {
           organization_id: organizationId,
           user_id: user.id,
           event_type: "chat.completion",
-          model,
+          model: runtime.model,
           tokens_input: usage.inputTokens ?? null,
           tokens_output: usage.outputTokens ?? null,
           metadata: {
             assistant_id: assistant.id,
             conversation_id: conversation.id,
+            provider: runtime.provider,
+            provider_connection_id: runtime.providerConnectionId,
             finish_reason: finishReason,
           },
         });
@@ -226,6 +230,10 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
+    if (error instanceof AiRuntimeError) {
+      return Response.json({ error: error.message }, { status: error.status });
+    }
+
     if (error instanceof ChatHttpError) {
       return Response.json({ error: error.message }, { status: error.status });
     }
@@ -239,6 +247,49 @@ export async function POST(request: Request) {
 }
 
 async function resolveAssistant(
+  supabase: SupabaseServerClient,
+  assistantId: string | undefined,
+  organizationId: string,
+) {
+  let query = supabase
+    .from("assistants")
+    .select(
+      "id,name,instructions,provider,provider_connection_id,model,temperature,is_default",
+    )
+    .eq("organization_id", organizationId);
+
+  if (assistantId) {
+    query = query.eq("id", assistantId);
+  } else {
+    query = query.eq("is_default", true);
+  }
+
+  const { data, error } = await query
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    if (
+      isMissingColumnError(error, [
+        "assistants.provider",
+        "provider_connection_id",
+      ])
+    ) {
+      return resolveAssistantFromLegacySchema(
+        supabase,
+        assistantId,
+        organizationId,
+      );
+    }
+
+    throw new ChatHttpError(`Falha ao buscar assistente: ${error.message}`, 500);
+  }
+
+  return data;
+}
+
+async function resolveAssistantFromLegacySchema(
   supabase: SupabaseServerClient,
   assistantId: string | undefined,
   organizationId: string,
@@ -263,7 +314,15 @@ async function resolveAssistant(
     throw new ChatHttpError(`Falha ao buscar assistente: ${error.message}`, 500);
   }
 
-  return data;
+  if (!data) {
+    return null;
+  }
+
+  return {
+    ...data,
+    provider: "openai" as const,
+    provider_connection_id: null,
+  };
 }
 
 async function resolveConversation(

@@ -26,7 +26,9 @@ import {
   DeleteAssistantForm,
   SetDefaultAssistantForm,
 } from "@/features/assistants/assistant-forms";
+import { listAiProviderConnections } from "@/features/ai-provider-connections/queries";
 import { getRequiredWorkspace } from "@/features/organizations/queries";
+import { AI_PROVIDER_DEFINITIONS } from "@/lib/ai/providers";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export default async function AssistantsPage() {
@@ -35,6 +37,10 @@ export default async function AssistantsPage() {
   const entitlements = await getEntitlements(supabase, workspace.organization.id);
   const featureEnabled = hasFeature(entitlements, "assistants");
   const assistants = await listAssistants(supabase, workspace.organization.id);
+  const providerConnections = await listAiProviderConnections(
+    supabase,
+    workspace.organization.id,
+  );
   const canManage =
     featureEnabled && ["owner", "admin"].includes(workspace.membership.role);
   const defaultAssistant = assistants.find((assistant) => assistant.isDefault);
@@ -92,6 +98,7 @@ export default async function AssistantsPage() {
               <AssistantCard
                 assistant={assistant}
                 canManage={canManage}
+                providerConnections={providerConnections}
                 key={assistant.id}
               />
             ))
@@ -102,7 +109,10 @@ export default async function AssistantsPage() {
       </section>
 
       <aside className="space-y-6">
-        <AssistantForm canManage={canManage} />
+        <AssistantForm
+          canManage={canManage}
+          providerConnections={providerConnections}
+        />
 
         <MotionSurface>
           <Card className="os-grid overflow-hidden">
@@ -132,12 +142,18 @@ export default async function AssistantsPage() {
 function AssistantCard({
   assistant,
   canManage,
+  providerConnections,
 }: {
   assistant: AssistantListItem;
   canManage: boolean;
+  providerConnections: Awaited<ReturnType<typeof listAiProviderConnections>>;
 }) {
   const setDefaultAction = setDefaultAssistantAction.bind(null, assistant.id);
   const deleteAction = deleteAssistantAction.bind(null, assistant.id);
+  const provider = AI_PROVIDER_DEFINITIONS[assistant.provider];
+  const providerConnection = providerConnections.find(
+    (connection) => connection.id === assistant.providerConnectionId,
+  );
 
   return (
     <MotionSurface>
@@ -178,13 +194,18 @@ function AssistantCard({
           </div>
         </CardHeader>
         <CardContent className="space-y-5">
-          <div className="grid gap-3 md:grid-cols-3">
+          <div className="grid gap-3 md:grid-cols-4">
             <InfoTile
               icon={<SlidersHorizontal className="size-4" />}
               label="Temperatura"
               value={assistant.temperature.toFixed(1)}
             />
+            <InfoTile label="Provider" value={provider.label} />
             <InfoTile label="Modelo" value={assistant.model} />
+            <InfoTile
+              label="Conexão"
+              value={providerConnection?.name ?? "Ambiente"}
+            />
             <InfoTile
               label="Criado em"
               value={new Intl.DateTimeFormat("pt-BR").format(
@@ -211,6 +232,7 @@ function AssistantCard({
                 <AssistantForm
                   assistant={assistant}
                   canManage={canManage}
+                  providerConnections={providerConnections}
                   variant="inline"
                 />
               </div>

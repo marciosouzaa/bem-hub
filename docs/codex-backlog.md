@@ -52,7 +52,8 @@ Verification:
 
 ## 3. Chat Persistence and Streaming
 
-Status: next recommended implementation step.
+Status: implemented as the first functional version. Keep manual QA and UX
+polish on the follow-up list.
 
 Scope:
 - Persist conversations and messages.
@@ -64,6 +65,35 @@ Acceptance:
 - User creates a conversation and receives streamed response.
 - Reloading the page keeps history.
 - Usage event is written after response.
+
+Verification:
+- `bun run lint`
+- `bun run build`
+- Manual smoke test reported working once, but should be repeated after AI
+  provider connections.
+
+## 3.5 AI Provider Connections
+
+Status: implemented as account-managed provider connections.
+
+Scope:
+- Store provider API keys per organization.
+- Encrypt keys server-side.
+- Support OpenAI, Claude/Anthropic, and Gemini.
+- Let assistants choose provider, connection, and model.
+- Keep legacy env var fallback for local development.
+
+Acceptance:
+- Owner/admin can create provider connections.
+- Assistants can be configured with provider-specific model choices.
+- `/api/chat` resolves the assistant runtime from the selected connection.
+- Secrets never return to the client.
+
+Verification:
+- `bun run lint`
+- `bun run build`
+- Supabase migration `0006_ai_provider_connections` applied remotely.
+- Manual end-to-end test still pending after the remote migration.
 
 ## 4. Knowledge Base Ingestion
 
@@ -103,6 +133,9 @@ Acceptance:
 
 ## 7. Billing and Limits
 
+Status: partially implemented. Entitlements are active server-side and the
+temporary manual plan switcher exists in settings.
+
 Scope:
 - Seed plans.
 - Associate organization with subscription.
@@ -111,3 +144,16 @@ Scope:
 Acceptance:
 - Free plan blocks over-limit actions.
 - Upgrade screen explains the required plan.
+- Owner/admin can switch plans manually during product construction.
+
+Current implementation:
+- `getEntitlements` reads `subscriptions` and `plans`.
+- Chat and assistants enforce feature/limit checks server-side.
+- `/app/settings/billing` lets owner/admin switch plans manually with status
+  `manual`.
+- `/app/upgrade` redirects to `/app/settings/billing`.
+
+Remaining:
+- Real checkout/gateway.
+- Billing history/invoices.
+- Full admin-only account billing rules and audit trail.

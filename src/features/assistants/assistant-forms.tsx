@@ -8,14 +8,16 @@ import {
   updateAssistantAction,
   type AssistantFormState,
 } from "@/features/assistants/actions";
+import type { AiProviderConnectionListItem } from "@/features/ai-provider-connections/queries";
 import type { AssistantListItem } from "@/features/assistants/queries";
-import { DEFAULT_OPENAI_MODEL } from "@/lib/ai/models";
+import { AI_PROVIDERS, AI_PROVIDER_DEFINITIONS } from "@/lib/ai/providers";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 type AssistantFormProps = {
   assistant?: AssistantListItem;
   canManage: boolean;
+  providerConnections?: AiProviderConnectionListItem[];
   variant?: "card" | "inline";
 };
 
@@ -27,6 +29,7 @@ const emptyAssistantFormState: AssistantFormState = {
 export function AssistantForm({
   assistant,
   canManage,
+  providerConnections = [],
   variant = "card",
 }: AssistantFormProps) {
   const action = assistant
@@ -77,16 +80,76 @@ export function AssistantForm({
 
         <label className="block">
           <span className="text-xs font-medium uppercase tracking-[0.08em] text-muted">
+            Provider
+          </span>
+          <select
+            className="mt-2 h-10 w-full rounded-[var(--radius-control)] border border-panel-border bg-panel-elevated px-3 text-sm outline-none transition focus:border-primary disabled:opacity-60"
+            defaultValue={assistant?.provider ?? "openai"}
+            disabled={!canManage}
+            name="provider"
+            required
+          >
+            {AI_PROVIDERS.map((provider) => (
+              <option key={provider.provider} value={provider.provider}>
+                {provider.label}
+              </option>
+            ))}
+          </select>
+          <FieldError errors={state.errors?.provider} />
+        </label>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <label className="block">
+          <span className="text-xs font-medium uppercase tracking-[0.08em] text-muted">
+            Conexão de IA
+          </span>
+          <select
+            className="mt-2 h-10 w-full rounded-[var(--radius-control)] border border-panel-border bg-panel-elevated px-3 text-sm outline-none transition focus:border-primary disabled:opacity-60"
+            defaultValue={assistant?.providerConnectionId ?? ""}
+            disabled={!canManage}
+            name="providerConnectionId"
+          >
+            <option value="">Fallback por ambiente</option>
+            {providerConnections.map((connection) => (
+              <option key={connection.id} value={connection.id}>
+                {connection.providerLabel} - {connection.name}
+              </option>
+            ))}
+          </select>
+          <FieldError errors={state.errors?.providerConnectionId} />
+        </label>
+
+        <label className="block">
+          <span className="text-xs font-medium uppercase tracking-[0.08em] text-muted">
             Modelo
           </span>
           <input
             className="mt-2 h-10 w-full rounded-md border border-panel-border bg-panel-elevated px-3 font-mono text-sm outline-none transition placeholder:text-[#6f7772] focus:border-primary disabled:opacity-60"
-            defaultValue={assistant?.model ?? DEFAULT_OPENAI_MODEL}
+            defaultValue={
+              assistant?.model ?? AI_PROVIDER_DEFINITIONS.openai.defaultModel
+            }
             disabled={!canManage}
+            list="assistant-model-options"
             maxLength={80}
             name="model"
             required
           />
+          <datalist id="assistant-model-options">
+            {providerConnections.flatMap((connection) =>
+              connection.availableModels.map((model) => (
+                <option
+                  key={`${connection.id}-${model}`}
+                  value={model}
+                />
+              )),
+            )}
+            {AI_PROVIDERS.flatMap((provider) =>
+              provider.suggestedModels.map((model) => (
+                <option key={`${provider.provider}-${model}`} value={model} />
+              )),
+            )}
+          </datalist>
           <FieldError errors={state.errors?.model} />
         </label>
       </div>

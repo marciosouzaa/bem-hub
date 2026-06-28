@@ -16,8 +16,8 @@ export function UpgradeCTA({
   feature?: string;
 }) {
   const href = feature
-    ? `/app/upgrade?feature=${encodeURIComponent(feature)}`
-    : "/app/upgrade";
+    ? `/app/settings/billing?feature=${encodeURIComponent(feature)}`
+    : "/app/settings/billing";
 
   return (
     <Card className="border-warning/50 bg-panel-elevated">

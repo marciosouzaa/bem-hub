@@ -39,7 +39,14 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 OPENAI_API_KEY=
 OPENAI_CHAT_MODEL=gpt-5.5
+APP_ENCRYPTION_KEY=
+ANTHROPIC_API_KEY=
+GOOGLE_GENERATIVE_AI_API_KEY=
 ```
+
+`APP_ENCRYPTION_KEY` is required when admins save AI provider keys in the
+workspace. Keep this value stable; rotating it without re-encrypting saved
+provider connections makes existing encrypted keys unreadable.
 
 Supabase used to expose an `anon` key label in older setups. For new Vercel
 environments, use the Supabase publishable key and store it in
