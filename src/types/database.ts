@@ -138,6 +138,87 @@ export type Database = {
           created_at?: string;
         }
       >;
+      conversations: TableDefinition<
+        {
+          id: string;
+          organization_id: string;
+          assistant_id: string | null;
+          user_id: string;
+          title: string | null;
+          created_at: string;
+          updated_at: string;
+        },
+        {
+          id?: string;
+          organization_id: string;
+          assistant_id?: string | null;
+          user_id: string;
+          title?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        },
+        {
+          id?: string;
+          organization_id?: string;
+          assistant_id?: string | null;
+          user_id?: string;
+          title?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        }
+      >;
+      messages: TableDefinition<
+        {
+          id: string;
+          organization_id: string;
+          conversation_id: string;
+          role: "user" | "assistant" | "system";
+          content: string;
+          tokens_input: number | null;
+          tokens_output: number | null;
+          model: string | null;
+          metadata: Json;
+          created_at: string;
+        },
+        {
+          id?: string;
+          organization_id: string;
+          conversation_id: string;
+          role: "user" | "assistant" | "system";
+          content: string;
+          tokens_input?: number | null;
+          tokens_output?: number | null;
+          model?: string | null;
+          metadata?: Json;
+          created_at?: string;
+        }
+      >;
+      usage_events: TableDefinition<
+        {
+          id: string;
+          organization_id: string;
+          user_id: string | null;
+          event_type: string;
+          model: string | null;
+          tokens_input: number | null;
+          tokens_output: number | null;
+          cost_estimate: number | null;
+          metadata: Json;
+          created_at: string;
+        },
+        {
+          id?: string;
+          organization_id: string;
+          user_id?: string | null;
+          event_type: string;
+          model?: string | null;
+          tokens_input?: number | null;
+          tokens_output?: number | null;
+          cost_estimate?: number | null;
+          metadata?: Json;
+          created_at?: string;
+        }
+      >;
     };
     Views: Record<string, never>;
     Functions: {

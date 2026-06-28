@@ -1,5 +1,15 @@
-import { Building2, ChevronDown, LogOut, UserRound } from "lucide-react";
+"use client";
+
+import {
+  Building2,
+  ChevronDown,
+  LogOut,
+  Moon,
+  SunMedium,
+  UserRound,
+} from "lucide-react";
 import Link from "next/link";
+import { useTheme } from "@/components/theme/theme-provider";
 import { cn } from "@/lib/utils";
 
 type UserMenuProps = {
@@ -18,6 +28,8 @@ export function UserMenu({
   className,
 }: UserMenuProps) {
   const initials = getInitials(name || email || organization);
+  const { theme, toggleTheme } = useTheme();
+  const isDark = theme === "dark";
 
   return (
     <details className={cn("group relative", className)}>
@@ -59,6 +71,18 @@ export function UserMenu({
         </div>
 
         <div className="border-t border-panel-border pt-2">
+          <button
+            className="flex h-10 w-full items-center gap-3 rounded-md px-3 text-left text-sm text-muted-strong transition hover:bg-sidebar-active hover:text-primary"
+            onClick={toggleTheme}
+            type="button"
+          >
+            {isDark ? (
+              <SunMedium className="size-4" />
+            ) : (
+              <Moon className="size-4" />
+            )}
+            {isDark ? "Ativar tema claro" : "Ativar tema escuro"}
+          </button>
           <Link
             className="flex h-10 items-center gap-3 rounded-md px-3 text-sm text-muted-strong transition hover:bg-[#2a1f1f] hover:text-danger"
             href="/auth/logout"

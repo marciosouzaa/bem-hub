@@ -2,6 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import {
+  getEntitlementErrorMessage,
+  getEntitlements,
+  requireFeature,
+  requireLimitAvailable,
+} from "@/features/billing/entitlements";
 import { getOrCreateWorkspace } from "@/features/organizations/bootstrap";
 import { DEFAULT_OPENAI_MODEL } from "@/lib/ai/models";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -76,6 +82,22 @@ export async function createAssistantAction(
     };
   }
 
+  try {
+    const entitlements = await getEntitlements(
+      supabase,
+      workspace.organization.id,
+    );
+    requireFeature(entitlements, "assistants");
+    requireLimitAvailable(entitlements, "assistants", count ?? 0);
+  } catch (error) {
+    return {
+      ok: false,
+      message:
+        getEntitlementErrorMessage(error) ??
+        "Falha ao validar limites do plano.",
+    };
+  }
+
   const shouldBeDefault = parsed.data.isDefault || count === 0;
 
   if (shouldBeDefault) {
@@ -125,6 +147,8 @@ export async function updateAssistantAction(
   }
 
   const { supabase, workspace } = await getAdminWorkspace();
+  const entitlements = await getEntitlements(supabase, workspace.organization.id);
+  requireFeature(entitlements, "assistants");
 
   if (parsed.data.isDefault) {
     await unsetDefaultAssistants(supabase, workspace.organization.id);
@@ -165,6 +189,8 @@ export async function deleteAssistantAction(
 ) {
   void formData;
   const { supabase, workspace } = await getAdminWorkspace();
+  const entitlements = await getEntitlements(supabase, workspace.organization.id);
+  requireFeature(entitlements, "assistants");
 
   const { data: assistant, error: readError } = await supabase
     .from("assistants")
@@ -204,6 +230,8 @@ export async function setDefaultAssistantAction(
 ) {
   void formData;
   const { supabase, workspace } = await getAdminWorkspace();
+  const entitlements = await getEntitlements(supabase, workspace.organization.id);
+  requireFeature(entitlements, "assistants");
 
   await unsetDefaultAssistants(supabase, workspace.organization.id);
 

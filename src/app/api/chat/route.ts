@@ -1,26 +1,54 @@
 import { openai } from "@ai-sdk/openai";
-import { convertToModelMessages, streamText, type UIMessage } from "ai";
+import { streamText, type ModelMessage } from "ai";
 import { z } from "zod";
+import {
+  EntitlementError,
+  getEntitlementErrorMessage,
+  getEntitlements,
+  getMonthlyAssistantMessageCount,
+  requireFeature,
+  requireLimitAvailable,
+} from "@/features/billing/entitlements";
+import { getOrCreateWorkspace } from "@/features/organizations/bootstrap";
+import { DEFAULT_OPENAI_MODEL } from "@/lib/ai/models";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const maxDuration = 30;
 
 const chatRequestSchema = z.object({
-  messages: z.array(z.custom<UIMessage>()).min(1),
-  assistant: z
-    .object({
-      name: z.string().optional(),
-      instructions: z.string().optional(),
-      model: z.string().optional(),
-    })
-    .optional(),
+  conversationId: z
+    .string()
+    .uuid()
+    .nullish()
+    .transform((value) => value ?? undefined),
+  assistantId: z
+    .string()
+    .uuid()
+    .nullish()
+    .transform((value) => value ?? undefined),
+  message: z.string().trim().min(1).max(8000),
 });
+
+type SupabaseServerClient = Awaited<
+  ReturnType<typeof createSupabaseServerClient>
+>;
+
+class ChatHttpError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "ChatHttpError";
+    this.status = status;
+  }
+}
 
 export async function POST(request: Request) {
   if (!process.env.OPENAI_API_KEY) {
     return Response.json(
       {
         error:
-          "OPENAI_API_KEY nao configurada. Copie .env.example para .env.local e informe sua chave.",
+          "OPENAI_API_KEY não configurada. Copie .env.example para .env.local e informe sua chave.",
       },
       { status: 400 },
     );
@@ -30,21 +58,293 @@ export async function POST(request: Request) {
 
   if (!body.success) {
     return Response.json(
-      { error: "Payload invalido.", issues: body.error.issues },
+      { error: "Payload inválido.", issues: body.error.issues },
       { status: 400 },
     );
   }
 
-  const model =
-    body.data.assistant?.model ?? process.env.OPENAI_CHAT_MODEL ?? "gpt-5.5";
+  try {
+    const supabase = await createSupabaseServerClient();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
-  const result = streamText({
-    model: openai.responses(model),
-    system:
-      body.data.assistant?.instructions ??
-      "Voce e um assistente corporativo do BEM HUB. Responda com clareza, cite limites quando faltar contexto e evite inventar dados.",
-    messages: await convertToModelMessages(body.data.messages),
-  });
+    if (userError || !user) {
+      return Response.json({ error: "Sessão expirada." }, { status: 401 });
+    }
 
-  return result.toUIMessageStreamResponse();
+    const workspace = await getOrCreateWorkspace(supabase, { user });
+    const organizationId = workspace.organization.id;
+    const entitlements = await getEntitlements(supabase, organizationId);
+
+    try {
+      requireFeature(entitlements, "chat");
+      const monthlyMessages = await getMonthlyAssistantMessageCount(
+        supabase,
+        organizationId,
+      );
+      requireLimitAvailable(entitlements, "monthlyMessages", monthlyMessages);
+    } catch (error) {
+      if (error instanceof EntitlementError) {
+        return Response.json(
+          {
+            error:
+              getEntitlementErrorMessage(error) ??
+              "Plano atual não permite esta operação.",
+            code: error.code,
+            plan: error.planKey,
+            limit: error.limit,
+            used: error.used,
+          },
+          { status: error.code === "feature_disabled" ? 403 : 402 },
+        );
+      }
+
+      throw error;
+    }
+
+    const assistant = await resolveAssistant(
+      supabase,
+      body.data.assistantId,
+      organizationId,
+    );
+
+    if (!assistant) {
+      return Response.json(
+        { error: "Assistente não encontrado nesta organização." },
+        { status: 404 },
+      );
+    }
+
+    const conversation = await resolveConversation(supabase, {
+      assistantId: assistant.id,
+      conversationId: body.data.conversationId,
+      message: body.data.message,
+      organizationId,
+      userId: user.id,
+    });
+
+    if (
+      conversation.assistant_id &&
+      conversation.assistant_id !== assistant.id
+    ) {
+      return Response.json(
+        {
+          error:
+            "Esta conversa pertence a outro assistente. Abra uma nova conversa para trocar.",
+        },
+        { status: 409 },
+      );
+    }
+
+    const { error: messageError } = await supabase.from("messages").insert({
+      organization_id: organizationId,
+      conversation_id: conversation.id,
+      role: "user",
+      content: body.data.message,
+      model: assistant.model,
+      metadata: { assistant_id: assistant.id },
+    });
+
+    if (messageError) {
+      throw new ChatHttpError(
+        `Falha ao salvar mensagem: ${messageError.message}`,
+        500,
+      );
+    }
+
+    const messages = await loadModelMessages(
+      supabase,
+      organizationId,
+      conversation.id,
+    );
+    const model =
+      assistant.model || process.env.OPENAI_CHAT_MODEL || DEFAULT_OPENAI_MODEL;
+
+    const result = streamText({
+      model: openai.responses(model),
+      system:
+        assistant.instructions ||
+        "Você é um assistente corporativo do BEM HUB. Responda com clareza, cite limites quando faltar contexto e evite inventar dados.",
+      messages,
+      temperature: assistant.temperature,
+      onEnd: async ({ text, usage, finishReason }) => {
+        const { error: assistantMessageError } = await supabase
+          .from("messages")
+          .insert({
+            organization_id: organizationId,
+            conversation_id: conversation.id,
+            role: "assistant",
+            content: text,
+            model,
+            tokens_input: usage.inputTokens ?? null,
+            tokens_output: usage.outputTokens ?? null,
+            metadata: {
+              assistant_id: assistant.id,
+              finish_reason: finishReason,
+            },
+          });
+
+        if (assistantMessageError) {
+          console.error("Falha ao salvar resposta do chat", assistantMessageError);
+          return;
+        }
+
+        await supabase
+          .from("conversations")
+          .update({ updated_at: new Date().toISOString() })
+          .eq("id", conversation.id)
+          .eq("organization_id", organizationId);
+
+        const { error: usageError } = await supabase.from("usage_events").insert({
+          organization_id: organizationId,
+          user_id: user.id,
+          event_type: "chat.completion",
+          model,
+          tokens_input: usage.inputTokens ?? null,
+          tokens_output: usage.outputTokens ?? null,
+          metadata: {
+            assistant_id: assistant.id,
+            conversation_id: conversation.id,
+            finish_reason: finishReason,
+          },
+        });
+
+        if (usageError) {
+          console.error("Falha ao registrar uso do chat", usageError);
+        }
+      },
+      onError: ({ error }) => {
+        console.error("Falha no stream de chat", error);
+      },
+    });
+
+    return result.toTextStreamResponse({
+      headers: {
+        "x-conversation-id": conversation.id,
+      },
+    });
+  } catch (error) {
+    if (error instanceof ChatHttpError) {
+      return Response.json({ error: error.message }, { status: error.status });
+    }
+
+    console.error("Falha inesperada no chat", error);
+    return Response.json(
+      { error: "Falha ao processar a conversa." },
+      { status: 500 },
+    );
+  }
+}
+
+async function resolveAssistant(
+  supabase: SupabaseServerClient,
+  assistantId: string | undefined,
+  organizationId: string,
+) {
+  let query = supabase
+    .from("assistants")
+    .select("id,name,instructions,model,temperature,is_default")
+    .eq("organization_id", organizationId);
+
+  if (assistantId) {
+    query = query.eq("id", assistantId);
+  } else {
+    query = query.eq("is_default", true);
+  }
+
+  const { data, error } = await query
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    throw new ChatHttpError(`Falha ao buscar assistente: ${error.message}`, 500);
+  }
+
+  return data;
+}
+
+async function resolveConversation(
+  supabase: SupabaseServerClient,
+  {
+    assistantId,
+    conversationId,
+    message,
+    organizationId,
+    userId,
+  }: {
+    assistantId: string;
+    conversationId: string | undefined;
+    message: string;
+    organizationId: string;
+    userId: string;
+  },
+) {
+  if (conversationId) {
+    const { data, error } = await supabase
+      .from("conversations")
+      .select("id,organization_id,assistant_id,user_id,title")
+      .eq("id", conversationId)
+      .eq("organization_id", organizationId)
+      .maybeSingle();
+
+    if (error) {
+      throw new ChatHttpError(`Falha ao buscar conversa: ${error.message}`, 500);
+    }
+
+    if (!data) {
+      throw new ChatHttpError("Conversa não encontrada nesta organização.", 404);
+    }
+
+    return data;
+  }
+
+  const { data, error } = await supabase
+    .from("conversations")
+    .insert({
+      organization_id: organizationId,
+      assistant_id: assistantId,
+      user_id: userId,
+      title: createConversationTitle(message),
+    })
+    .select("id,organization_id,assistant_id,user_id,title")
+    .single();
+
+  if (error) {
+    throw new ChatHttpError(`Falha ao criar conversa: ${error.message}`, 500);
+  }
+
+  return data;
+}
+
+async function loadModelMessages(
+  supabase: SupabaseServerClient,
+  organizationId: string,
+  conversationId: string,
+): Promise<ModelMessage[]> {
+  const { data, error } = await supabase
+    .from("messages")
+    .select("role,content,created_at")
+    .eq("organization_id", organizationId)
+    .eq("conversation_id", conversationId)
+    .order("created_at", { ascending: true })
+    .limit(40);
+
+  if (error) {
+    throw new ChatHttpError(`Falha ao carregar histórico: ${error.message}`, 500);
+  }
+
+  return data
+    .filter((message) => message.role === "user" || message.role === "assistant")
+    .map((message) => ({
+      role: message.role,
+      content: message.content,
+    }));
+}
+
+function createConversationTitle(message: string) {
+  const normalized = message.replace(/\s+/g, " ").trim();
+  return normalized.length > 72 ? `${normalized.slice(0, 69)}...` : normalized;
 }
