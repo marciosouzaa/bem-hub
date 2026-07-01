@@ -1,6 +1,6 @@
 # Handoff Notes
 
-Atualizado em 2026-06-28.
+Atualizado em 2026-07-01.
 
 ## Estado Atual
 
@@ -77,6 +77,21 @@ sinalização verde e páginas de trabalho em português.
   - suporte a OpenAI, Anthropic/Claude e Gemini via AI SDK
   - fallback para env vars legadas quando não houver conexão cadastrada
   - seleção de provider/conexão/modelo no cadastro do assistente.
+- Smoke test funcional de settings/billing, settings/ai-providers,
+  assistants e chat foi reportado como concluído pelo usuário em 2026-07-01.
+- Implementado Knowledge Base Ingestion inicial:
+  - migration `0007_knowledge_base_ingestion`
+  - bucket privado Supabase Storage `knowledge-documents`
+  - policies de storage por primeiro segmento do path como `organization_id`
+  - colunas de metadata em `documents`: tamanho, chunks, modelo e data de
+    processamento
+  - upload em `/api/knowledge/documents`
+  - tela `/app/knowledge`
+  - validação server-side de owner/admin, plano e limite de documentos
+  - extração de TXT/Markdown
+  - chunks e embeddings OpenAI `text-embedding-3-small`
+  - busca semântica via `match_document_chunks`
+  - PDF/DOCX ficam registrados como `failed` até adicionarmos parsers.
 - Aplicada remotamente a migration `0006_ai_provider_connections` via MCP.
 - Recarregado schema cache do PostgREST com `notify pgrst, 'reload schema';`.
 - Criada área de configurações com submenu:
@@ -105,6 +120,8 @@ sinalização verde e páginas de trabalho em português.
 - `bun run lint` passou após as alterações.
 - `bun run build` passou após as alterações.
 - Build atual inclui as rotas:
+  - `/api/knowledge/documents`
+  - `/app/knowledge`
   - `/app/settings`
   - `/app/settings/account`
   - `/app/settings/billing`
@@ -112,20 +129,25 @@ sinalização verde e páginas de trabalho em português.
   - `/app/upgrade`
 - Supabase remoto validado via MCP:
   - migration `0006_ai_provider_connections` no histórico remoto
+  - migration `0007_knowledge_base_ingestion` no histórico remoto
   - `public.ai_provider_connections` criada
   - RLS ativo na tabela
   - `assistants.provider` existe
   - `assistants.provider_connection_id` existe.
+  - bucket privado `storage.buckets.knowledge-documents` criado
+  - colunas `documents.file_size`, `documents.chunk_count`,
+    `documents.embedding_model` e `documents.processed_at` existem
+  - policies `knowledge_documents_*` existem em `storage.objects`.
 
 ## Ainda Não Verificado Manualmente
 
-- Criar uma conexão real em `/app/settings/ai-providers` depois da migration.
-- Criar/editar assistente usando uma conexão cadastrada.
-- Enviar mensagem no chat usando assistente com provider selecionado pela conta.
-- Trocar plano em `/app/settings/billing` e confirmar visualmente que limites e
-  bloqueios mudam sem refresh manual.
+- Abrir `/app/knowledge` em ambiente com Supabase Storage e OpenAI configurados.
+- Enviar um TXT ou Markdown e confirmar status `ready`, chunks e busca
+  semântica.
+- Enviar um PDF ou DOCX e confirmar status `failed` com mensagem clara de
+  extração ainda não habilitada.
 - Verificação com dois usuários Supabase para confirmar isolamento completo
-  entre organizações.
+  entre organizações, incluindo objetos de Storage.
 
 ## Alertas Supabase
 
@@ -157,11 +179,16 @@ git status --short
 Arquivos novos importantes:
 
 - `supabase/migrations/0006_ai_provider_connections.sql`
+- `supabase/migrations/0007_knowledge_base_ingestion.sql`
 - `src/features/ai-provider-connections/*`
+- `src/features/knowledge-base/*`
 - `src/lib/ai/providers.ts`
 - `src/lib/ai/runtime.ts`
+- `src/lib/ai/embeddings.ts`
 - `src/lib/security/encryption.ts`
 - `src/lib/supabase/schema-errors.ts`
+- `src/app/api/knowledge/documents/route.ts`
+- `src/app/app/knowledge/page.tsx`
 - `src/app/app/settings/*`
 - `src/components/app/settings-nav.tsx`
 - `src/features/billing/actions.ts`
@@ -175,22 +202,19 @@ Arquivos de logo em `public/` também aparecem como não rastreados:
 
 ## Próximo Passo Recomendado
 
-Na próxima sessão, começar por smoke test funcional das telas recém-criadas:
+Fazer smoke test da nova tela `/app/knowledge` com a migration
+`0007_knowledge_base_ingestion` já aplicada no Supabase remoto:
 
-1. Abrir `/app/settings/billing`.
-2. Trocar plano para `Pro` e confirmar que a assinatura atual muda.
-3. Abrir `/app/settings/ai-providers`.
-4. Cadastrar uma conexão OpenAI com chave real.
-5. Abrir `/app/assistants`.
-6. Editar/criar assistente escolhendo provider/conexão/modelo.
-7. Abrir `/app/chat` e testar uma mensagem com esse assistente.
-8. Se tudo passar, seguir para Knowledge Base Ingestion.
+1. Enviar TXT ou Markdown.
+2. Confirmar objeto no bucket privado `knowledge-documents`.
+3. Confirmar documento `ready`, chunks gravados e evento de uso.
+4. Rodar busca semântica na própria tela.
+5. Confirmar que PDF/DOCX aparecem como `failed` com mensagem clara.
+6. Repetir checagem com dois usuários/organizações para isolamento em tabelas e
+   Storage.
 
-Depois do smoke test, o próximo bloco de implementação pelo backlog é:
+Depois disso, o próximo bloco pelo backlog é RAG Answering:
 
-- upload de documentos
-- storage Supabase
-- extração de texto
-- chunks
-- embeddings
-- busca semântica
+- recuperar top chunks antes da resposta do chat
+- injetar contexto no prompt
+- retornar fontes/citações para a UI

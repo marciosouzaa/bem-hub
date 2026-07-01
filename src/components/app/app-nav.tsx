@@ -30,7 +30,7 @@ const navItems: NavItem[] = [
   { icon: MessageSquareText, label: "Conversas", href: "/app/chat" },
   { icon: Workflow, label: "Agentes IA", href: "/app" },
   { icon: Zap, label: "Automações", href: "/app" },
-  { icon: Database, label: "Base de conhecimento", href: "/app" },
+  { icon: Database, label: "Base de conhecimento", href: "/app/knowledge" },
   { icon: FileText, label: "Documentos", href: "/app" },
   { icon: BarChart3, label: "Analytics", href: "/app" },
   { icon: Users, label: "Time", href: "/app" },

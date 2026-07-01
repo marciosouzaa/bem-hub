@@ -247,6 +247,78 @@ export type Database = {
           created_at?: string;
         }
       >;
+      knowledge_bases: TableDefinition<
+        {
+          id: string;
+          organization_id: string;
+          name: string;
+          description: string | null;
+          created_at: string;
+        },
+        {
+          id?: string;
+          organization_id: string;
+          name: string;
+          description?: string | null;
+          created_at?: string;
+        }
+      >;
+      documents: TableDefinition<
+        {
+          id: string;
+          organization_id: string;
+          knowledge_base_id: string | null;
+          name: string;
+          file_path: string;
+          mime_type: string;
+          file_size: number | null;
+          status: Database["public"]["Enums"]["document_status"];
+          error: string | null;
+          chunk_count: number;
+          embedding_model: string | null;
+          processed_at: string | null;
+          created_by: string;
+          created_at: string;
+        },
+        {
+          id?: string;
+          organization_id: string;
+          knowledge_base_id?: string | null;
+          name: string;
+          file_path: string;
+          mime_type: string;
+          file_size?: number | null;
+          status?: Database["public"]["Enums"]["document_status"];
+          error?: string | null;
+          chunk_count?: number;
+          embedding_model?: string | null;
+          processed_at?: string | null;
+          created_by: string;
+          created_at?: string;
+        }
+      >;
+      document_chunks: TableDefinition<
+        {
+          id: string;
+          organization_id: string;
+          document_id: string;
+          content: string;
+          chunk_index: number;
+          token_count: number | null;
+          embedding: number[] | null;
+          created_at: string;
+        },
+        {
+          id?: string;
+          organization_id: string;
+          document_id: string;
+          content: string;
+          chunk_index: number;
+          token_count?: number | null;
+          embedding?: number[] | null;
+          created_at?: string;
+        }
+      >;
       usage_events: TableDefinition<
         {
           id: string;
@@ -283,6 +355,19 @@ export type Database = {
         Returns: {
           organization_id: string;
           role: Database["public"]["Enums"]["organization_role"];
+        }[];
+      };
+      match_document_chunks: {
+        Args: {
+          target_organization_id: string;
+          query_embedding: number[];
+          match_count?: number;
+        };
+        Returns: {
+          id: string;
+          document_id: string;
+          content: string;
+          similarity: number;
         }[];
       };
     };
