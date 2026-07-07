@@ -121,23 +121,35 @@ Current implementation:
 - Files are stored in private Supabase Storage bucket `knowledge-documents`.
 - TXT, Markdown and text-based PDF are extracted, chunked, embedded with OpenAI
   `text-embedding-3-small`, and stored in `document_chunks`.
+- PDF extraction runs in the Node.js route runtime and keeps `pdf-parse` /
+  `pdfjs-dist` externalized from the Next.js server bundle to avoid worker
+  resolution failures.
 - Uploads use a 6 MB synchronous processing limit.
 - `documents` stores file size, chunk count, embedding model and processed
   timestamp metadata.
 - Owners/admins can delete any document from `/app/knowledge`; deletion removes
   the Storage object and cascades stored chunks.
+- Members can download the original private Storage object through
+  `GET /api/knowledge/documents/[documentId]`, which verifies
+  `organization_id` and redirects to a short-lived signed URL.
 
 Verification:
 - `bun run lint`
 - `bun run build`
+- User-reported smoke test: TXT and text-based PDF uploads process correctly
+  after the PDF parser fix.
 
 Remaining:
-- Manual upload/search smoke test against Supabase Storage and a real OpenAI
-  key.
+- Repeat upload/search smoke test against Supabase Storage and a real OpenAI
+  key after the next deploy.
+- Manually verify document download from the UI.
+- Manually verify deletion removes Storage object, `documents` row and chunks.
 - Add DOCX extraction parser and OCR for scanned PDFs.
 - Repeat two-user tenant isolation test for documents and storage objects.
 
 ## 5. RAG Answering
+
+Status: next recommended implementation block.
 
 Scope:
 - Retrieve top chunks before chat completion.

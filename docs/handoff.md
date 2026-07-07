@@ -1,6 +1,6 @@
 # Handoff Notes
 
-Atualizado em 2026-07-01.
+Atualizado em 2026-07-07.
 
 ## Estado Atual
 
@@ -225,4 +225,55 @@ Depois disso, o próximo bloco pelo backlog é RAG Answering:
 
 - recuperar top chunks antes da resposta do chat
 - injetar contexto no prompt
-- retornar fontes/citações para a UI
+- retornar fontes/citacoes para a UI
+
+## Handoff 2026-07-07
+
+Resumo da sessao:
+
+- Smoke test reportado pelo usuario:
+  - upload/processamento de TXT funciona.
+  - upload/processamento de PDF com texto selecionavel passou depois da
+    correcao do parser.
+- Corrigido erro de PDF no Next.js:
+  - `next.config.ts` externaliza `pdf-parse` e `pdfjs-dist` via
+    `serverExternalPackages`.
+  - `/api/knowledge/documents` declara `runtime = "nodejs"`.
+  - Isso evita o erro de `pdf.worker.mjs` sendo procurado dentro de
+    `.next/dev/server/chunks`.
+- Implementado download do arquivo original:
+  - `GET /api/knowledge/documents/[documentId]`.
+  - rota autenticada.
+  - busca `documents` filtrando por `id` e `organization_id`.
+  - gera signed URL de 5 minutos no bucket privado `knowledge-documents`.
+  - UI de `/app/knowledge` ganhou botao `Baixar` em cada card.
+  - membros podem baixar documentos visiveis; exclusao segue restrita a
+    owner/admin.
+
+Verificacao desta sessao:
+
+- `bun run lint` passou apos a correcao de PDF.
+- `bun run build` passou apos a correcao de PDF.
+- `bun run lint` passou apos adicionar download.
+- `bun run build` passou apos adicionar download.
+
+Pendente:
+
+- Confirmar manualmente download pela UI em um documento pronto e um falho.
+- Confirmar exclusao removendo Storage, `documents` e chunks.
+- Testar Markdown.
+- Testar DOCX/PDF escaneado como `failed` com mensagem clara.
+- Repetir verificacao com dois usuarios/organizacoes para isolamento em tabelas
+  e Storage quando houver credenciais disponiveis.
+
+Proxima sessao:
+
+Comecar RAG Answering. A base de conhecimento ja tem upload, processamento,
+chunks, embeddings, busca semantica, exclusao e download do arquivo original.
+O primeiro slice recomendado:
+
+1. Recuperar top chunks da organizacao antes da resposta do chat.
+2. Injetar contexto documental no prompt do assistente.
+3. Fazer o assistente responder quando o contexto for insuficiente.
+4. Retornar fontes para a UI do chat.
+5. Manter limites/entitlements e isolamento por `organization_id` no servidor.
