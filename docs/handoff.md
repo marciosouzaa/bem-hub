@@ -88,10 +88,13 @@ sinalização verde e páginas de trabalho em português.
   - upload em `/api/knowledge/documents`
   - tela `/app/knowledge`
   - validação server-side de owner/admin, plano e limite de documentos
-  - extração de TXT/Markdown
+  - extração de TXT/Markdown/PDF com texto selecionável
   - chunks e embeddings OpenAI `text-embedding-3-small`
   - busca semântica via `match_document_chunks`
-  - PDF/DOCX ficam registrados como `failed` até adicionarmos parsers.
+  - exclusão de documentos em `/app/knowledge` para owner/admin, removendo
+    objeto do Storage e chunks por cascade
+  - DOCX e PDFs sem texto extraível ficam registrados como `failed` com
+    mensagem clara.
 - Aplicada remotamente a migration `0006_ai_provider_connections` via MCP.
 - Recarregado schema cache do PostgREST com `notify pgrst, 'reload schema';`.
 - Criada área de configurações com submenu:
@@ -121,6 +124,7 @@ sinalização verde e páginas de trabalho em português.
 - `bun run build` passou após as alterações.
 - Build atual inclui as rotas:
   - `/api/knowledge/documents`
+  - `/api/knowledge/documents/[documentId]`
   - `/app/knowledge`
   - `/app/settings`
   - `/app/settings/account`
@@ -142,10 +146,13 @@ sinalização verde e páginas de trabalho em português.
 ## Ainda Não Verificado Manualmente
 
 - Abrir `/app/knowledge` em ambiente com Supabase Storage e OpenAI configurados.
-- Enviar um TXT ou Markdown e confirmar status `ready`, chunks e busca
+- Enviar um TXT, Markdown ou PDF com texto selecionável e confirmar status
+  `ready`, chunks e busca
   semântica.
-- Enviar um PDF ou DOCX e confirmar status `failed` com mensagem clara de
-  extração ainda não habilitada.
+- Excluir documentos prontos e falhos pela UI e confirmar remoção do registro,
+  chunks e objeto no bucket.
+- Enviar um DOCX ou PDF escaneado e confirmar status `failed` com mensagem
+  clara de parser/OCR ainda não suportado.
 - Verificação com dois usuários Supabase para confirmar isolamento completo
   entre organizações, incluindo objetos de Storage.
 
@@ -205,12 +212,13 @@ Arquivos de logo em `public/` também aparecem como não rastreados:
 Fazer smoke test da nova tela `/app/knowledge` com a migration
 `0007_knowledge_base_ingestion` já aplicada no Supabase remoto:
 
-1. Enviar TXT ou Markdown.
+1. Enviar TXT, Markdown ou PDF com texto selecionável.
 2. Confirmar objeto no bucket privado `knowledge-documents`.
 3. Confirmar documento `ready`, chunks gravados e evento de uso.
 4. Rodar busca semântica na própria tela.
-5. Confirmar que PDF/DOCX aparecem como `failed` com mensagem clara.
-6. Repetir checagem com dois usuários/organizações para isolamento em tabelas e
+5. Excluir um documento e confirmar remoção do Storage, `documents` e chunks.
+6. Confirmar que DOCX e PDF escaneado aparecem como `failed` com mensagem clara.
+7. Repetir checagem com dois usuários/organizações para isolamento em tabelas e
    Storage.
 
 Depois disso, o próximo bloco pelo backlog é RAG Answering:

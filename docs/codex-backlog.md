@@ -97,9 +97,9 @@ Verification:
 
 ## 4. Knowledge Base Ingestion
 
-Status: implemented as the first ingestion slice for TXT/Markdown. PDF and
-DOCX are accepted by the upload UI but currently recorded as failed with a
-clear extraction message until parsers are added.
+Status: implemented as the first ingestion slice for TXT, Markdown and
+text-based PDF. DOCX is accepted by the upload UI but currently recorded as
+failed with a clear extraction message until a parser is added.
 
 Scope:
 - Upload files to Supabase Storage.
@@ -119,11 +119,13 @@ Current implementation:
 - `/api/knowledge/documents` accepts multipart uploads, validates admin role,
   plan feature and document limit server-side.
 - Files are stored in private Supabase Storage bucket `knowledge-documents`.
-- TXT and Markdown are extracted, chunked, embedded with OpenAI
+- TXT, Markdown and text-based PDF are extracted, chunked, embedded with OpenAI
   `text-embedding-3-small`, and stored in `document_chunks`.
 - Uploads use a 6 MB synchronous processing limit.
 - `documents` stores file size, chunk count, embedding model and processed
   timestamp metadata.
+- Owners/admins can delete any document from `/app/knowledge`; deletion removes
+  the Storage object and cascades stored chunks.
 
 Verification:
 - `bun run lint`
@@ -132,7 +134,7 @@ Verification:
 Remaining:
 - Manual upload/search smoke test against Supabase Storage and a real OpenAI
   key.
-- Add PDF and DOCX extraction parsers.
+- Add DOCX extraction parser and OCR for scanned PDFs.
 - Repeat two-user tenant isolation test for documents and storage objects.
 
 ## 5. RAG Answering

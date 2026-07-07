@@ -1,13 +1,4 @@
-export const KNOWLEDGE_BUCKET = "knowledge-documents";
-export const MAX_DOCUMENT_SIZE_BYTES = 6 * 1024 * 1024;
-
-export const ACCEPTED_DOCUMENT_MIME_TYPES = [
-  "application/pdf",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  "text/markdown",
-  "text/plain",
-  "text/x-markdown",
-] as const;
+import { ACCEPTED_DOCUMENT_MIME_TYPES } from "./constants";
 
 const CHUNK_MAX_CHARACTERS = 1800;
 const CHUNK_OVERLAP_CHARACTERS = 220;
@@ -24,9 +15,7 @@ export async function extractDocumentText(file: File) {
   }
 
   if (file.type === "application/pdf") {
-    throw new Error(
-      "Extracao de PDF ainda nao esta habilitada. Envie TXT ou Markdown nesta etapa.",
-    );
+    return extractPdfText(file);
   }
 
   if (
@@ -117,6 +106,26 @@ function normalizeExtractedText(text: string) {
     .replace(/\n{3,}/g, "\n\n")
     .replace(/[ \t]{2,}/g, " ")
     .trim();
+}
+
+async function extractPdfText(file: File) {
+  const { PDFParse } = await import("pdf-parse");
+  const parser = new PDFParse({
+    data: new Uint8Array(await file.arrayBuffer()),
+  });
+
+  try {
+    const result = await parser.getText({ pageJoiner: "\n\n" });
+    const text = normalizeExtractedText(result.text);
+
+    if (!text) {
+      throw new Error("PDF sem texto extraivel. OCR ainda nao suportado.");
+    }
+
+    return text;
+  } finally {
+    await parser.destroy();
+  }
 }
 
 function findChunkBoundary(text: string, start: number, hardEnd: number) {

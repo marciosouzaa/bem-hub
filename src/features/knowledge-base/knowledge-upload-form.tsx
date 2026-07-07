@@ -4,7 +4,7 @@ import { UploadCloud } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
-import { MAX_DOCUMENT_SIZE_BYTES } from "./processing";
+import { MAX_DOCUMENT_SIZE_BYTES } from "./constants";
 
 type UploadState = {
   type: "idle" | "success" | "error";
@@ -96,8 +96,8 @@ export function KnowledgeUploadForm({ canManage }: { canManage: boolean }) {
           <div>
             <p className="text-sm font-semibold">Enviar documento</p>
             <p className="mt-1 text-sm leading-6 text-muted-strong">
-              TXT e Markdown sao processados agora. PDF e DOCX ficam registrados
-              com erro de extracao ate a etapa de parsers.
+              TXT, Markdown e PDF com texto selecionavel sao processados agora.
+              DOCX ainda fica registrado com erro de extracao.
             </p>
           </div>
         </div>

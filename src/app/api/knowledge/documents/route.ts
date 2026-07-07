@@ -8,11 +8,13 @@ import {
 } from "@/features/billing/entitlements";
 import { getOrCreateWorkspace } from "@/features/organizations/bootstrap";
 import {
+  KNOWLEDGE_BUCKET,
+  MAX_DOCUMENT_SIZE_BYTES,
+} from "@/features/knowledge-base/constants";
+import {
   chunkDocumentText,
   extractDocumentText,
   isAcceptedDocument,
-  KNOWLEDGE_BUCKET,
-  MAX_DOCUMENT_SIZE_BYTES,
   sanitizeStorageFilename,
 } from "@/features/knowledge-base/processing";
 import { embedTexts, resolveOpenAIEmbeddingRuntime } from "@/lib/ai/embeddings";
@@ -20,6 +22,7 @@ import { DEFAULT_EMBEDDING_MODEL } from "@/lib/ai/models";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const maxDuration = 60;
+export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   const supabase = await createSupabaseServerClient();

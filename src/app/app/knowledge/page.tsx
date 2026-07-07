@@ -2,6 +2,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   Database,
+  Download,
   FileText,
   Loader2,
   Search,
@@ -19,6 +20,7 @@ import { UpgradeCTA } from "@/features/billing/upgrade-cta";
 import { getRequiredWorkspace } from "@/features/organizations/queries";
 import { resolveOpenAIEmbeddingRuntime } from "@/lib/ai/embeddings";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { DeleteDocumentButton } from "@/features/knowledge-base/delete-document-button";
 import { KnowledgeUploadForm } from "@/features/knowledge-base/knowledge-upload-form";
 import {
   getKnowledgeStats,
@@ -142,7 +144,11 @@ export default async function KnowledgePage({
         <div className="space-y-4">
           {documents.length ? (
             documents.map((document) => (
-              <DocumentCard document={document} key={document.id} />
+              <DocumentCard
+                canManage={canManage}
+                document={document}
+                key={document.id}
+              />
             ))
           ) : (
             <EmptyState canManage={canManage} />
@@ -230,7 +236,13 @@ function SearchResults({
   );
 }
 
-function DocumentCard({ document }: { document: KnowledgeDocumentListItem }) {
+function DocumentCard({
+  canManage,
+  document,
+}: {
+  canManage: boolean;
+  document: KnowledgeDocumentListItem;
+}) {
   const status = getStatus(document.status);
 
   return (
@@ -248,15 +260,34 @@ function DocumentCard({ document }: { document: KnowledgeDocumentListItem }) {
               </p>
             </div>
           </div>
-          <span
-            className={cn(
-              "inline-flex items-center gap-2 rounded-md border px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.08em]",
-              status.className,
-            )}
-          >
-            {status.icon}
-            {status.label}
-          </span>
+          <div className="flex flex-col items-start gap-3 md:items-end">
+            <span
+              className={cn(
+                "inline-flex items-center gap-2 rounded-md border px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.08em]",
+                status.className,
+              )}
+            >
+              {status.icon}
+              {status.label}
+            </span>
+            <div className="flex flex-wrap items-center gap-2 md:justify-end">
+              <Button asChild size="sm" variant="secondary">
+                <a
+                  aria-label={`Baixar ${document.name}`}
+                  href={`/api/knowledge/documents/${document.id}`}
+                >
+                  <Download className="size-4" />
+                  Baixar
+                </a>
+              </Button>
+              {canManage ? (
+                <DeleteDocumentButton
+                  documentId={document.id}
+                  documentName={document.name}
+                />
+              ) : null}
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-3 md:grid-cols-4">
