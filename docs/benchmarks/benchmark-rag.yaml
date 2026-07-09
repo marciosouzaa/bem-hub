@@ -1,0 +1,160 @@
+name: benchmark-rag
+
+version: 1
+
+description: >
+  Benchmark oficial do BEM HUB para validação de pipelines RAG.
+  Este arquivo não deve ser indexado na base de conhecimento.
+
+knowledge_base:
+
+  should_index:
+    - manual-de-reembolsos.md
+    - politica-de-ferias.md
+    - operacao-cliente-orion.md
+
+benchmark:
+
+  literal:
+
+    - id: RAG-LIT-001
+      question: Qual é o prazo normal para pagamento de um reembolso?
+      expected_answer: 17 dias corridos.
+      document: manual-de-reembolsos.md
+      section: Prazo de pagamento
+
+    - id: RAG-LIT-002
+      question: Quem precisa aprovar reembolsos acima de R$ 850?
+      expected_answer: Marina Lopes.
+      document: manual-de-reembolsos.md
+      section: Aprovação financeira
+
+    - id: RAG-LIT-003
+      question: Qual sistema deve ser utilizado para registrar férias?
+      expected_answer: Órbita RH.
+      document: politica-de-ferias.md
+      section: Sistema oficial
+
+    - id: RAG-LIT-004
+      question: Qual antecedência mínima é exigida para solicitar férias?
+      expected_answer: 43 dias.
+      document: politica-de-ferias.md
+      section: Antecedência mínima
+
+    - id: RAG-LIT-005
+      question: Quem é responsável pelo escalonamento da operação Orion?
+      expected_answer: Rafael Nunes.
+      document: operacao-cliente-orion.md
+      section: Responsável pela escalada
+
+    - id: RAG-LIT-006
+      question: Qual é a palavra utilizada para encerrar oficialmente um incidente?
+      expected_answer: Cobalto.
+      document: operacao-cliente-orion.md
+      section: Palavra de confirmação
+
+    - id: RAG-LIT-007
+      question: Quando os backups da operação Orion são verificados?
+      expected_answer: Terças-feiras e quintas-feiras às 06h40.
+      document: operacao-cliente-orion.md
+      section: Verificação de backups
+
+    - id: RAG-LIT-008
+      question: Qual canal deve receber solicitações de reembolso?
+      expected_answer: reembolsos@aurora-ficticia.com.br
+      document: manual-de-reembolsos.md
+      section: Canal oficial
+
+    - id: RAG-LIT-009
+      question: Qual canal oficial deve ser utilizado para incidentes críticos?
+      expected_answer: orion-incidentes
+      document: operacao-cliente-orion.md
+      section: Canal oficial de incidentes
+
+    - id: RAG-LIT-010
+      question: Qual é o período mínimo permitido para férias?
+      expected_answer: 7 dias corridos.
+      document: politica-de-ferias.md
+      section: Período mínimo
+
+  multi_chunk:
+
+    - id: RAG-MC-001
+      question: Como uma despesa internacional deve ser convertida e para onde a solicitação deve ser enviada?
+      expected_answer: Utilizando o câmbio PTAX do dia útil anterior e enviando a solicitação para reembolsos@aurora-ficticia.com.br.
+      document: manual-de-reembolsos.md
+      sections:
+        - Despesas internacionais
+        - Canal oficial
+
+    - id: RAG-MC-002
+      question: Quem aprova férias em dezembro e onde qualquer alteração deve ser registrada?
+      expected_answer: Comitê Safira e sistema Órbita RH.
+      document: politica-de-ferias.md
+      sections:
+        - Férias em dezembro
+        - Registro das alterações
+
+    - id: RAG-MC-003
+      question: Qual é o SLA crítico e quem é o responsável pelo escalonamento?
+      expected_answer: 22 minutos e Rafael Nunes.
+      document: operacao-cliente-orion.md
+      sections:
+        - SLA
+        - Responsável pela escalada
+
+    - id: RAG-MC-004
+      question: Quem aprova reembolsos acima de R$850 e qual é o prazo normal de pagamento?
+      expected_answer: Marina Lopes e 17 dias corridos.
+      document: manual-de-reembolsos.md
+      sections:
+        - Aprovação financeira
+        - Prazo de pagamento
+
+    - id: RAG-MC-005
+      question: Qual é a antecedência mínima para solicitar férias e qual o período mínimo permitido?
+      expected_answer: 43 dias e 7 dias corridos.
+      document: politica-de-ferias.md
+      sections:
+        - Antecedência mínima
+        - Período mínimo
+
+  ambiguous:
+
+    - id: RAG-AMB-001
+      question: Quem é o responsável pela aprovação?
+      expected: Solicitar esclarecimento.
+
+    - id: RAG-AMB-002
+      question: Qual é o prazo oficial?
+      expected: Solicitar contexto adicional.
+
+    - id: RAG-AMB-003
+      question: Qual é o canal oficial?
+      expected: Identificar ambiguidade.
+
+  no_answer:
+
+    - id: RAG-NA-001
+      question: Qual é o telefone da Aurora Serviços Integrados?
+      expected: Não há informação suficiente.
+
+    - id: RAG-NA-002
+      question: Qual é o endereço da Orion Comércio Digital?
+      expected: Não há informação suficiente.
+
+    - id: RAG-NA-003
+      question: Qual é o CPF de Rafael Nunes?
+      expected: Não há informação suficiente.
+
+metrics:
+
+  total: 21
+
+  literal: 10
+
+  multi_chunk: 5
+
+  ambiguous: 3
+
+  no_answer: 3

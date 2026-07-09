@@ -1,0 +1,490 @@
+{
+  "name": "benchmark-rag",
+  "version": 1,
+  "description": "Benchmark externo para validação do pipeline RAG do BEM HUB. Este arquivo não deve ser indexado na base de conhecimento.",
+  "should_index": false,
+  "knowledge_base_documents": [
+    "manual-de-reembolsos.md",
+    "politica-de-ferias.md",
+    "operacao-cliente-orion.md"
+  ],
+  "tests": [
+    {
+      "id": "RAG-LIT-001",
+      "enabled": true,
+      "category": "literal",
+      "difficulty": "easy",
+      "question": "Qual é o prazo normal para pagamento de um reembolso?",
+      "expected": {
+        "answer": "17 dias corridos.",
+        "documents": ["manual-de-reembolsos.md"],
+        "sections": ["Prazo de pagamento"],
+        "policy_codes": ["AUR-FIN-042"]
+      },
+      "evaluation": {
+        "should_have_answer": true,
+        "must_find_documents": true,
+        "must_cite_sections": true,
+        "allow_paraphrase": false,
+        "allow_partial": false
+      }
+    },
+    {
+      "id": "RAG-LIT-002",
+      "enabled": true,
+      "category": "literal",
+      "difficulty": "easy",
+      "question": "Quem precisa aprovar reembolsos acima de R$ 850?",
+      "expected": {
+        "answer": "Marina Lopes.",
+        "documents": ["manual-de-reembolsos.md"],
+        "sections": ["Aprovação financeira"],
+        "policy_codes": ["AUR-FIN-042"]
+      },
+      "evaluation": {
+        "should_have_answer": true,
+        "must_find_documents": true,
+        "must_cite_sections": true,
+        "allow_paraphrase": false,
+        "allow_partial": false
+      }
+    },
+    {
+      "id": "RAG-LIT-003",
+      "enabled": true,
+      "category": "literal",
+      "difficulty": "easy",
+      "question": "Qual sistema deve ser utilizado para registrar férias?",
+      "expected": {
+        "answer": "Órbita RH.",
+        "documents": ["politica-de-ferias.md"],
+        "sections": ["Sistema oficial"],
+        "policy_codes": ["AUR-RH-118"]
+      },
+      "evaluation": {
+        "should_have_answer": true,
+        "must_find_documents": true,
+        "must_cite_sections": true,
+        "allow_paraphrase": false,
+        "allow_partial": false
+      }
+    },
+    {
+      "id": "RAG-LIT-004",
+      "enabled": true,
+      "category": "literal",
+      "difficulty": "easy",
+      "question": "Qual antecedência mínima é exigida para solicitar férias?",
+      "expected": {
+        "answer": "43 dias.",
+        "documents": ["politica-de-ferias.md"],
+        "sections": ["Antecedência mínima"],
+        "policy_codes": ["AUR-RH-118"]
+      },
+      "evaluation": {
+        "should_have_answer": true,
+        "must_find_documents": true,
+        "must_cite_sections": true,
+        "allow_paraphrase": false,
+        "allow_partial": false
+      }
+    },
+    {
+      "id": "RAG-LIT-005",
+      "enabled": true,
+      "category": "literal",
+      "difficulty": "easy",
+      "question": "Quem é responsável pelo escalonamento da operação Orion?",
+      "expected": {
+        "answer": "Rafael Nunes.",
+        "documents": ["operacao-cliente-orion.md"],
+        "sections": ["Responsável pela escalada"],
+        "policy_codes": ["OPS-ORION-731"]
+      },
+      "evaluation": {
+        "should_have_answer": true,
+        "must_find_documents": true,
+        "must_cite_sections": true,
+        "allow_paraphrase": false,
+        "allow_partial": false
+      }
+    },
+    {
+      "id": "RAG-LIT-006",
+      "enabled": true,
+      "category": "literal",
+      "difficulty": "easy",
+      "question": "Qual é a palavra utilizada para encerrar oficialmente um incidente?",
+      "expected": {
+        "answer": "Cobalto.",
+        "documents": ["operacao-cliente-orion.md"],
+        "sections": ["Palavra de confirmação"],
+        "policy_codes": ["OPS-ORION-731"]
+      },
+      "evaluation": {
+        "should_have_answer": true,
+        "must_find_documents": true,
+        "must_cite_sections": true,
+        "allow_paraphrase": false,
+        "allow_partial": false
+      }
+    },
+    {
+      "id": "RAG-LIT-007",
+      "enabled": true,
+      "category": "literal",
+      "difficulty": "easy",
+      "question": "Quando os backups da operação Orion são verificados?",
+      "expected": {
+        "answer": "Terças-feiras e quintas-feiras às 06h40.",
+        "documents": ["operacao-cliente-orion.md"],
+        "sections": ["Verificação de backups"],
+        "policy_codes": ["OPS-ORION-731"]
+      },
+      "evaluation": {
+        "should_have_answer": true,
+        "must_find_documents": true,
+        "must_cite_sections": true,
+        "allow_paraphrase": false,
+        "allow_partial": false
+      }
+    },
+    {
+      "id": "RAG-LIT-008",
+      "enabled": true,
+      "category": "literal",
+      "difficulty": "easy",
+      "question": "Qual canal deve receber solicitações de reembolso?",
+      "expected": {
+        "answer": "reembolsos@aurora-ficticia.com.br",
+        "documents": ["manual-de-reembolsos.md"],
+        "sections": ["Canal oficial"],
+        "policy_codes": ["AUR-FIN-042"]
+      },
+      "evaluation": {
+        "should_have_answer": true,
+        "must_find_documents": true,
+        "must_cite_sections": true,
+        "allow_paraphrase": false,
+        "allow_partial": false
+      }
+    },
+    {
+      "id": "RAG-LIT-009",
+      "enabled": true,
+      "category": "literal",
+      "difficulty": "easy",
+      "question": "Qual canal oficial deve ser utilizado para incidentes críticos?",
+      "expected": {
+        "answer": "orion-incidentes",
+        "documents": ["operacao-cliente-orion.md"],
+        "sections": ["Canal oficial de incidentes"],
+        "policy_codes": ["OPS-ORION-731"]
+      },
+      "evaluation": {
+        "should_have_answer": true,
+        "must_find_documents": true,
+        "must_cite_sections": true,
+        "allow_paraphrase": false,
+        "allow_partial": false
+      }
+    },
+    {
+      "id": "RAG-LIT-010",
+      "enabled": true,
+      "category": "literal",
+      "difficulty": "easy",
+      "question": "Qual é o período mínimo permitido para férias?",
+      "expected": {
+        "answer": "7 dias corridos.",
+        "documents": ["politica-de-ferias.md"],
+        "sections": ["Período mínimo"],
+        "policy_codes": ["AUR-RH-118"]
+      },
+      "evaluation": {
+        "should_have_answer": true,
+        "must_find_documents": true,
+        "must_cite_sections": true,
+        "allow_paraphrase": false,
+        "allow_partial": false
+      }
+    },
+    {
+      "id": "RAG-MC-001",
+      "enabled": true,
+      "category": "multi_chunk",
+      "difficulty": "medium",
+      "question": "Como uma despesa internacional deve ser convertida e para onde a solicitação deve ser enviada?",
+      "expected": {
+        "answer": "Utilizando o câmbio PTAX do dia útil anterior e enviando a solicitação para reembolsos@aurora-ficticia.com.br.",
+        "documents": ["manual-de-reembolsos.md"],
+        "sections": ["Despesas internacionais", "Canal oficial"],
+        "policy_codes": ["AUR-FIN-042"]
+      },
+      "evaluation": {
+        "should_have_answer": true,
+        "must_find_documents": true,
+        "must_cite_sections": true,
+        "allow_paraphrase": true,
+        "allow_partial": false
+      }
+    },
+    {
+      "id": "RAG-MC-002",
+      "enabled": true,
+      "category": "multi_chunk",
+      "difficulty": "medium",
+      "question": "Quem aprova férias em dezembro e onde qualquer alteração deve ser registrada?",
+      "expected": {
+        "answer": "As férias em dezembro exigem aprovação do Comitê Safira e qualquer alteração deve ser registrada no sistema Órbita RH.",
+        "documents": ["politica-de-ferias.md"],
+        "sections": ["Férias em dezembro", "Registro das alterações"],
+        "policy_codes": ["AUR-RH-118"]
+      },
+      "evaluation": {
+        "should_have_answer": true,
+        "must_find_documents": true,
+        "must_cite_sections": true,
+        "allow_paraphrase": true,
+        "allow_partial": false
+      }
+    },
+    {
+      "id": "RAG-MC-003",
+      "enabled": true,
+      "category": "multi_chunk",
+      "difficulty": "medium",
+      "question": "Qual é o SLA crítico e quem é o responsável pelo escalonamento?",
+      "expected": {
+        "answer": "O SLA crítico é de 22 minutos e o responsável pela escalada é Rafael Nunes.",
+        "documents": ["operacao-cliente-orion.md"],
+        "sections": ["SLA", "Responsável pela escalada"],
+        "policy_codes": ["OPS-ORION-731"]
+      },
+      "evaluation": {
+        "should_have_answer": true,
+        "must_find_documents": true,
+        "must_cite_sections": true,
+        "allow_paraphrase": true,
+        "allow_partial": false
+      }
+    },
+    {
+      "id": "RAG-MC-004",
+      "enabled": true,
+      "category": "multi_chunk",
+      "difficulty": "medium",
+      "question": "Quem aprova reembolsos acima de R$850 e qual é o prazo normal de pagamento?",
+      "expected": {
+        "answer": "Marina Lopes aprova solicitações acima de R$850 e o prazo normal para pagamento é de 17 dias corridos.",
+        "documents": ["manual-de-reembolsos.md"],
+        "sections": ["Aprovação financeira", "Prazo de pagamento"],
+        "policy_codes": ["AUR-FIN-042"]
+      },
+      "evaluation": {
+        "should_have_answer": true,
+        "must_find_documents": true,
+        "must_cite_sections": true,
+        "allow_paraphrase": true,
+        "allow_partial": false
+      }
+    },
+    {
+      "id": "RAG-MC-005",
+      "enabled": true,
+      "category": "multi_chunk",
+      "difficulty": "medium",
+      "question": "Qual é a antecedência mínima para solicitar férias e qual o período mínimo permitido?",
+      "expected": {
+        "answer": "A solicitação deve ser realizada com antecedência mínima de 43 dias e o período mínimo permitido é de 7 dias corridos.",
+        "documents": ["politica-de-ferias.md"],
+        "sections": ["Antecedência mínima", "Período mínimo"],
+        "policy_codes": ["AUR-RH-118"]
+      },
+      "evaluation": {
+        "should_have_answer": true,
+        "must_find_documents": true,
+        "must_cite_sections": true,
+        "allow_paraphrase": true,
+        "allow_partial": false
+      }
+    },
+    {
+      "id": "RAG-AMB-001",
+      "enabled": true,
+      "category": "ambiguous",
+      "difficulty": "hard",
+      "question": "Quem é o responsável pela aprovação?",
+      "expected": {
+        "answer": "A pergunta é ambígua. Existem múltiplos responsáveis possíveis: Marina Lopes para reembolsos acima de R$850, Comitê Safira para férias em dezembro, e Rafael Nunes para escalada operacional, que não é aprovação.",
+        "documents": [
+          "manual-de-reembolsos.md",
+          "politica-de-ferias.md",
+          "operacao-cliente-orion.md"
+        ],
+        "sections": [
+          "Aprovação financeira",
+          "Férias em dezembro",
+          "Responsável pela escalada"
+        ],
+        "policy_codes": [
+          "AUR-FIN-042",
+          "AUR-RH-118",
+          "OPS-ORION-731"
+        ]
+      },
+      "evaluation": {
+        "should_have_answer": false,
+        "must_find_documents": false,
+        "must_cite_sections": false,
+        "allow_paraphrase": true,
+        "allow_partial": false,
+        "expected_behavior": "Solicitar esclarecimento ou indicar ambiguidade antes de responder."
+      }
+    },
+    {
+      "id": "RAG-AMB-002",
+      "enabled": true,
+      "category": "ambiguous",
+      "difficulty": "hard",
+      "question": "Qual é o prazo oficial?",
+      "expected": {
+        "answer": "A pergunta é ambígua. Os documentos possuem prazos diferentes: 17 dias corridos para reembolso, 43 dias de antecedência para férias e 22 minutos para SLA crítico.",
+        "documents": [
+          "manual-de-reembolsos.md",
+          "politica-de-ferias.md",
+          "operacao-cliente-orion.md"
+        ],
+        "sections": [
+          "Prazo de pagamento",
+          "Antecedência mínima",
+          "SLA"
+        ],
+        "policy_codes": [
+          "AUR-FIN-042",
+          "AUR-RH-118",
+          "OPS-ORION-731"
+        ]
+      },
+      "evaluation": {
+        "should_have_answer": false,
+        "must_find_documents": false,
+        "must_cite_sections": false,
+        "allow_paraphrase": true,
+        "allow_partial": false,
+        "expected_behavior": "Solicitar contexto adicional antes de responder."
+      }
+    },
+    {
+      "id": "RAG-AMB-003",
+      "enabled": true,
+      "category": "ambiguous",
+      "difficulty": "hard",
+      "question": "Qual é o canal oficial?",
+      "expected": {
+        "answer": "A pergunta é ambígua. Para reembolsos, o canal é reembolsos@aurora-ficticia.com.br. Para incidentes críticos da operação Orion, o canal é orion-incidentes. Para férias, o documento indica o sistema Órbita RH, não um canal.",
+        "documents": [
+          "manual-de-reembolsos.md",
+          "politica-de-ferias.md",
+          "operacao-cliente-orion.md"
+        ],
+        "sections": [
+          "Canal oficial",
+          "Sistema oficial",
+          "Canal oficial de incidentes"
+        ],
+        "policy_codes": [
+          "AUR-FIN-042",
+          "AUR-RH-118",
+          "OPS-ORION-731"
+        ]
+      },
+      "evaluation": {
+        "should_have_answer": false,
+        "must_find_documents": false,
+        "must_cite_sections": false,
+        "allow_paraphrase": true,
+        "allow_partial": false,
+        "expected_behavior": "Identificar ambiguidade e solicitar especificação."
+      }
+    },
+    {
+      "id": "RAG-NA-001",
+      "enabled": true,
+      "category": "no_answer",
+      "difficulty": "medium",
+      "question": "Qual é o telefone da Aurora Serviços Integrados?",
+      "expected": {
+        "answer": "Não existe essa informação no corpus.",
+        "documents": [],
+        "sections": [],
+        "policy_codes": []
+      },
+      "evaluation": {
+        "should_have_answer": false,
+        "must_find_documents": false,
+        "must_cite_sections": false,
+        "allow_paraphrase": true,
+        "allow_partial": false,
+        "expected_behavior": "Informar que não há contexto suficiente nos documentos disponíveis."
+      }
+    },
+    {
+      "id": "RAG-NA-002",
+      "enabled": true,
+      "category": "no_answer",
+      "difficulty": "medium",
+      "question": "Qual é o endereço da sede da Orion Comércio Digital?",
+      "expected": {
+        "answer": "Não existe essa informação no corpus.",
+        "documents": [],
+        "sections": [],
+        "policy_codes": []
+      },
+      "evaluation": {
+        "should_have_answer": false,
+        "must_find_documents": false,
+        "must_cite_sections": false,
+        "allow_paraphrase": true,
+        "allow_partial": false,
+        "expected_behavior": "Informar que não há contexto suficiente nos documentos disponíveis."
+      }
+    },
+    {
+      "id": "RAG-NA-003",
+      "enabled": true,
+      "category": "no_answer",
+      "difficulty": "medium",
+      "question": "Qual é o CPF de Rafael Nunes?",
+      "expected": {
+        "answer": "Não existe essa informação no corpus.",
+        "documents": [],
+        "sections": [],
+        "policy_codes": []
+      },
+      "evaluation": {
+        "should_have_answer": false,
+        "must_find_documents": false,
+        "must_cite_sections": false,
+        "allow_paraphrase": true,
+        "allow_partial": false,
+        "expected_behavior": "Informar que não há contexto suficiente nos documentos disponíveis."
+      }
+    }
+  ],
+  "metrics": {
+    "total_tests": 21,
+    "categories": {
+      "literal": 10,
+      "multi_chunk": 5,
+      "ambiguous": 3,
+      "no_answer": 3
+    },
+    "recommended_scores": {
+      "answer_correct": 40,
+      "document_correct": 25,
+      "section_correct": 20,
+      "no_hallucination": 15
+    }
+  }
+}

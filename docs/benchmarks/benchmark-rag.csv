@@ -1,0 +1,22 @@
+id,category,difficulty,question,expected_answer,expected_documents,expected_sections,expected_behavior,should_have_answer
+RAG-LIT-001,literal,easy,"Qual é o prazo normal para pagamento de um reembolso?","17 dias corridos.","manual-de-reembolsos.md","Prazo de pagamento","Resposta literal",true
+RAG-LIT-002,literal,easy,"Quem precisa aprovar reembolsos acima de R$ 850?","Marina Lopes.","manual-de-reembolsos.md","Aprovação financeira","Resposta literal",true
+RAG-LIT-003,literal,easy,"Qual sistema deve ser utilizado para registrar férias?","Órbita RH.","politica-de-ferias.md","Sistema oficial","Resposta literal",true
+RAG-LIT-004,literal,easy,"Qual antecedência mínima é exigida para solicitar férias?","43 dias.","politica-de-ferias.md","Antecedência mínima","Resposta literal",true
+RAG-LIT-005,literal,easy,"Quem é responsável pelo escalonamento da operação Orion?","Rafael Nunes.","operacao-cliente-orion.md","Responsável pela escalada","Resposta literal",true
+RAG-LIT-006,literal,easy,"Qual é a palavra utilizada para encerrar oficialmente um incidente?","Cobalto.","operacao-cliente-orion.md","Palavra de confirmação","Resposta literal",true
+RAG-LIT-007,literal,easy,"Quando os backups da operação Orion são verificados?","Terças-feiras e quintas-feiras às 06h40.","operacao-cliente-orion.md","Verificação de backups","Resposta literal",true
+RAG-LIT-008,literal,easy,"Qual canal deve receber solicitações de reembolso?","reembolsos@aurora-ficticia.com.br","manual-de-reembolsos.md","Canal oficial","Resposta literal",true
+RAG-LIT-009,literal,easy,"Qual canal oficial deve ser utilizado para incidentes críticos?","orion-incidentes","operacao-cliente-orion.md","Canal oficial de incidentes","Resposta literal",true
+RAG-LIT-010,literal,easy,"Qual é o período mínimo permitido para férias?","7 dias corridos.","politica-de-ferias.md","Período mínimo","Resposta literal",true
+RAG-MC-001,multi_chunk,medium,"Como uma despesa internacional deve ser convertida e para onde a solicitação deve ser enviada?","Utilizando o câmbio PTAX do dia útil anterior e enviando a solicitação para reembolsos@aurora-ficticia.com.br.","manual-de-reembolsos.md","Despesas internacionais|Canal oficial","Combinar dois trechos",true
+RAG-MC-002,multi_chunk,medium,"Quem aprova férias em dezembro e onde qualquer alteração deve ser registrada?","Comitê Safira e sistema Órbita RH.","politica-de-ferias.md","Férias em dezembro|Registro das alterações","Combinar dois trechos",true
+RAG-MC-003,multi_chunk,medium,"Qual é o SLA crítico e quem é o responsável pelo escalonamento?","22 minutos e Rafael Nunes.","operacao-cliente-orion.md","SLA|Responsável pela escalada","Combinar dois trechos",true
+RAG-MC-004,multi_chunk,medium,"Quem aprova reembolsos acima de R$850 e qual é o prazo normal de pagamento?","Marina Lopes e 17 dias corridos.","manual-de-reembolsos.md","Aprovação financeira|Prazo de pagamento","Combinar dois trechos",true
+RAG-MC-005,multi_chunk,medium,"Qual é a antecedência mínima para solicitar férias e qual o período mínimo permitido?","43 dias e 7 dias corridos.","politica-de-ferias.md","Antecedência mínima|Período mínimo","Combinar dois trechos",true
+RAG-AMB-001,ambiguous,hard,"Quem é o responsável pela aprovação?","","","","Solicitar esclarecimento",false
+RAG-AMB-002,ambiguous,hard,"Qual é o prazo oficial?","","","","Solicitar contexto",false
+RAG-AMB-003,ambiguous,hard,"Qual é o canal oficial?","","","","Identificar ambiguidade",false
+RAG-NA-001,no_answer,medium,"Qual é o telefone da Aurora Serviços Integrados?","","","","Informar ausência de contexto",false
+RAG-NA-002,no_answer,medium,"Qual é o endereço da Orion Comércio Digital?","","","","Informar ausência de contexto",false
+RAG-NA-003,no_answer,medium,"Qual é o CPF de Rafael Nunes?","","","","Informar ausência de contexto",false
