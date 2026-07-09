@@ -138,6 +138,8 @@ Verification:
 - `bun run build`
 - User-reported smoke test: TXT and text-based PDF uploads process correctly
   after the PDF parser fix.
+- User-reported smoke test on 2026-07-09: four Markdown files processed as
+  ready, totaling 49 chunks with no failures.
 
 Remaining:
 - Repeat upload/search smoke test against Supabase Storage and a real OpenAI
@@ -149,7 +151,8 @@ Remaining:
 
 ## 5. RAG Answering
 
-Status: next recommended implementation block.
+Status: next recommended implementation block. A controlled corpus and external
+benchmark are ready, but chat RAG has not been implemented or tested yet.
 
 Scope:
 - Retrieve top chunks before chat completion.
@@ -159,6 +162,18 @@ Scope:
 Acceptance:
 - Answers cite document names.
 - Assistant can say when context is insufficient.
+
+Prepared validation assets:
+- Knowledge documents:
+  - `manual-de-reembolsos.md`
+  - `politica-de-ferias.md`
+  - `operacao-cliente-orion.md`
+- External benchmark files under `docs/benchmarks`:
+  - `benchmark-rag.csv`
+  - `benchmark-rag.json`
+  - `benchmark-rag.yaml`
+- `roteiro-de-validacao-rag.md` was accidentally indexed and must be deleted
+  from the knowledge base before testing because it contains expected answers.
 
 ## 6. Manual Automation Templates
 

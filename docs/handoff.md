@@ -1,6 +1,6 @@
 # Handoff Notes
 
-Atualizado em 2026-07-07.
+Atualizado em 2026-07-09.
 
 ## Estado Atual
 
@@ -277,3 +277,35 @@ O primeiro slice recomendado:
 3. Fazer o assistente responder quando o contexto for insuficiente.
 4. Retornar fontes para a UI do chat.
 5. Manter limites/entitlements e isolamento por `organization_id` no servidor.
+
+## Handoff 2026-07-09
+
+Preparacao do benchmark RAG:
+
+- O usuario processou com sucesso quatro arquivos Markdown em `/app/knowledge`.
+- A tela reportou 4 documentos prontos, 49 chunks e nenhuma falha.
+- Os documentos corporativos indexados foram:
+  - `manual-de-reembolsos.md`
+  - `politica-de-ferias.md`
+  - `operacao-cliente-orion.md`
+- `roteiro-de-validacao-rag.md` tambem foi processado, mas contem o gabarito e
+  deve ser excluido da base de conhecimento antes de qualquer validacao RAG.
+- Os artefatos externos de benchmark estao versionados em `docs/benchmarks`:
+  - `benchmark-rag.csv`
+  - `benchmark-rag.json`
+  - `benchmark-rag.yaml`
+- Esses tres arquivos de benchmark nao devem ser enviados nem indexados na base
+  de conhecimento.
+
+Nao foi executado teste RAG nesta sessao. O chat ainda precisa receber a
+implementacao do bloco RAG Answering antes da validacao ponta a ponta.
+
+Proxima sessao:
+
+1. Excluir `roteiro-de-validacao-rag.md` de `/app/knowledge` para remover o
+   gabarito dos chunks pesquisaveis.
+2. Implementar recuperacao dos top chunks da organizacao no fluxo de chat.
+3. Injetar o contexto recuperado no prompt sem expor dados entre organizacoes.
+4. Retornar e exibir as fontes usadas na resposta.
+5. Executar o benchmark externo, incluindo perguntas sem resposta, e comparar
+   resultado, documento citado e comportamento esperado.
