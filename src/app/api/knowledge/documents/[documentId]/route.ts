@@ -119,15 +119,21 @@ export async function DELETE(
     );
   }
 
-  const { error: deleteError } = await supabase
+  const { data: deletedDocument, error: deleteError } = await supabase
     .from("documents")
     .delete()
     .eq("id", document.id)
-    .eq("organization_id", organizationId);
+    .eq("organization_id", organizationId)
+    .select("id")
+    .maybeSingle();
 
-  if (deleteError) {
+  if (deleteError || !deletedDocument) {
     return NextResponse.json(
-      { error: `Falha ao excluir documento: ${deleteError.message}` },
+      {
+        error: `Falha ao excluir documento: ${
+          deleteError?.message ?? "registro nao foi removido"
+        }`,
+      },
       { status: 500 },
     );
   }

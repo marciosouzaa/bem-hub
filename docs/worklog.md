@@ -4,6 +4,24 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-12 - Confirmacao De Exclusao Documental
+
+### Feito
+
+- DELETE de documento agora exige retorno do registro realmente removido.
+- Operacao bloqueada por RLS ou que afete zero linhas nao responde mais com
+  sucesso falso depois da etapa de Storage.
+
+### Verificacao
+
+- `bun run test`: 27 testes passaram em 8 arquivos.
+- `bun run lint` passou.
+- `bun run build` passou com Next.js 16.2.9.
+
+### Proximo Passo
+
+Continuar auditoria de falhas silenciosas em chat e automacoes.
+
 ## 2026-07-12 - Consistencia Da Ingestao
 
 ### Feito
