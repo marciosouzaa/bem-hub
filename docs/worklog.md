@@ -4,6 +4,30 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-12 - Recovery E Loading Do Workspace
+
+### Feito
+
+- Adicionado `src/app/app/error.tsx` seguindo contrato Next.js 16.2 com
+  `unstable_retry`.
+- Falhas inesperadas agora preservam AppShell, exibem mensagem operacional,
+  digest quando disponivel e botao de nova tentativa.
+- Erro completo fica no log do servidor/navegador e nao e exposto na UI.
+- Adicionado loading compartilhado com dimensoes estaveis para header, cards e
+  lista, reduzindo layout shift entre modulos.
+- Animacoes de skeleton respeitam `prefers-reduced-motion`.
+
+### Verificacao
+
+- `bun run test`: 26 testes passaram em 8 arquivos.
+- `bun run lint` passou.
+- `bun run build` passou com Next.js 16.2.9.
+
+### Proximo Passo
+
+Continuar confiabilidade e produto automatizaveis; testes manuais permanecem
+fora da fila ativa conforme orientacao do usuario.
+
 ## 2026-07-12 - Extracao DOCX
 
 ### Feito
