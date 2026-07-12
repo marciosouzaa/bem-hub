@@ -21,14 +21,14 @@ a ponta antes de mudar de objetivo.
 Objetivo: eliminar os riscos conhecidos que impedem usar documentos e dados de
 clientes reais com seguranca.
 
-- [ ] Criar migration de hardening para `bootstrap_owned_organization`,
+- [x] Criar migration de hardening para `bootstrap_owned_organization`,
   `is_org_member`, `is_org_admin` e `match_document_chunks`.
-- [ ] Fixar `search_path`, revisar `SECURITY DEFINER`, revogar execucao publica e
+- [x] Fixar `search_path`, revisar `SECURITY DEFINER`, revogar execucao publica e
   conceder apenas aos papeis necessarios.
-- [ ] Garantir que RPCs validem `auth.uid()` e `organization_id` sem confiar em
+- [x] Garantir que RPCs validem `auth.uid()` e `organization_id` sem confiar em
   parametros fornecidos pelo cliente.
-- [ ] Adicionar testes ou verificacoes reproduziveis para acesso cruzado por RPC.
-- [ ] Revisar policies do bucket `knowledge-documents` e downloads assinados.
+- [x] Adicionar testes ou verificacoes reproduziveis para acesso cruzado por RPC.
+- [x] Revisar policies do bucket `knowledge-documents` e downloads assinados.
 - [ ] Rodar advisors Supabase e registrar alertas remanescentes.
 - [ ] Verificar com dois usuarios reais: tabelas, RPC, Storage e URL assinada.
 - [ ] Ativar protecao contra senha vazada no Supabase Auth ou registrar o bloqueio
@@ -107,6 +107,11 @@ Bloqueado pela auditoria da plataforma e disponibilidade dos dados.
 - O PDF do piloto considera RAG pronto, mas o chat ainda nao recupera nem exibe fontes.
 - `roteiro-de-validacao-rag.md`, se ainda indexado no ambiente remoto, deve ser
   removido antes do benchmark porque contem respostas esperadas.
+- A migration `20260712160034_harden_tenant_security_functions.sql` ainda nao foi
+  aplicada remotamente; o endpoint atual permite que `anon` execute
+  `is_org_member`, confirmado por resposta HTTP 200.
+- Os 29 testes pgTAP de hardening estao prontos, mas exigem Docker/Supabase local
+  ou credencial de banco remoto para execucao.
 
 ## Concluido
 

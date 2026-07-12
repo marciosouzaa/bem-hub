@@ -1,6 +1,20 @@
 # Handoff Notes
 
-Atualizado em 2026-07-09.
+Atualizado em 2026-07-12.
+
+## Handoff 2026-07-12 - Hardening M0
+
+- Criada a migration local
+  `20260712160034_harden_tenant_security_functions.sql`.
+- Criado `supabase/tests/security_hardening_test.sql` com 29 assercoes pgTAP.
+- O remoto ainda nao recebeu a migration; chamada anonima a `is_org_member`
+  respondeu HTTP 200 antes do hardening.
+- Lint e build passaram.
+- Validacao SQL, advisors, aplicacao remota, leaked-password protection e teste
+  com dois usuarios estao bloqueados por ausencia de Docker local e credenciais
+  de gerenciamento/banco.
+- Trabalho local pode continuar no M1 RAG, mas dados reais nao devem ser
+  considerados liberados ate concluir o gate remoto de M0.
 
 ## Estado Atual
 

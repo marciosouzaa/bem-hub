@@ -35,7 +35,7 @@ impede considerar o produto pronto para dados sensiveis reais.
 - [x] Conexoes de OpenAI, Anthropic e Gemini com chaves criptografadas.
 - [x] Upload, extracao, chunks, embeddings e busca semantica.
 - [x] Entitlements e troca manual de plano no servidor.
-- [ ] Restringir e revisar funcoes `SECURITY DEFINER` e permissoes de execucao.
+- [x] Preparar hardening de funcoes `SECURITY DEFINER` e permissoes de execucao.
 - [ ] Verificar isolamento de tabelas, RPCs e Storage com dois usuarios reais.
 - [ ] Ativar protecao contra senha vazada no Supabase Auth.
 - [ ] Fechar alertas de seguranca que bloqueiem uso de dados reais.

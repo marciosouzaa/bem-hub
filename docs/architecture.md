@@ -63,6 +63,19 @@ map into normalized product, stock, order, and customer contracts. Provider
 selection, credentials, automatic external sends, and personal-data policies
 are product or operational gates, not implementation details.
 
+## Privileged Database Functions
+
+RLS membership lookups live as `SECURITY DEFINER` functions in the unexposed
+`private` schema because querying `organization_members` through its own policy
+would recurse. Public `is_org_member` and `is_org_admin` functions are
+`SECURITY INVOKER` wrappers available only to `authenticated`.
+
+`match_document_chunks` is `SECURITY INVOKER`, relies on table RLS in addition
+to the explicit organization check, and caps results server-side. The exposed
+`bootstrap_owned_organization` RPC remains `SECURITY DEFINER` because it must
+create the first membership, but it validates `auth.uid()` against the
+organization owner and is executable only by `authenticated`.
+
 ## AI Provider Runtime
 
 Workspace admins manage AI keys in `/app/settings/ai-providers`. Keys are

@@ -4,6 +4,45 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-12 - M0 Hardening Preparado
+
+### Feito
+
+- Auditadas funcoes privilegiadas, policies RLS, Storage e rotas de documento.
+- Confirmado no remoto atual que `anon` ainda executa `is_org_member` e recebe
+  HTTP 200, demonstrando a exposicao antes da migration.
+- Criada `20260712160034_harden_tenant_security_functions.sql` pelo Supabase CLI.
+- Movidos helpers privilegiados para schema `private`; wrappers publicos e busca
+  vetorial passaram a `SECURITY INVOKER`.
+- Mantido apenas o bootstrap como RPC publica `SECURITY DEFINER`, com validacao
+  de owner por `auth.uid()`.
+- Revogada execucao de `PUBLIC`/`anon`, fixado `search_path` vazio e limitado o
+  retorno da busca vetorial a 20 chunks.
+- Criado pgTAP transacional com 29 assercoes para ACLs, funcoes, RLS, busca,
+  Storage, delecao cruzada e bootstrap com dois tenants.
+
+### Verificacao
+
+- `bun run lint` passou.
+- `bun run build` passou com Next.js 16.2.9.
+- `git diff --check` passou antes do checkpoint.
+- `supabase db lint --local` e `supabase test db --local` nao executaram porque
+  Docker/Supabase local nao esta disponivel.
+
+### Bloqueios Operacionais
+
+- `SUPABASE_ACCESS_TOKEN` e database password nao estao disponiveis para
+  advisors, aplicacao remota ou pgTAP linked.
+- A protecao contra senha vazada depende de acesso ao projeto/painel Supabase.
+- O teste manual com duas contas reais permanece pendente.
+
+### Proximo Passo
+
+Executar reset/lint/pgTAP em um Supabase local ou linked, corrigir qualquer
+falha, aplicar a migration remotamente com autorizacao, rodar advisors e repetir
+o teste anonimo. Enquanto esse gate operacional estiver bloqueado, iniciar a
+preparacao local do M1 pelo contrato de fontes e recuperacao RAG no servidor.
+
 ## 2026-07-12 - Roadmap E Autonomia
 
 ### Feito
