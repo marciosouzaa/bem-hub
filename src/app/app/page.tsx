@@ -112,6 +112,18 @@ export default async function WorkspacePage() {
 
             <MotionSurface>
               <Card>
+                <CardHeader><CardTitle className="text-sm uppercase tracking-[0.12em]">Operacao IA · 7 dias</CardTitle></CardHeader>
+                <CardContent className="grid grid-cols-2 gap-3 text-sm">
+                  <OperationalMetric label="Falhas" value={usage?.failures7d ?? 0} />
+                  <OperationalMetric label="Membros ativos" value={usage?.activeUsers7d ?? 0} />
+                  <OperationalMetric label="Tokens" value={usage?.tokens7d ?? 0} />
+                  <OperationalMetric label="Latencia media" value={usage?.averageLatencyMs ? `${usage.averageLatencyMs} ms` : "Sem dados"} />
+                </CardContent>
+              </Card>
+            </MotionSurface>
+
+            <MotionSurface>
+              <Card>
                 <CardHeader>
                   <SectionHeader
                     actions={
@@ -239,6 +251,10 @@ export default async function WorkspacePage() {
       </PageLayout>
     </MotionPage>
   );
+}
+
+function OperationalMetric({ label, value }: { label: string; value: number | string }) {
+  return <div className="rounded-[var(--radius-control)] border border-panel-border bg-panel-elevated p-3"><p className="text-xs text-muted">{label}</p><p className="mt-1 font-mono font-semibold">{value}</p></div>;
 }
 
 function SummaryCard({

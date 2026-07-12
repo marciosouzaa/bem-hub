@@ -4,6 +4,23 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-13 - Analytics Operacional De IA
+
+### Feito
+
+- Conclusoes do chat registram latencia total em metadata.
+- Dashboard admin exibe falhas, membros ativos, tokens e latencia media em 7 dias.
+- Agregacao ignora latencias invalidas e nao expoe eventos aos membros comuns.
+
+### Verificacao
+
+- `bun run test`: 41 testes passaram em 10 arquivos.
+- Lint e build passaram com Next.js 16.2.9.
+
+### Proximo Passo
+
+Automatizar execucao do pgTAP em ambiente Supabase local/CI.
+
 ## 2026-07-13 - Catalogo Versionado
 
 ### Feito

@@ -57,6 +57,7 @@ class ChatHttpError extends Error {
 }
 
 export async function POST(request: Request) {
+  const requestStartedAt = performance.now();
   const body = chatRequestSchema.safeParse(await request.json());
 
   if (!body.success) {
@@ -209,6 +210,7 @@ export async function POST(request: Request) {
               knowledge_status: rag.knowledge.status,
               knowledge_source_count: rag.knowledge.sources.length,
               knowledge_embedding_model: rag.knowledge.embeddingModel,
+              latency_ms: Math.round(performance.now() - requestStartedAt),
             },
           },
         );
