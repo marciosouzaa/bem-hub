@@ -13,6 +13,8 @@ do marco ativo.
 - Adicionados tambem relatorio estruturado e conversao de notas de reuniao em
   tarefas; dados ausentes permanecem explicitos e compromissos nao sao
   inventados.
+- Analise de planilha aceita CSV/TSV colado, nao executa formulas, URLs ou
+  instrucoes de celulas e explicita formato invalido ou truncado.
 - Execucao valida input com Zod, entitlement `automations`, sessao e
   organizacao no servidor.
 - Provider, conexao e modelo sao resolvidos pelo assistente padrao do tenant;
@@ -30,7 +32,7 @@ do marco ativo.
 
 ### Verificacao
 
-- `bun run test`: 21 testes passaram em 6 arquivos.
+- `bun run test`: 22 testes passaram em 6 arquivos.
 - `bun run lint` passou.
 - `bun run build` passou com Next.js 16.2.9 e rota `/app/automations`.
 

@@ -9,6 +9,7 @@ import {
   FileText,
   MessageSquareReply,
   Play,
+  TableProperties,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,6 +35,7 @@ const icons = {
   checklist: CheckSquare,
   report: FileBarChart,
   meeting_tasks: ClipboardList,
+  spreadsheet_analysis: TableProperties,
 };
 
 export function ManualAutomationForm() {

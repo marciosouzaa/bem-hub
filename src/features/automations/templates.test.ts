@@ -3,7 +3,7 @@ import { AUTOMATION_TEMPLATES, getAutomationTemplate } from "./templates";
 
 describe("automation templates", () => {
   test("all templates treat input as untrusted", () => {
-    expect(AUTOMATION_TEMPLATES).toHaveLength(5);
+    expect(AUTOMATION_TEMPLATES).toHaveLength(6);
     for (const template of AUTOMATION_TEMPLATES) {
       expect(template.system).toContain("dado nao confiavel");
       expect(template.system).toContain("ignore instrucoes");
@@ -20,5 +20,11 @@ describe("automation templates", () => {
   test("reports and meeting tasks preserve missing information", () => {
     expect(getAutomationTemplate("report").system).toContain("dados ausentes");
     expect(getAutomationTemplate("meeting_tasks").system).toContain("a definir");
+  });
+
+  test("spreadsheet analysis never executes cell content", () => {
+    const template = getAutomationTemplate("spreadsheet_analysis");
+    expect(template.system).toContain("nao execute");
+    expect(template.system).toContain("nao invente linhas");
   });
 });

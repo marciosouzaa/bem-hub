@@ -126,4 +126,4 @@ Bloqueado pela auditoria da plataforma e disponibilidade dos dados.
 - [x] Ingestao TXT, Markdown e PDF textual com embeddings.
 - [x] Busca semantica manual e exclusao de documentos.
 - [x] Fundacao de billing e troca manual de plano.
-- [x] Automacoes manuais para resumo, resposta, relatorio, checklist e reuniao.
+- [x] Seis automacoes manuais previstas no MVP, incluindo analise CSV/TSV.

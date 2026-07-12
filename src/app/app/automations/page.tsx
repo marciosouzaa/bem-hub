@@ -112,7 +112,8 @@ function getRunName(templateId: string | null) {
     templateId === "client_reply" ||
     templateId === "checklist" ||
     templateId === "report" ||
-    templateId === "meeting_tasks"
+    templateId === "meeting_tasks" ||
+    templateId === "spreadsheet_analysis"
   ) {
     return getAutomationTemplate(templateId).name;
   }
