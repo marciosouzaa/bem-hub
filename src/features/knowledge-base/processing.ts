@@ -2,6 +2,11 @@ import { ACCEPTED_DOCUMENT_MIME_TYPES } from "./constants";
 
 const CHUNK_MAX_CHARACTERS = 1800;
 const CHUNK_OVERLAP_CHARACTERS = 220;
+const MAX_CATALOG_ROWS = 1_000;
+const MAX_CATALOG_COLUMNS = 30;
+const MAX_CATALOG_CELL_CHARACTERS = 500;
+const PRODUCT_HEADERS = ["produto", "nome", "item", "product", "name"];
+const PRICE_HEADERS = ["preco", "valor", "price", "preco venda"];
 
 export type DocumentChunkInput = {
   content: string;
@@ -10,6 +15,10 @@ export type DocumentChunkInput = {
 };
 
 export async function extractDocumentText(file: File) {
+  if (isCatalogSpreadsheet(file)) {
+    return extractCatalogSpreadsheetText(await file.text(), file.name);
+  }
+
   if (isPlainTextDocument(file)) {
     return normalizeExtractedText(await file.text());
   }
@@ -65,8 +74,67 @@ export function isAcceptedDocument(file: File) {
   return (
     ACCEPTED_DOCUMENT_MIME_TYPES.includes(
       file.type as (typeof ACCEPTED_DOCUMENT_MIME_TYPES)[number],
-    ) || isMarkdownFilename(file.name)
+    ) ||
+    isMarkdownFilename(file.name) ||
+    isCatalogSpreadsheet(file)
   );
+}
+
+export function extractCatalogSpreadsheetText(content: string, filename: string) {
+  const delimiter = filename.toLowerCase().endsWith(".tsv") ? "\t" : detectDelimiter(content);
+  const rows = parseDelimitedRows(content, delimiter);
+
+  if (rows.length < 2) {
+    throw new Error("Catalogo precisa ter cabecalho e ao menos um produto.");
+  }
+
+  if (rows.length - 1 > MAX_CATALOG_ROWS) {
+    throw new Error(`Catalogo excede o limite de ${MAX_CATALOG_ROWS} produtos.`);
+  }
+
+  const headers = rows[0].map(normalizeHeader);
+  if (headers.length > MAX_CATALOG_COLUMNS) {
+    throw new Error(`Catalogo excede o limite de ${MAX_CATALOG_COLUMNS} colunas.`);
+  }
+
+  const productIndex = findHeaderIndex(headers, PRODUCT_HEADERS);
+  const priceIndex = findHeaderIndex(headers, PRICE_HEADERS);
+
+  if (productIndex < 0 || priceIndex < 0) {
+    throw new Error(
+      "Catalogo precisa conter colunas de produto (produto/nome/item) e preco (preco/valor).",
+    );
+  }
+
+  const normalizedRows = rows.slice(1).flatMap((row, rowIndex) => {
+    const product = sanitizeCatalogCell(row[productIndex] ?? "");
+    const price = sanitizeCatalogCell(row[priceIndex] ?? "");
+
+    if (!product || !price) {
+      return [];
+    }
+
+    const details = headers.flatMap((header, columnIndex) => {
+      if (!header || columnIndex === productIndex || columnIndex === priceIndex) {
+        return [];
+      }
+
+      const value = sanitizeCatalogCell(row[columnIndex] ?? "");
+      return value ? [`${header}: ${value}`] : [];
+    });
+
+    return [
+      `Produto ${rowIndex + 1}\nNome: ${product}\nPreco: ${price}${
+        details.length ? `\n${details.join("\n")}` : ""
+      }`,
+    ];
+  });
+
+  if (!normalizedRows.length) {
+    throw new Error("Catalogo nao possui produtos com nome e preco preenchidos.");
+  }
+
+  return `CATALOGO E TABELA DE PRECOS\nArquivo: ${sanitizeStorageFilename(filename)}\nRegistros: ${normalizedRows.length}\n\n${normalizedRows.join("\n\n")}`;
 }
 
 export function isPlainTextDocument(file: File) {
@@ -177,4 +245,104 @@ function estimateTokenCount(content: string) {
 
 function isMarkdownFilename(filename: string) {
   return /\.(md|markdown)$/i.test(filename);
+}
+
+function isCatalogSpreadsheet(file: File) {
+  return (
+    /\.(csv|tsv)$/i.test(file.name) ||
+    [
+      "text/csv",
+      "text/tab-separated-values",
+      "application/csv",
+      "application/vnd.ms-excel",
+    ].includes(file.type)
+  );
+}
+
+function detectDelimiter(content: string) {
+  const firstLine = content.split(/\r?\n/, 1)[0] ?? "";
+  const candidates = [",", ";", "\t"];
+  return candidates.reduce((best, candidate) =>
+    countDelimiter(firstLine, candidate) > countDelimiter(firstLine, best)
+      ? candidate
+      : best,
+  );
+}
+
+function countDelimiter(line: string, delimiter: string) {
+  return line.split(delimiter).length - 1;
+}
+
+function parseDelimitedRows(content: string, delimiter: string) {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let cell = "";
+  let quoted = false;
+
+  for (let index = 0; index < content.length; index += 1) {
+    const character = content[index];
+
+    if (character === '"') {
+      if (quoted && content[index + 1] === '"') {
+        cell += '"';
+        index += 1;
+      } else {
+        quoted = !quoted;
+      }
+    } else if (character === delimiter && !quoted) {
+      row.push(cell);
+      cell = "";
+    } else if ((character === "\n" || character === "\r") && !quoted) {
+      if (character === "\r" && content[index + 1] === "\n") {
+        index += 1;
+      }
+      row.push(cell);
+      if (row.some((value) => value.trim())) {
+        rows.push(row);
+      }
+      row = [];
+      cell = "";
+    } else {
+      cell += character;
+    }
+  }
+
+  if (quoted) {
+    throw new Error("Catalogo possui campo com aspas nao finalizadas.");
+  }
+
+  row.push(cell);
+  if (row.some((value) => value.trim())) {
+    rows.push(row);
+  }
+
+  return rows;
+}
+
+function normalizeHeader(value: string) {
+  return value
+    .replace(/^\uFEFF/, "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function findHeaderIndex(headers: string[], aliases: string[]) {
+  return headers.findIndex((header) => aliases.includes(header));
+}
+
+function sanitizeCatalogCell(value: string) {
+  const normalized = value
+    .replace(/\u0000/g, "")
+    .replace(/[\r\n\t]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, MAX_CATALOG_CELL_CHARACTERS);
+
+  return /^[=+@]/.test(normalized) || /^-\s*[A-Za-z]/.test(normalized)
+    ? "[formula nao executada]"
+    : normalized;
 }

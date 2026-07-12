@@ -61,7 +61,7 @@ export async function POST(request: Request) {
 
   if (!isAcceptedDocument(file)) {
     return NextResponse.json(
-      { error: "Formato nao suportado. Use PDF, DOCX, TXT ou Markdown." },
+      { error: "Formato nao suportado. Use PDF, DOCX, TXT, Markdown, CSV ou TSV." },
       { status: 400 },
     );
   }

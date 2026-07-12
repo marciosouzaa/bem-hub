@@ -96,14 +96,14 @@ export function KnowledgeUploadForm({ canManage }: { canManage: boolean }) {
           <div>
             <p className="text-sm font-semibold">Enviar documento</p>
             <p className="mt-1 text-sm leading-6 text-muted-strong">
-              TXT, Markdown e PDF com texto selecionavel sao processados agora.
-              DOCX ainda fica registrado com erro de extracao.
+              PDF, DOCX, TXT e Markdown viram conhecimento. CSV/TSV de catalogo
+              exige colunas de produto e preco e aceita ate 1.000 itens.
             </p>
           </div>
         </div>
 
         <input
-          accept=".txt,.md,.markdown,.pdf,.docx,text/plain,text/markdown,text/x-markdown,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          accept=".txt,.md,.markdown,.pdf,.docx,.csv,.tsv,text/plain,text/markdown,text/x-markdown,text/csv,text/tab-separated-values,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
           className="min-h-11 rounded-[var(--radius-control)] border border-panel-border bg-panel px-3 py-2 text-sm text-muted-strong file:mr-3 file:rounded-md file:border-0 file:bg-sidebar-active file:px-3 file:py-2 file:text-sm file:font-medium file:text-primary focus:border-primary disabled:cursor-not-allowed disabled:opacity-60"
           disabled={!canManage || isUploading}
           name="file"

@@ -62,7 +62,7 @@ Objetivo: permitir que uma dona e sua equipe alcancem valor em menos de 15
 minutos sem configuracao tecnica recorrente.
 
 - [x] Definir checklist de configuracao do assistente de catalogo.
-- [ ] Importar catalogo e tabela de precos do piloto.
+- [x] Importar catalogo e tabela de precos do piloto por CSV/TSV validado.
 - [ ] Permitir convite ou inclusao segura das tres funcionarias.
 - [x] Criar estado inicial e orientacao contextual curta dentro do fluxo real.
 - [x] Instrumentar ativacao, uso diario e perguntas sem resposta.

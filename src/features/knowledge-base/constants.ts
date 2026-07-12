@@ -7,4 +7,8 @@ export const ACCEPTED_DOCUMENT_MIME_TYPES = [
   "text/markdown",
   "text/plain",
   "text/x-markdown",
+  "text/csv",
+  "text/tab-separated-values",
+  "application/csv",
+  "application/vnd.ms-excel",
 ] as const;

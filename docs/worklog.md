@@ -4,6 +4,24 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-13 - Catalogo E Precos Estruturados
+
+### Feito
+
+- Upload de conhecimento aceita CSV/TSV com produto e preco obrigatorios.
+- Parser suporta delimitadores, campos entre aspas e normalizacao para RAG.
+- Limites: 1.000 produtos, 30 colunas e 500 caracteres por celula.
+- Formulas de planilha sao neutralizadas antes de entrar no contexto.
+
+### Verificacao
+
+- Seis testes focados de processamento passaram.
+- Lint e build passaram com Next.js 16.2.9.
+
+### Proximo Passo
+
+Implementar convites e gestao segura de membros.
+
 ## 2026-07-13 - RAG E Chat Confiavel
 
 ### Feito
