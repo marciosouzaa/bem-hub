@@ -1,5 +1,5 @@
 begin;
-select plan(57);
+select plan(61);
 
 select ok(
   not has_function_privilege('anon', 'public.bootstrap_owned_organization(uuid)', 'execute'),
@@ -77,6 +77,30 @@ select is(
   'chat completion RPC is security invoker'
 );
 select ok(
+  not has_function_privilege(
+    'anon',
+    'public.add_organization_member_by_email(uuid,text,public.organization_role)',
+    'execute'
+  ),
+  'anon cannot add organization members'
+);
+select ok(
+  has_function_privilege(
+    'authenticated',
+    'public.add_organization_member_by_email(uuid,text,public.organization_role)',
+    'execute'
+  ),
+  'authenticated can call member inclusion RPC'
+);
+select is(
+  (
+    select prosecdef from pg_proc
+    where oid = 'public.add_organization_member_by_email(uuid,text,public.organization_role)'::regprocedure
+  ),
+  true,
+  'member inclusion RPC is security definer'
+);
+select ok(
   has_function_privilege('authenticated', 'public.is_org_member(uuid)', 'execute'),
   'authenticated can execute membership helper'
 );
@@ -139,6 +163,7 @@ select ok(
       'public.set_default_assistant(uuid,uuid)'::regprocedure,
       'public.delete_assistant(uuid,uuid)'::regprocedure,
       'public.finalize_chat_completion(uuid,uuid,text,text,integer,integer,jsonb,jsonb)'::regprocedure,
+      'public.add_organization_member_by_email(uuid,text,public.organization_role)'::regprocedure,
       'private.is_org_member(uuid)'::regprocedure,
       'private.is_org_admin(uuid)'::regprocedure
     )
@@ -568,6 +593,18 @@ select throws_ok(
   '42501',
   'organization_member_required',
   'tenant A cannot finalize tenant B chat data'
+);
+select throws_ok(
+  $$
+    select public.add_organization_member_by_email(
+      'b0000000-0000-0000-0000-000000000002',
+      'tenant-a@example.test',
+      'member'
+    )
+  $$,
+  '42501',
+  'organization_admin_required',
+  'tenant A cannot add members to tenant B'
 );
 
 reset role;

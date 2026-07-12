@@ -724,6 +724,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_organization_member_by_email: {
+        Args: {
+          target_email: string
+          target_organization_id: string
+          target_role?: Database["public"]["Enums"]["organization_role"]
+        }
+        Returns: string
+      }
       bootstrap_owned_organization: {
         Args: { target_organization_id: string }
         Returns: {

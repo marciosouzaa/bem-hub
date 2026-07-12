@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getEntitlements } from "@/features/billing/entitlements";
 import { getRequiredWorkspace } from "@/features/organizations/queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { MemberForm } from "@/features/members/member-form";
 
 export default async function AccountSettingsPage() {
   const workspace = await getRequiredWorkspace();
@@ -24,6 +25,7 @@ export default async function AccountSettingsPage() {
     supabase,
     workspace.organization.id,
   );
+  const canManage = ["owner", "admin"].includes(workspace.membership.role);
 
   return (
     <section className="space-y-6">
@@ -94,6 +96,19 @@ export default async function AccountSettingsPage() {
           </CardContent>
         </Card>
       </section>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Equipe do workspace</CardTitle>
+          <p className="text-sm leading-6 text-muted-strong">
+            Inclua contas BEM HUB ja cadastradas. O limite de usuarios do plano
+            e validado no servidor.
+          </p>
+        </CardHeader>
+        <CardContent>
+          <MemberForm canManage={canManage} />
+        </CardContent>
+      </Card>
 
       <section className="grid gap-4 lg:grid-cols-3">
         <InfoCard

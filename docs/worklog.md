@@ -4,6 +4,24 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-13 - Inclusao Segura De Membros
+
+### Feito
+
+- Conta settings inclui membro/admin por e-mail de conta ja cadastrada.
+- RPC remota valida admin, tenant, papel, limite do plano e owner imutavel.
+- Busca em `auth.users` fica encapsulada; e-mail inexistente gera erro generico.
+- ACL bloqueia anon e pgTAP possui 61 assertions preparadas.
+
+### Verificacao
+
+- 38 testes, lint e build passaram.
+- Remoto confirmou `SECURITY DEFINER`, search path vazio e ACL restrita.
+
+### Proximo Passo
+
+Implementar auditoria persistida de loja, PDV e planilhas.
+
 ## 2026-07-13 - Catalogo E Precos Estruturados
 
 ### Feito

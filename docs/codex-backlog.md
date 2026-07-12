@@ -63,7 +63,7 @@ minutos sem configuracao tecnica recorrente.
 
 - [x] Definir checklist de configuracao do assistente de catalogo.
 - [x] Importar catalogo e tabela de precos do piloto por CSV/TSV validado.
-- [ ] Permitir convite ou inclusao segura das tres funcionarias.
+- [x] Permitir inclusao segura por e-mail de contas BEM HUB cadastradas.
 - [x] Criar estado inicial e orientacao contextual curta dentro do fluxo real.
 - [x] Instrumentar ativacao, uso diario e perguntas sem resposta.
 - [ ] Registrar auditoria da plataforma de loja, API, PDV e planilhas.
