@@ -4,6 +4,24 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-13 - Contratos Comerciais M3
+
+### Feito
+
+- Produtos, clientes e pedidos possuem schemas normalizados e independentes.
+- Dinheiro usa centavos inteiros; estoque nao aceita negativos; datas sao ISO.
+- Importador CSV/TSV reconhece cabecalhos PT/EN e limita 5.000 registros.
+- Linhas invalidas falham com numero da linha, sem persistencia parcial.
+
+### Verificacao
+
+- `bun run test`: 48 testes passaram em 12 arquivos.
+- Lint e build passaram com Next.js 16.2.9.
+
+### Proximo Passo
+
+Adicionar hardening operacional e runbooks.
+
 ## 2026-07-13 - Contrato Neutro De Canal
 
 ### Feito

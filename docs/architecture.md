@@ -108,3 +108,8 @@ Provider-neutral contracts live in `src/features/channels`. Inbound messages
 require stable provider IDs for idempotency. Replies begin as drafts and cannot
 reach `sent` without explicit `approved`; terminal states stay immutable. No
 adapter sends externally before BSP selection and operational approval.
+
+Normalized commerce contracts live in `src/features/commerce`. Money uses
+integer cents, stock uses non-negative integers, external IDs stay strings and
+orders use ISO timestamps. Spreadsheet import maps provider columns into these
+contracts before any future connector persists data.

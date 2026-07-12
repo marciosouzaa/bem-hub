@@ -92,7 +92,7 @@ clientes. Se nao houver API, validar primeiro com importacao estruturada de
 planilha antes de criar um conector permanente.
 
 - [ ] Implementar conector inicial para a plataforma confirmada.
-- [ ] Normalizar pedidos, produtos, estoque e clientes no dominio BEM HUB.
+- [x] Normalizar pedidos, produtos, estoque e clientes no dominio BEM HUB.
 - [ ] Entregar digest diario de vendas, metas, top produtos e estoque critico.
 - [ ] Criar agente de recompra com ciclo configuravel, inicialmente 55 dias.
 - [ ] Exigir aprovacao humana antes de campanhas de recompra.
