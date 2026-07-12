@@ -120,6 +120,8 @@ Bloqueado pela auditoria da plataforma e disponibilidade dos dados.
   stream ou persistencia geram telemetria `chat.failed` sem conteudo sensivel.
 - Gestao de equipe lista perfis do mesmo tenant, altera papel e remove acesso;
   owner permanece imutavel e pgTAP possui 70 assertions preparadas.
+- Catalogos possuem versao ativa atomica; historico permanece auditavel, mas
+  chunks substituidos nao entram mais na recuperacao RAG.
 - Advisor sinaliza `add_organization_member_by_email` como `SECURITY DEFINER`
   executavel por authenticated; e intencional para consultar `auth.users`, com
   admin/tenant/papel/limite/owner validados dentro da RPC e anon revogado.

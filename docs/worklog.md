@@ -4,6 +4,25 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-13 - Catalogo Versionado
+
+### Feito
+
+- CSV/TSV de catalogo nasce inativo enquanto processa embeddings.
+- RPC `activate_catalog_version` troca versao ativa atomicamente por tenant.
+- Catalogos anteriores permanecem no historico, mas saem da busca vetorial.
+- UI identifica versao ativa e historica; limites/metricas contam ativos.
+- pgTAP possui 80 assertions preparadas.
+
+### Verificacao
+
+- SQL remoto confirmou v2, supersessao da v1 e um unico ativo com rollback.
+- 40 testes, lint e build passaram; advisors sem alerta novo.
+
+### Proximo Passo
+
+Expor falhas, uso por assistente/membro, latencia e tokens no analytics.
+
 ## 2026-07-13 - Gestao Completa De Equipe
 
 ### Feito

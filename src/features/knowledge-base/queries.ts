@@ -20,6 +20,9 @@ export type KnowledgeDocumentListItem = {
   processedAt: string | null;
   createdBy: string;
   createdAt: string;
+  sourceKind: string;
+  catalogVersion: number | null;
+  supersededAt: string | null;
 };
 
 export type KnowledgeSearchResult = {
@@ -37,7 +40,7 @@ export async function listKnowledgeDocuments(
   const { data, error } = await supabase
     .from("documents")
     .select(
-      "id,organization_id,knowledge_base_id,name,file_path,mime_type,file_size,status,error,chunk_count,embedding_model,processed_at,created_by,created_at",
+      "id,organization_id,knowledge_base_id,name,file_path,mime_type,file_size,status,error,chunk_count,embedding_model,processed_at,created_by,created_at,source_kind,catalog_version,superseded_at",
     )
     .eq("organization_id", organizationId)
     .order("created_at", { ascending: false });
@@ -61,6 +64,9 @@ export async function listKnowledgeDocuments(
     processedAt: document.processed_at,
     createdBy: document.created_by,
     createdAt: document.created_at,
+    sourceKind: document.source_kind,
+    catalogVersion: document.catalog_version,
+    supersededAt: document.superseded_at,
   }));
 }
 
@@ -111,12 +117,14 @@ export async function searchKnowledgeDocuments(
 }
 
 export function getKnowledgeStats(documents: KnowledgeDocumentListItem[]) {
+  const activeDocuments = documents.filter((document) => !document.supersededAt);
+
   return {
-    total: documents.length,
-    ready: documents.filter((document) => document.status === "ready").length,
-    processing: documents.filter((document) => document.status === "processing")
+    total: activeDocuments.length,
+    ready: activeDocuments.filter((document) => document.status === "ready").length,
+    processing: activeDocuments.filter((document) => document.status === "processing")
       .length,
-    failed: documents.filter((document) => document.status === "failed").length,
-    chunks: documents.reduce((sum, document) => sum + document.chunkCount, 0),
+    failed: activeDocuments.filter((document) => document.status === "failed").length,
+    chunks: activeDocuments.reduce((sum, document) => sum + document.chunkCount, 0),
   };
 }

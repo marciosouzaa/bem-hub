@@ -15,6 +15,7 @@ import {
   chunkDocumentText,
   extractDocumentText,
   isAcceptedDocument,
+  isCatalogSpreadsheet,
   sanitizeStorageFilename,
 } from "@/features/knowledge-base/processing";
 import {
@@ -72,11 +73,13 @@ export async function POST(request: Request) {
       { status: 413 },
     );
   }
+  const isCatalog = isCatalogSpreadsheet(file);
 
   const { count, error: countError } = await supabase
     .from("documents")
     .select("id", { count: "exact", head: true })
-    .eq("organization_id", organizationId);
+    .eq("organization_id", organizationId)
+    .is("superseded_at", null);
 
   if (countError) {
     return NextResponse.json(
@@ -142,6 +145,8 @@ export async function POST(request: Request) {
     chunk_count: 0,
     embedding_model: DEFAULT_EMBEDDING_MODEL,
     created_by: user.id,
+    source_kind: isCatalog ? "catalog" : "document",
+    superseded_at: isCatalog ? new Date().toISOString() : null,
   });
 
   if (insertError) {
@@ -203,6 +208,21 @@ export async function POST(request: Request) {
       throw new Error(`Falha ao concluir documento: ${readyError.message}`);
     }
 
+    let catalogVersion: number | null = null;
+    if (isCatalog) {
+      const { data, error: activationError } = await supabase.rpc(
+        "activate_catalog_version",
+        {
+          target_document_id: documentId,
+          target_organization_id: organizationId,
+        },
+      );
+      if (activationError) {
+        throw new Error(`Falha ao ativar catalogo: ${activationError.message}`);
+      }
+      catalogVersion = data;
+    }
+
     const { error: usageError } = await supabase.from("usage_events").insert({
       organization_id: organizationId,
       user_id: user.id,
@@ -214,6 +234,8 @@ export async function POST(request: Request) {
         chunks: chunks.length,
         provider: "openai",
         provider_connection_id: runtime.providerConnectionId,
+        source_kind: isCatalog ? "catalog" : "document",
+        catalog_version: catalogVersion,
       },
     });
 
@@ -225,6 +247,7 @@ export async function POST(request: Request) {
       documentId,
       message: "Documento processado e pronto para busca semantica.",
       status: "ready",
+      catalogVersion,
     });
   } catch (error) {
     const message =

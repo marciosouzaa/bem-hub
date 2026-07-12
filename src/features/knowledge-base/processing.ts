@@ -247,7 +247,7 @@ function isMarkdownFilename(filename: string) {
   return /\.(md|markdown)$/i.test(filename);
 }
 
-function isCatalogSpreadsheet(file: File) {
+export function isCatalogSpreadsheet(file: File) {
   return (
     /\.(csv|tsv)$/i.test(file.name) ||
     [

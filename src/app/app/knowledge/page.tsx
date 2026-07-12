@@ -254,7 +254,15 @@ function DocumentCard({
               <FileText className="size-5" />
             </span>
             <div className="min-w-0">
-              <CardTitle className="truncate text-lg">{document.name}</CardTitle>
+              <div className="flex flex-wrap items-center gap-2">
+                <CardTitle className="truncate text-lg">{document.name}</CardTitle>
+                {document.sourceKind === "catalog" ? (
+                  <Badge>
+                    Catalogo v{document.catalogVersion ?? "processando"}
+                    {document.supersededAt ? " - historico" : " - ativo"}
+                  </Badge>
+                ) : null}
+              </div>
               <p className="mt-2 text-sm leading-6 text-muted-strong">
                 {formatMimeType(document.mimeType)} - {formatFileSize(document.fileSize)}
               </p>

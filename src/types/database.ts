@@ -323,6 +323,7 @@ export type Database = {
       }
       documents: {
         Row: {
+          catalog_version: number | null
           chunk_count: number
           created_at: string
           created_by: string
@@ -337,8 +338,11 @@ export type Database = {
           organization_id: string
           processed_at: string | null
           status: Database["public"]["Enums"]["document_status"]
+          source_kind: string
+          superseded_at: string | null
         }
         Insert: {
+          catalog_version?: number | null
           chunk_count?: number
           created_at?: string
           created_by: string
@@ -353,8 +357,11 @@ export type Database = {
           organization_id: string
           processed_at?: string | null
           status?: Database["public"]["Enums"]["document_status"]
+          source_kind?: string
+          superseded_at?: string | null
         }
         Update: {
+          catalog_version?: number | null
           chunk_count?: number
           created_at?: string
           created_by?: string
@@ -369,6 +376,8 @@ export type Database = {
           organization_id?: string
           processed_at?: string | null
           status?: Database["public"]["Enums"]["document_status"]
+          source_kind?: string
+          superseded_at?: string | null
         }
         Relationships: [
           {
@@ -724,6 +733,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      activate_catalog_version: {
+        Args: { target_document_id: string; target_organization_id: string }
+        Returns: number
+      }
       add_organization_member_by_email: {
         Args: {
           target_email: string

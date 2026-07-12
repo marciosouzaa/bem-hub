@@ -1,5 +1,5 @@
 begin;
-select plan(70);
+select plan(80);
 
 select ok(
   not has_function_privilege('anon', 'public.bootstrap_owned_organization(uuid)', 'execute'),
@@ -125,6 +125,19 @@ select is(
   'member management RPC is security invoker'
 );
 select ok(
+  not has_function_privilege('anon', 'public.activate_catalog_version(uuid,uuid)', 'execute'),
+  'anon cannot activate catalog versions'
+);
+select ok(
+  has_function_privilege('authenticated', 'public.activate_catalog_version(uuid,uuid)', 'execute'),
+  'authenticated can call catalog activation RPC'
+);
+select is(
+  (select prosecdef from pg_proc where oid = 'public.activate_catalog_version(uuid,uuid)'::regprocedure),
+  false,
+  'catalog activation RPC is security invoker'
+);
+select ok(
   has_function_privilege('authenticated', 'public.is_org_member(uuid)', 'execute'),
   'authenticated can execute membership helper'
 );
@@ -189,6 +202,7 @@ select ok(
       'public.finalize_chat_completion(uuid,uuid,text,text,integer,integer,jsonb,jsonb)'::regprocedure,
       'public.add_organization_member_by_email(uuid,text,public.organization_role)'::regprocedure,
       'public.manage_organization_member(uuid,uuid,public.organization_role,public.member_status)'::regprocedure,
+      'public.activate_catalog_version(uuid,uuid)'::regprocedure,
       'private.is_org_member(uuid)'::regprocedure,
       'private.is_org_admin(uuid)'::regprocedure
     )
@@ -343,7 +357,32 @@ values
     'text/plain',
     'ready',
     '20000000-0000-0000-0000-000000000002'
+  ),
+  (
+    'a1000000-0000-0000-0000-000000000011',
+    'a0000000-0000-0000-0000-000000000001',
+    'catalog-v1.csv',
+    'a0000000-0000-0000-0000-000000000001/catalog-v1.csv',
+    'text/csv',
+    'ready',
+    '10000000-0000-0000-0000-000000000001'
+  ),
+  (
+    'a1000000-0000-0000-0000-000000000012',
+    'a0000000-0000-0000-0000-000000000001',
+    'catalog-v2.csv',
+    'a0000000-0000-0000-0000-000000000001/catalog-v2.csv',
+    'text/csv',
+    'ready',
+    '10000000-0000-0000-0000-000000000001'
   );
+
+update public.documents
+set source_kind = 'catalog', superseded_at = clock_timestamp()
+where id in (
+  'a1000000-0000-0000-0000-000000000011',
+  'a1000000-0000-0000-0000-000000000012'
+);
 
 insert into public.document_chunks (
   organization_id,
@@ -687,6 +726,49 @@ select throws_ok(
   '42501',
   'organization_admin_required',
   'tenant A cannot manage tenant B members'
+);
+select lives_ok(
+  $$select public.activate_catalog_version(
+    'a0000000-0000-0000-0000-000000000001',
+    'a1000000-0000-0000-0000-000000000011'
+  )$$,
+  'tenant A activates catalog version one'
+);
+select is(
+  (select catalog_version from public.documents where id = 'a1000000-0000-0000-0000-000000000011'),
+  1,
+  'first catalog receives version one'
+);
+select lives_ok(
+  $$select public.activate_catalog_version(
+    'a0000000-0000-0000-0000-000000000001',
+    'a1000000-0000-0000-0000-000000000012'
+  )$$,
+  'tenant A activates catalog version two'
+);
+select is(
+  (select catalog_version from public.documents where id = 'a1000000-0000-0000-0000-000000000012'),
+  2,
+  'second catalog receives version two'
+);
+select is(
+  (select superseded_at is not null from public.documents where id = 'a1000000-0000-0000-0000-000000000011'),
+  true,
+  'previous catalog is superseded'
+);
+select is(
+  (select count(*) from public.documents where organization_id = 'a0000000-0000-0000-0000-000000000001' and source_kind = 'catalog' and superseded_at is null),
+  1::bigint,
+  'tenant keeps exactly one active catalog'
+);
+select throws_ok(
+  $$select public.activate_catalog_version(
+    'b0000000-0000-0000-0000-000000000002',
+    'a1000000-0000-0000-0000-000000000012'
+  )$$,
+  '42501',
+  'organization_admin_required',
+  'tenant A cannot activate tenant B catalogs'
 );
 
 reset role;
