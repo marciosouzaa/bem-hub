@@ -66,7 +66,7 @@ minutos sem configuracao tecnica recorrente.
 - [x] Permitir inclusao segura por e-mail de contas BEM HUB cadastradas.
 - [x] Criar estado inicial e orientacao contextual curta dentro do fluxo real.
 - [x] Instrumentar ativacao, uso diario e perguntas sem resposta.
-- [ ] Registrar auditoria da plataforma de loja, API, PDV e planilhas.
+- [x] Registrar auditoria da plataforma de loja, API, PDV e planilhas.
 
 Aceite: equipe acessa o workspace isolado, encontra o assistente correto e faz a
 primeira pergunta util sem ajuda do engenheiro.
@@ -118,6 +118,9 @@ Bloqueado pela auditoria da plataforma e disponibilidade dos dados.
   initplans de Auth e zero policies permissivas sobrepostas.
 - Finalizacao do chat persiste resposta, atividade e uso atomicamente; falhas de
   stream ou persistencia geram telemetria `chat.failed` sem conteudo sensivel.
+- Advisor sinaliza `add_organization_member_by_email` como `SECURITY DEFINER`
+  executavel por authenticated; e intencional para consultar `auth.users`, com
+  admin/tenant/papel/limite/owner validados dentro da RPC e anon revogado.
 
 ## Concluido
 

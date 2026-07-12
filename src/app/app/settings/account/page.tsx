@@ -13,6 +13,8 @@ import { getEntitlements } from "@/features/billing/entitlements";
 import { getRequiredWorkspace } from "@/features/organizations/queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { MemberForm } from "@/features/members/member-form";
+import { IntegrationAuditForm } from "@/features/integration-audit/audit-form";
+import { parseIntegrationAudit } from "@/features/integration-audit/audit";
 
 export default async function AccountSettingsPage() {
   const workspace = await getRequiredWorkspace();
@@ -26,6 +28,10 @@ export default async function AccountSettingsPage() {
     workspace.organization.id,
   );
   const canManage = ["owner", "admin"].includes(workspace.membership.role);
+  const { data: auditRecord } = await supabase.from("integrations").select("config")
+    .eq("organization_id", workspace.organization.id).eq("provider", "commerce_audit")
+    .limit(1).maybeSingle();
+  const parsedAudit = parseIntegrationAudit(auditRecord?.config);
 
   return (
     <section className="space-y-6">
@@ -107,6 +113,16 @@ export default async function AccountSettingsPage() {
         </CardHeader>
         <CardContent>
           <MemberForm canManage={canManage} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Auditoria de dados comerciais</CardTitle>
+          <p className="text-sm leading-6 text-muted-strong">Mapeie loja, API, PDV e planilhas antes de escolher ou construir um conector.</p>
+        </CardHeader>
+        <CardContent>
+          <IntegrationAuditForm canManage={canManage} initial={parsedAudit.success ? parsedAudit.data : null} />
         </CardContent>
       </Card>
 

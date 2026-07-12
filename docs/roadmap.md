@@ -57,7 +57,7 @@ Status: em andamento. Equivale a Fase 1 do roadmap do piloto.
 - [x] Preparar assistente de catalogo com linguagem configuravel da marca.
 - [x] Organizar onboarding guiado para dona e equipe em menos de 15 minutos.
 - [x] Medir uso por organizacao e frequencia do assistente.
-- [ ] Auditar plataforma de e-commerce, estoque e origem dos dados do piloto.
+- [x] Auditar plataforma de e-commerce, estoque e origem dos dados do piloto.
 
 Criterio de sucesso: a dona ou uma funcionaria usa o assistente ao menos uma vez
 por dia, encontra respostas confiaveis no catalogo e nao precisa de suporte

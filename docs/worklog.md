@@ -4,6 +4,28 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-13 - Auditoria De Dados Comerciais
+
+### Feito
+
+- Settings registra plataforma, disponibilidade de API e origem de estoque,
+  pedidos e clientes.
+- Auditoria usa `integrations` com provider `commerce_audit`, escopo por tenant
+  e escrita restrita a owner/admin pela action e RLS.
+- Nenhum fornecedor ou conector foi presumido; dados servem ao gate do M3.
+- Sete passos autonomos solicitados foram implementados.
+
+### Verificacao
+
+- `bun run test`: 40 testes passaram em 10 arquivos.
+- `bun run lint` passou.
+- `bun run build` passou com Next.js 16.2.9.
+
+### Proximo Passo
+
+Executar benchmark RAG real quando houver token dedicado ou seguir para o
+proximo trabalho tecnico desbloqueado do M1.
+
 ## 2026-07-13 - Inclusao Segura De Membros
 
 ### Feito

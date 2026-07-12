@@ -2,6 +2,16 @@
 
 Atualizado em 2026-07-12.
 
+## Handoff 2026-07-13 - Onboarding Do Piloto
+
+- Catalogos CSV/TSV com produto e preco entram no pipeline RAG com limites e
+  neutralizacao de formulas.
+- Inclusao de conta existente por e-mail foi aplicada remotamente com limite de
+  plano e owner imutavel; a RPC `SECURITY DEFINER` e intencional e restrita.
+- Settings persiste auditoria de plataforma, API, estoque, pedidos e clientes
+  usando `integrations` e RLS existente.
+- Suite final possui 40 testes em 10 arquivos; lint e build passaram.
+
 ## Handoff 2026-07-13 - RAG E Persistencia Do Chat
 
 - Matriz automatica cobre literal, multi-chunk, ambiguo e sem resposta; corpus
