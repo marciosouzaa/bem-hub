@@ -4,6 +4,36 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-12 - Dashboard Sem Dados Ficticios
+
+### Feito
+
+- Removidas conversas, assistentes, percentuais, integracoes, latencia, uptime
+  e sincronizacao ficticios do dashboard.
+- Resumo agora usa listas reais de assistentes, documentos e conversas da
+  organizacao autenticada.
+- Conversas recentes apontam para historico real; ausencia de dados possui
+  estado vazio e CTA utilizavel.
+- Cards exibem documentos prontos, chunks pesquisaveis, assistente padrao e
+  uso registrado sem alegar estados nao observados.
+- Onboarding passou a derivar progresso das mesmas consultas, eliminando tres
+  contagens duplicadas por carregamento.
+- Contexto lateral mostra organizacao, papel, saude documental e perguntas sem
+  evidencia, sem simular integracoes ainda inexistentes.
+
+### Verificacao
+
+- `bun run test`: 18 testes passaram em 5 arquivos.
+- `bun run lint` passou.
+- `bun run build` passou com Next.js 16.2.9.
+- QA manual/visual nao bloqueia continuidade conforme orientacao do usuario.
+
+### Proximo Passo
+
+Auditar proximos fluxos locais por dados ficticios, estados incompletos e riscos
+server-side. Manter gates externos registrados sem interromper trabalho
+automatizavel.
+
 ## 2026-07-12 - Modelo Configuravel De Catalogo
 
 ### Feito
