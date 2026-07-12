@@ -4,6 +4,41 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-12 - Migrations Remotas E RLS Consolidado
+
+### Feito
+
+- Aplicadas remotamente `add_foreign_key_indexes` e
+  `secure_manual_automation_runs` com autorizacao do usuario.
+- Validado no remoto: 15 indices esperados e 2 policies de runs presentes.
+- Criada e aplicada `optimize_auth_rls_policies`: cinco policies usam initplan,
+  roles explicitos e `WITH CHECK`; conversa nao pode mudar para outro tenant.
+- Criada e aplicada `consolidate_permissive_policies`: policies `FOR ALL`
+  sobrepostas foram separadas por acao e limitadas a `authenticated`.
+- Bootstrap direto de owner foi preservado em policy unica, sem ampliar acesso.
+- pgTAP passou para 34 assertions com tentativa de mover conversa entre tenants.
+
+### Advisors Pos-Migration
+
+- `unindexed_foreign_keys`: 0.
+- `auth_rls_initplan`: 0.
+- `multiple_permissive_policies`: 0.
+- Restam 19 infos `unused_index`, esperadas logo apos criar indices e antes de
+  carga relevante.
+- Seguranca mantem 2 warnings conhecidos: bootstrap `SECURITY DEFINER`
+  intencional e leaked-password protection desativada no painel Auth.
+
+### Proximo Passo
+
+Continuar produto sem depender de teste manual. Leaked-password protection
+permanece unica configuracao de seguranca externa nao resolvida.
+
+### Verificacao
+
+- `bun run test`: 22 testes passaram em 6 arquivos.
+- `bun run lint` passou.
+- `bun run build` passou com Next.js 16.2.9.
+
 ## 2026-07-12 - Automacoes Manuais Verticais
 
 ### Feito

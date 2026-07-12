@@ -38,6 +38,7 @@ senha vazada para considerar o produto pronto para dados sensiveis reais.
 - [x] Entitlements e troca manual de plano no servidor.
 - [x] Preparar hardening de funcoes `SECURITY DEFINER` e permissoes de execucao.
 - [x] Aplicar hardening remoto de funcoes `SECURITY DEFINER` e RPCs vetoriais.
+- [x] Corrigir indices, initplans Auth e policies RLS permissivas sobrepostas.
 - [ ] Verificar isolamento de tabelas, RPCs e Storage com dois usuarios reais.
 - [ ] Ativar protecao contra senha vazada no Supabase Auth.
 - [ ] Fechar alertas de seguranca que bloqueiem uso de dados reais.

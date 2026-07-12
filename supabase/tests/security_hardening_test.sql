@@ -1,5 +1,5 @@
 begin;
-select plan(33);
+select plan(34);
 
 select ok(
   not has_function_privilege('anon', 'public.bootstrap_owned_organization(uuid)', 'execute'),
@@ -150,6 +150,19 @@ values
     '{"template_id":"summarize"}',
     '20000000-0000-0000-0000-000000000002'
   );
+
+insert into public.conversations (
+  id,
+  organization_id,
+  user_id,
+  title
+)
+values (
+  'a3000000-0000-0000-0000-000000000001',
+  'a0000000-0000-0000-0000-000000000001',
+  '10000000-0000-0000-0000-000000000001',
+  'Tenant A conversation'
+);
 
 insert into public.documents (
   id,
@@ -311,6 +324,17 @@ select throws_ok(
   '42501',
   'new row violates row-level security policy for table "automation_runs"',
   'tenant A cannot create a run attributed to tenant B user'
+);
+
+select throws_ok(
+  $$
+    update public.conversations
+    set organization_id = 'b0000000-0000-0000-0000-000000000002'
+    where id = 'a3000000-0000-0000-0000-000000000001'
+  $$,
+  '42501',
+  'new row violates row-level security policy for table "conversations"',
+  'tenant A cannot move its conversation into tenant B'
 );
 
 reset role;

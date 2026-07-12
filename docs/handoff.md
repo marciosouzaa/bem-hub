@@ -2,6 +2,17 @@
 
 Atualizado em 2026-07-12.
 
+## Handoff 2026-07-12 - RLS E Automacoes No Remoto
+
+- Aplicadas migrations de 15 indices FK, policies de runs manuais, initplans
+  Auth e consolidacao de policies permissivas.
+- Advisors remotos: zero FK sem indice, zero initplan Auth e zero policies
+  permissivas sobrepostas.
+- Permanecem warning intencional do bootstrap `SECURITY DEFINER`, protecao de
+  senha vazada desativada e infos de indices novos ainda sem uso.
+- pgTAP local possui 34 assertions, incluindo isolamento de runs e bloqueio de
+  movimentacao de conversa entre tenants.
+
 ## Handoff 2026-07-12 - Benchmark RAG Reproduzivel
 
 - Criado `bun run benchmark:rag` para executar o corpus oficial sem depender da

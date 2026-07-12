@@ -113,9 +113,9 @@ Bloqueado pela auditoria da plataforma e disponibilidade dos dados.
   reais e registrar os advisories que ainda permanecerem.
 - Os 29 testes pgTAP de hardening estao prontos, mas exigem Docker/Supabase local
   ou credencial de banco remoto para execucao.
-- A migration `20260712215654_add_foreign_key_indexes.sql` corrige localmente
-  os foreign keys sem indice; aplicacao remota e novo advisor permanecem como
-  operacoes externas, sem bloquear desenvolvimento local.
+- Migrations de indices, runs manuais e consolidacao RLS foram aplicadas
+  remotamente. Advisors agora reportam zero foreign keys sem indice, zero
+  initplans de Auth e zero policies permissivas sobrepostas.
 
 ## Concluido
 
