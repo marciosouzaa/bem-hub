@@ -4,6 +4,25 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-13 - Hardening Operacional
+
+### Feito
+
+- Cada envio do chat possui `request_id` UUID unico por organizacao.
+- Retry duplicado retorna conflito antes de nova chamada de IA.
+- pgTAP subiu para 82 assertions com prova de idempotencia.
+- Runbooks cobrem incidente, backup/restore, credencial e retencao.
+
+### Verificacao
+
+- `bun run test`: 48 testes passaram em 12 arquivos.
+- Lint e build passaram; migration aplicada remotamente.
+
+### Proximo Passo
+
+Continuar M2/M3 somente apos os gates de fornecedor e dados reais, ou ampliar
+observabilidade e operacao do MVP comercial.
+
 ## 2026-07-13 - Contratos Comerciais M3
 
 ### Feito

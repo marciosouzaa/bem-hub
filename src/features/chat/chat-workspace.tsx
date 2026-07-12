@@ -121,6 +121,7 @@ export function ChatWorkspace({
       const response = await fetch("/api/chat", {
         body: JSON.stringify({
           assistantId,
+          requestId: userMessage.id,
           ...(conversationId ? { conversationId } : {}),
           message,
         }),

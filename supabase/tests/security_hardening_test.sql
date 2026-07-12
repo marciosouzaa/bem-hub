@@ -1,5 +1,5 @@
 begin;
-select plan(80);
+select plan(82);
 
 select ok(
   not has_function_privilege('anon', 'public.bootstrap_owned_organization(uuid)', 'execute'),
@@ -769,6 +769,30 @@ select throws_ok(
   '42501',
   'organization_admin_required',
   'tenant A cannot activate tenant B catalogs'
+);
+select lives_ok(
+  $$insert into public.messages (organization_id, conversation_id, role, content, request_id)
+    values (
+      'a0000000-0000-0000-0000-000000000001',
+      'a3000000-0000-0000-0000-000000000001',
+      'user',
+      'Mensagem idempotente',
+      '1d3a9000-0000-4000-8000-000000000001'
+    )$$,
+  'first request id is accepted'
+);
+select throws_ok(
+  $$insert into public.messages (organization_id, conversation_id, role, content, request_id)
+    values (
+      'a0000000-0000-0000-0000-000000000001',
+      'a3000000-0000-0000-0000-000000000001',
+      'user',
+      'Retry duplicado',
+      '1d3a9000-0000-4000-8000-000000000001'
+    )$$,
+  '23505',
+  'duplicate key value violates unique constraint "messages_user_request_id_idx"',
+  'duplicate request id is rejected before another completion'
 );
 
 reset role;

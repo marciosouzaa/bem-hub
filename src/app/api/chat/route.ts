@@ -29,6 +29,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 export const maxDuration = 30;
 
 const chatRequestSchema = z.object({
+  requestId: z.string().uuid(),
   conversationId: z
     .string()
     .uuid()
@@ -159,6 +160,7 @@ export async function POST(request: Request) {
       role: "user",
       content: body.data.message,
       model: runtime.model,
+      request_id: body.data.requestId,
       metadata: {
         assistant_id: assistant.id,
         provider: runtime.provider,
@@ -167,6 +169,12 @@ export async function POST(request: Request) {
     });
 
     if (messageError) {
+      if (messageError.code === "23505") {
+        return Response.json(
+          { error: "Esta mensagem ja foi processada.", code: "duplicate_request" },
+          { status: 409 },
+        );
+      }
       throw new ChatHttpError(
         `Falha ao salvar mensagem: ${messageError.message}`,
         500,

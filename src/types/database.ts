@@ -465,6 +465,7 @@ export type Database = {
       }
       messages: {
         Row: {
+          request_id: string | null
           content: string
           conversation_id: string
           created_at: string
@@ -477,6 +478,7 @@ export type Database = {
           tokens_output: number | null
         }
         Insert: {
+          request_id?: string | null
           content: string
           conversation_id: string
           created_at?: string
@@ -489,6 +491,7 @@ export type Database = {
           tokens_output?: number | null
         }
         Update: {
+          request_id?: string | null
           content?: string
           conversation_id?: string
           created_at?: string
