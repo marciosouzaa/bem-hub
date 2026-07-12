@@ -101,3 +101,10 @@ Runs are scoped by `organization_id`. Members may create runs and update only
 runs they created; organization members may inspect history under RLS.
 Scheduling, automatic sends, external side effects, and autonomous execution
 remain out of scope.
+
+## Assisted Channel Contract
+
+Provider-neutral contracts live in `src/features/channels`. Inbound messages
+require stable provider IDs for idempotency. Replies begin as drafts and cannot
+reach `sent` without explicit `approved`; terminal states stay immutable. No
+adapter sends externally before BSP selection and operational approval.

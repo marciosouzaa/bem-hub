@@ -4,6 +4,18 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-13 - Contrato Neutro De Canal
+
+### Feito
+
+- Mensagens recebidas independem de fornecedor e possuem chave idempotente.
+- Maquina de estados exige aprovacao humana antes de envio.
+- Estados finais impedem reenvio ou reabertura acidental.
+
+### Proximo Passo
+
+Preparar modelo normalizado e importador comercial M3.
+
 ## 2026-07-13 - pgTAP No CI
 
 ### Feito
