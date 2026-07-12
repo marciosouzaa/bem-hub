@@ -4,6 +4,33 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-12 - Avaliacao Do Benchmark RAG Endurecida
+
+### Feito
+
+- Corrigido o runner para respeitar `must_find_documents`,
+  `must_cite_sections` e `allow_partial` definidos no corpus.
+- Respostas com parafrase deixaram de receber aprovacao automatica sem
+  avaliacao semantica; agora ficam explicitamente em `REVIEW`.
+- Saida por caso diferencia `PASS`, `FAIL` e `REVIEW`.
+- Resumo do relatorio passou a detalhar resultados por categoria.
+- Adicionados testes para criterios opcionais, evidencia parcial e revisao de
+  parafrases.
+
+### Verificacao
+
+- `bun run test`: 11 testes passaram em 2 arquivos.
+- `bun run lint` passou.
+- `bun run build` passou com Next.js 16.2.9.
+
+### Bloqueio E Proximo Passo
+
+Benchmark real continua bloqueado porque `.env.local` nao possui
+`BEM_HUB_BENCHMARK_ACCESS_TOKEN` nem `BEM_HUB_BENCHMARK_ORGANIZATION_ID`.
+Obter token curto de usuario e organizacao do corpus, remover o documento com
+gabarito da base e executar `bun run benchmark:rag`; revisar todos os casos
+`REVIEW` antes de calibrar retrieval ou prompt.
+
 ## 2026-07-12 - Runner Do Benchmark RAG
 
 ### Feito

@@ -56,7 +56,69 @@ describe("evaluateCase", () => {
 
     expect(result.automaticPass).toBe(true);
     expect(result.uncertaintyPresent).toBe(true);
+    expect(result.needsHumanReview).toBe(false);
+  });
+
+  test("sends paraphrased answers to review after hard criteria pass", () => {
+    const result = evaluateCase(
+      benchmarkCase({
+        answer: "O prazo depende das regras aplicaveis.",
+        documents: ["politica-de-ferias.md"],
+        shouldHaveAnswer: true,
+        allowParaphrase: true,
+      }),
+      "A solicitacao precisa respeitar o prazo da politica. [Fonte 1]",
+      ["politica-de-ferias.md"],
+      "grounded",
+      30,
+    );
+
+    expect(result.automaticPass).toBeNull();
     expect(result.needsHumanReview).toBe(true);
+  });
+
+  test("honors optional retrieval and citation criteria", () => {
+    const testCase = benchmarkCase({
+      answer: "Resposta exata.",
+      documents: ["documento.md"],
+      shouldHaveAnswer: true,
+      allowParaphrase: false,
+    });
+    testCase.evaluation.must_find_documents = false;
+    testCase.evaluation.must_cite_sections = false;
+
+    const result = evaluateCase(
+      testCase,
+      "Resposta exata.",
+      [],
+      "grounded",
+      10,
+    );
+
+    expect(result.automaticPass).toBe(true);
+    expect(result.expectedDocumentsFound).toBeNull();
+    expect(result.citationPresent).toBeNull();
+  });
+
+  test("accepts some expected documents when partial evidence is allowed", () => {
+    const testCase = benchmarkCase({
+      answer: "Resposta exata.",
+      documents: ["documento-a.md", "documento-b.md"],
+      shouldHaveAnswer: true,
+      allowParaphrase: false,
+    });
+    testCase.evaluation.allow_partial = true;
+
+    const result = evaluateCase(
+      testCase,
+      "Resposta exata. [Fonte 1]",
+      ["documento-a.md"],
+      "grounded",
+      10,
+    );
+
+    expect(result.automaticPass).toBe(true);
+    expect(result.expectedDocumentsFound).toBe(true);
   });
 });
 

@@ -152,7 +152,13 @@ async function main() {
       );
 
       results.push(result);
-      console.log(`${result.automaticPass === false ? "FAIL" : "DONE"} ${testCase.id}`);
+      const status =
+        result.automaticPass === true
+          ? "PASS"
+          : result.automaticPass === false
+            ? "FAIL"
+            : "REVIEW";
+      console.log(`${status} ${testCase.id}`);
     } catch (error) {
       results.push({
         id: testCase.id,
@@ -209,20 +215,30 @@ export function evaluateCase(
   latencyMs: number,
 ): BenchmarkCaseResult {
   const normalizedRetrieved = new Set(retrievedDocuments.map(normalizeText));
-  const expectedDocumentsFound = testCase.expected.documents.length
-    ? testCase.expected.documents.every((document) =>
-        normalizedRetrieved.has(normalizeText(document)),
-      )
+  const expectedDocumentsFound = testCase.evaluation.must_find_documents
+    ? testCase.expected.documents[
+        testCase.evaluation.allow_partial ? "some" : "every"
+      ]((document) => normalizedRetrieved.has(normalizeText(document)))
     : null;
-  const citationPresent = /\[Fonte\s+\d+\]/iu.test(answer);
+  const citationPresent = testCase.evaluation.must_cite_sections
+    ? /\[Fonte\s+\d+\]/iu.test(answer)
+    : null;
   const exactAnswerPresent = testCase.evaluation.allow_paraphrase
     ? null
     : normalizeText(answer).includes(normalizeText(testCase.expected.answer));
   const uncertaintyPresent = hasUncertaintySignal(answer);
+  const hardCriteriaPass =
+    (expectedDocumentsFound ?? true) &&
+    (citationPresent ?? true) &&
+    exactAnswerPresent !== false;
+  const requiresSemanticReview =
+    testCase.evaluation.should_have_answer && testCase.evaluation.allow_paraphrase;
   const automaticPass = testCase.evaluation.should_have_answer
-    ? (expectedDocumentsFound ?? true) &&
-      citationPresent &&
-      exactAnswerPresent !== false
+    ? hardCriteriaPass
+      ? requiresSemanticReview
+        ? null
+        : true
+      : false
     : uncertaintyPresent;
 
   return {
@@ -239,19 +255,23 @@ export function evaluateCase(
     exactAnswerPresent,
     uncertaintyPresent,
     automaticPass,
-    needsHumanReview:
-      testCase.evaluation.allow_paraphrase || !testCase.evaluation.should_have_answer,
+    needsHumanReview: automaticPass === null,
     latencyMs: Math.round(latencyMs),
     error: null,
   };
 }
 
 function summarizeResults(results: BenchmarkCaseResult[]) {
+  const categories = Object.fromEntries(
+    ["literal", "multi_chunk", "ambiguous", "no_answer"].map((category) => {
+      const categoryResults = results.filter((result) => result.category === category);
+
+      return [category, summarizeStatus(categoryResults)];
+    }),
+  );
+
   return {
-    total: results.length,
-    automaticPass: results.filter((result) => result.automaticPass === true).length,
-    automaticFail: results.filter((result) => result.automaticPass === false).length,
-    needsHumanReview: results.filter((result) => result.needsHumanReview).length,
+    ...summarizeStatus(results),
     errors: results.filter((result) => result.error).length,
     averageLatencyMs: results.length
       ? Math.round(
@@ -259,6 +279,16 @@ function summarizeResults(results: BenchmarkCaseResult[]) {
             results.length,
         )
       : 0,
+    categories,
+  };
+}
+
+function summarizeStatus(results: BenchmarkCaseResult[]) {
+  return {
+    total: results.length,
+    automaticPass: results.filter((result) => result.automaticPass === true).length,
+    automaticFail: results.filter((result) => result.automaticPass === false).length,
+    needsHumanReview: results.filter((result) => result.automaticPass === null).length,
   };
 }
 

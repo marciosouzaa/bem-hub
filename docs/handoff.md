@@ -12,6 +12,11 @@ Atualizado em 2026-07-12.
 - Relatorios JSON sao gravados em `output/benchmarks` e ignorados pelo Git.
 - O corpus validou 21 casos; 8 testes automatizados, lint e build passaram.
 - Nenhuma chamada real de IA foi feita pelo runner nesta sessao.
+- Avaliador agora respeita os criterios declarados no corpus, diferencia
+  `PASS`/`FAIL`/`REVIEW` e inclui resumo por categoria.
+- Casos com parafrase exigem revisao humana em vez de aprovacao automatica.
+- Suite atual possui 11 testes; lint e build passaram apos o hardening do
+  avaliador.
 
 ## Handoff 2026-07-12 - RAG No Chat
 
