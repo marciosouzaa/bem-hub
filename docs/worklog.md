@@ -4,6 +4,36 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-12 - Runner Do Benchmark RAG
+
+### Feito
+
+- Criado `scripts/benchmark-rag.ts` com schema Zod para o corpus oficial.
+- Adicionado modo `--validate-only`, filtros por categoria, limite de casos e
+  caminho de saida configuravel.
+- Execucao real exige token curto de usuario, organizacao e assistente opcional;
+  nenhum segredo e escrito no relatorio.
+- Runner usa os mesmos retrieval, prompt, provider runtime e entitlements do
+  produto, sem persistir conversas ou eventos de uso.
+- Relatorio registra resposta, fontes, citacao, abstinencia, latencia, erros e
+  casos que ainda exigem revisao humana.
+- Resultados gerados ficam ignorados em `output/benchmarks`.
+
+### Verificacao
+
+- `bun run benchmark:rag -- --validate-only` validou 21 casos: 10 literais, 5
+  multi-chunk, 3 ambiguos e 3 sem resposta.
+- `bun run test`: 8 testes passaram em 2 arquivos.
+- `bun run lint` passou.
+- `bun run build` passou com Next.js 16.2.9.
+
+### Bloqueio E Proximo Passo
+
+Definir temporariamente `BEM_HUB_BENCHMARK_ACCESS_TOKEN` e
+`BEM_HUB_BENCHMARK_ORGANIZATION_ID` em `.env.local`, remover da base remota o
+documento com gabarito e executar `bun run benchmark:rag`. Revisar os casos
+marcados e calibrar o threshold somente depois do relatorio.
+
 ## 2026-07-12 - M1 RAG Vertical Implementado
 
 ### Feito

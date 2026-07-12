@@ -9,6 +9,7 @@
   "scripts": {
     "dev": "next dev",
     "test": "bun test",
+    "benchmark:rag": "bun run scripts/benchmark-rag.ts",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"

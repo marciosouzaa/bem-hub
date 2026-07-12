@@ -2,6 +2,17 @@
 
 Atualizado em 2026-07-12.
 
+## Handoff 2026-07-12 - Benchmark RAG Reproduzivel
+
+- Criado `bun run benchmark:rag` para executar o corpus oficial sem depender da
+  UI do chat.
+- `--validate-only` confirma estrutura e selecao sem credenciais ou custo.
+- Execucao real exige `BEM_HUB_BENCHMARK_ACCESS_TOKEN`,
+  `BEM_HUB_BENCHMARK_ORGANIZATION_ID` e assistente default ou ID explicito.
+- Relatorios JSON sao gravados em `output/benchmarks` e ignorados pelo Git.
+- O corpus validou 21 casos; 8 testes automatizados, lint e build passaram.
+- Nenhuma chamada real de IA foi feita pelo runner nesta sessao.
+
 ## Handoff 2026-07-12 - RAG No Chat
 
 - Implementada recuperacao semantica antes do chat com threshold e limites.

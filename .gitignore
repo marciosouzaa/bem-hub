@@ -13,6 +13,7 @@ package-lock.json
 
 # testing
 /coverage
+/output/benchmarks/
 
 # next.js
 /.next/

@@ -48,6 +48,7 @@ o primeiro valor diario do piloto.
 - [x] Injetar instrucoes contra alucinacao e para insuficiencia de contexto.
 - [x] Persistir metadata de fontes na mensagem do assistente.
 - [x] Renderizar fontes acessiveis com nome do documento e referencia util.
+- [x] Criar runner reproduzivel com validacao, filtros e relatorio JSON.
 - [ ] Cobrir casos literal, multi-chunk, ambiguo e sem resposta.
 - [ ] Executar o benchmark externo sem indexar arquivos de resposta esperada.
 - [ ] Fazer smoke test com historico recarregado e mais de uma organizacao.
