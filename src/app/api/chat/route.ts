@@ -207,11 +207,21 @@ export async function POST(request: Request) {
           return;
         }
 
-        await supabase
+        const { data: touchedConversation, error: conversationUpdateError } =
+          await supabase
           .from("conversations")
           .update({ updated_at: new Date().toISOString() })
           .eq("id", conversation.id)
-          .eq("organization_id", organizationId);
+          .eq("organization_id", organizationId)
+          .select("id")
+          .maybeSingle();
+
+        if (conversationUpdateError || !touchedConversation) {
+          console.error(
+            "Falha ao atualizar atividade da conversa",
+            conversationUpdateError ?? { conversationId: conversation.id },
+          );
+        }
 
         const { error: usageError } = await supabase.from("usage_events").insert({
           organization_id: organizationId,

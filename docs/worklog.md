@@ -4,6 +4,22 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-12 - Atividade Do Chat Observavel
+
+### Feito
+
+- Update de `conversations.updated_at` agora exige retorno da linha afetada.
+- Erro do banco ou update com zero linhas deixa log estruturado em vez de falhar
+  silenciosamente e esconder conversa recente na ordenacao do historico.
+
+### Verificacao
+
+- `bun run test`, `bun run lint` e `bun run build` passaram.
+
+### Proximo Passo
+
+Continuar auditoria de persistencia e telemetria do chat.
+
 ## 2026-07-12 - Exclusao Atomica De Assistente
 
 ### Feito
