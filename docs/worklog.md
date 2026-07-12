@@ -19,6 +19,9 @@ do marco ativo.
 - Tipos Supabase foram regenerados com a assinatura da RPC.
 - pgTAP possui 40 assertions cobrindo ACL, invoker, search path, default unico e
   tentativa cross-tenant.
+- Unique partial index `assistants_single_default_per_org_idx` foi aplicado e
+  confirmado no remoto; pgTAP agora possui 41 assertions e rejeita dois
+  defaults mesmo por escrita direta.
 
 ### Verificacao
 

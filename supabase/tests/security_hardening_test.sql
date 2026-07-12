@@ -1,5 +1,5 @@
 begin;
-select plan(40);
+select plan(41);
 
 select ok(
   not has_function_privilege('anon', 'public.bootstrap_owned_organization(uuid)', 'execute'),
@@ -194,6 +194,17 @@ values
     'Tenant B instructions',
     '20000000-0000-0000-0000-000000000002'
   );
+
+select throws_ok(
+  $$
+    update public.assistants
+    set is_default = true
+    where organization_id = 'a0000000-0000-0000-0000-000000000001'
+  $$,
+  '23505',
+  'duplicate key value violates unique constraint "assistants_single_default_per_org_idx"',
+  'database rejects two default assistants in one organization'
+);
 
 insert into public.conversations (
   id,
