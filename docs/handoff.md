@@ -34,7 +34,8 @@ Atualizado em 2026-07-12.
 
 - Criada a migration local
   `20260712160034_harden_tenant_security_functions.sql`.
-- Criado `supabase/tests/security_hardening_test.sql` com 29 assercoes pgTAP.
+- Criado `supabase/tests/security_hardening_test.sql`; suite atual possui 33
+  assercoes pgTAP, incluindo isolamento de automacoes manuais.
 - O remoto ainda nao recebeu a migration; chamada anonima a `is_org_member`
   respondeu HTTP 200 antes do hardening.
 - Lint e build passaram.

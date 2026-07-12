@@ -1,5 +1,5 @@
 begin;
-select plan(29);
+select plan(33);
 
 select ok(
   not has_function_privilege('anon', 'public.bootstrap_owned_organization(uuid)', 'execute'),
@@ -128,6 +128,29 @@ values
     'active'
   );
 
+insert into public.automation_runs (
+  id,
+  organization_id,
+  status,
+  input,
+  created_by
+)
+values
+  (
+    'a2000000-0000-0000-0000-000000000001',
+    'a0000000-0000-0000-0000-000000000001',
+    'running',
+    '{"template_id":"summarize"}',
+    '10000000-0000-0000-0000-000000000001'
+  ),
+  (
+    'b2000000-0000-0000-0000-000000000002',
+    'b0000000-0000-0000-0000-000000000002',
+    'running',
+    '{"template_id":"summarize"}',
+    '20000000-0000-0000-0000-000000000002'
+  );
+
 insert into public.documents (
   id,
   organization_id,
@@ -204,7 +227,10 @@ create temporary table tenant_a_results (
   matches_other bigint,
   storage_own bigint,
   storage_other bigint,
-  deleted_other bigint
+  deleted_other bigint,
+  runs_other bigint,
+  updated_run_own bigint,
+  updated_run_other bigint
 ) on commit drop;
 grant insert, select on tenant_a_results to authenticated;
 
@@ -215,6 +241,16 @@ set local request.jwt.claims =
 with deleted as (
   delete from public.documents
   where id = 'b1000000-0000-0000-0000-000000000002'
+  returning id
+), updated_run_own as (
+  update public.automation_runs
+  set status = 'succeeded'
+  where id = 'a2000000-0000-0000-0000-000000000001'
+  returning id
+), updated_run_other as (
+  update public.automation_runs
+  set status = 'succeeded'
+  where id = 'b2000000-0000-0000-0000-000000000002'
   returning id
 )
 insert into tenant_a_results
@@ -253,7 +289,29 @@ select
     where bucket_id = 'knowledge-documents'
       and name like 'b0000000-0000-0000-0000-000000000002/%'
   ),
-  (select count(*) from deleted);
+  (select count(*) from deleted),
+  (
+    select count(*)
+    from public.automation_runs
+    where organization_id = 'b0000000-0000-0000-0000-000000000002'
+  ),
+  (select count(*) from updated_run_own),
+  (select count(*) from updated_run_other);
+
+select throws_ok(
+  $$
+    insert into public.automation_runs (organization_id, status, input, created_by)
+    values (
+      'a0000000-0000-0000-0000-000000000001',
+      'running',
+      '{}',
+      '20000000-0000-0000-0000-000000000002'
+    )
+  $$,
+  '42501',
+  'new row violates row-level security policy for table "automation_runs"',
+  'tenant A cannot create a run attributed to tenant B user'
+);
 
 reset role;
 
@@ -268,6 +326,9 @@ select is((select matches_other from tenant_a_results), 0::bigint, 'tenant A vec
 select is((select storage_own from tenant_a_results), 1::bigint, 'tenant A reads its storage object');
 select is((select storage_other from tenant_a_results), 0::bigint, 'tenant A cannot read tenant B storage object');
 select is((select deleted_other from tenant_a_results), 0::bigint, 'tenant A cannot delete tenant B document');
+select is((select runs_other from tenant_a_results), 0::bigint, 'tenant A cannot read tenant B automation run');
+select is((select updated_run_own from tenant_a_results), 1::bigint, 'tenant A can update its own automation run');
+select is((select updated_run_other from tenant_a_results), 0::bigint, 'tenant A cannot update tenant B automation run');
 
 set local request.jwt.claims =
   '{"sub":"10000000-0000-0000-0000-000000000001","role":"authenticated"}';

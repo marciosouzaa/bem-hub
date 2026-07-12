@@ -22,6 +22,8 @@ do marco ativo.
   executa efeito externo automaticamente.
 - Migration `20260712221934_secure_manual_automation_runs.sql` restringe update
   ao criador autenticado dentro da organizacao.
+- pgTAP de hardening passou de 29 para 33 assertions, cobrindo leitura e update
+  cruzados de runs, update proprio e spoof de `created_by`.
 
 ### Verificacao
 
