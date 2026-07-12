@@ -4,6 +4,24 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-13 - pgTAP No CI
+
+### Feito
+
+- Workflow GitHub Actions inicia banco Supabase limpo em Docker.
+- Todas as migrations sao aplicadas antes das 80 assertions pgTAP.
+- Execucao ocorre em PR/push que altere `supabase/**`.
+- Scripts locais `test:db` e `test:ci` documentam comandos reproduziveis.
+
+### Verificacao
+
+- CLI 2.109.0 e sintaxe de `supabase test db --local` confirmadas localmente.
+- Execucao local do banco segue indisponivel sem Docker; CI remove esse gate.
+
+### Proximo Passo
+
+Preparar contrato neutro de canal assistido para M2.
+
 ## 2026-07-13 - Analytics Operacional De IA
 
 ### Feito

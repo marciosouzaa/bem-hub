@@ -9,6 +9,8 @@
   "scripts": {
     "dev": "next dev",
     "test": "bun test",
+    "test:db": "supabase test db --local supabase/tests",
+    "test:ci": "bun test && bun run lint && bun run build",
     "benchmark:rag": "bun run scripts/benchmark-rag.ts",
     "build": "next build",
     "start": "next start",
