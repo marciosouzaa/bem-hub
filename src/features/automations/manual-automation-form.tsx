@@ -2,7 +2,14 @@
 
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { CheckSquare, FileText, MessageSquareReply, Play } from "lucide-react";
+import {
+  CheckSquare,
+  ClipboardList,
+  FileBarChart,
+  FileText,
+  MessageSquareReply,
+  Play,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -25,6 +32,8 @@ const icons = {
   summarize: FileText,
   client_reply: MessageSquareReply,
   checklist: CheckSquare,
+  report: FileBarChart,
+  meeting_tasks: ClipboardList,
 };
 
 export function ManualAutomationForm() {
@@ -40,7 +49,7 @@ export function ManualAutomationForm() {
           <CardTitle>Escolha uma rotina</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-3 md:grid-cols-3">
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {AUTOMATION_TEMPLATES.map((item) => {
               const Icon = icons[item.id];
               const active = item.id === templateId;

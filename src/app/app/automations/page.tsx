@@ -110,7 +110,9 @@ function getRunName(templateId: string | null) {
   if (
     templateId === "summarize" ||
     templateId === "client_reply" ||
-    templateId === "checklist"
+    templateId === "checklist" ||
+    templateId === "report" ||
+    templateId === "meeting_tasks"
   ) {
     return getAutomationTemplate(templateId).name;
   }

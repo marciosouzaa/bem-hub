@@ -10,6 +10,9 @@ do marco ativo.
 
 - Criada rota `/app/automations` com resumo, rascunho de resposta ao cliente e
   checklist operacional.
+- Adicionados tambem relatorio estruturado e conversao de notas de reuniao em
+  tarefas; dados ausentes permanecem explicitos e compromissos nao sao
+  inventados.
 - Execucao valida input com Zod, entitlement `automations`, sessao e
   organizacao no servidor.
 - Provider, conexao e modelo sao resolvidos pelo assistente padrao do tenant;
@@ -27,7 +30,7 @@ do marco ativo.
 
 ### Verificacao
 
-- `bun run test`: 20 testes passaram em 6 arquivos.
+- `bun run test`: 21 testes passaram em 6 arquivos.
 - `bun run lint` passou.
 - `bun run build` passou com Next.js 16.2.9 e rota `/app/automations`.
 
