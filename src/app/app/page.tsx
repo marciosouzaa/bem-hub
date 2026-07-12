@@ -29,7 +29,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MotionItem, MotionPage, MotionSurface } from "@/components/ui/motion";
+import { OnboardingChecklist } from "@/features/onboarding/onboarding-checklist";
+import { getOnboardingProgress } from "@/features/onboarding/queries";
 import { getRequiredWorkspace } from "@/features/organizations/queries";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const recentConversations = [
   {
@@ -56,6 +59,11 @@ const integrations = [TerminalSquare, FileText, FolderKanban, Boxes, Database];
 
 export default async function WorkspacePage() {
   const workspace = await getRequiredWorkspace();
+  const supabase = await createSupabaseServerClient();
+  const onboarding = await getOnboardingProgress(
+    supabase,
+    workspace.organization.id,
+  );
   const firstName =
     workspace.profile.name?.split(" ")[0] ||
     workspace.profile.email?.split("@")[0] ||
@@ -76,6 +84,15 @@ export default async function WorkspacePage() {
               }
               title={<>Bom dia, {firstName}.</>}
             />
+
+            {onboarding.nextStep ? (
+              <MotionSurface>
+                <OnboardingChecklist
+                  organizationName={workspace.organization.name}
+                  progress={onboarding}
+                />
+              </MotionSurface>
+            ) : null}
 
             <ContentGrid columns={2}>
               <MotionSurface className="h-full">

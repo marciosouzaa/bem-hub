@@ -4,6 +4,34 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-12 - Onboarding Contextual Do Workspace
+
+### Feito
+
+- Dashboard ganhou checklist de primeiros 15 minutos baseado no estado real da
+  organizacao: assistente existente, documento pronto e primeira conversa.
+- Consultas executam em paralelo no servidor e filtram explicitamente por
+  `organization_id`, preservando RLS e isolamento multi-tenant.
+- Progresso aponta somente para a proxima acao disponivel no produto e some
+  quando o fluxo essencial termina.
+- Adicionados progresso acessivel, estados concluidos com texto e layout
+  responsivo para desktop/mobile.
+- Calculo do onboarding coberto por testes unitarios.
+
+### Verificacao
+
+- `bun run test`: 14 testes passaram em 3 arquivos.
+- `bun run lint` passou.
+- `bun run build` passou com Next.js 16.2.9.
+- QA visual nao executado porque o navegador integrado nao esta disponivel.
+
+### Proximo Passo
+
+Instrumentar ativacao e uso diario com eventos organizacionais sem duplicar os
+eventos de IA existentes. Convites permanecem pendentes porque exigem fluxo
+seguro de membership e entrega de convite; importacao do catalogo depende dos
+arquivos reais do piloto.
+
 ## 2026-07-12 - Avaliacao Do Benchmark RAG Endurecida
 
 ### Feito

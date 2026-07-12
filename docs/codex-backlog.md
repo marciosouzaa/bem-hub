@@ -61,10 +61,10 @@ evidencia nao inventam resposta; nenhuma busca atravessa organizacoes.
 Objetivo: permitir que uma dona e sua equipe alcancem valor em menos de 15
 minutos sem configuracao tecnica recorrente.
 
-- [ ] Definir checklist de configuracao do assistente de catalogo.
+- [x] Definir checklist de configuracao do assistente de catalogo.
 - [ ] Importar catalogo e tabela de precos do piloto.
 - [ ] Permitir convite ou inclusao segura das tres funcionarias.
-- [ ] Criar estado inicial e orientacao contextual curta dentro do fluxo real.
+- [x] Criar estado inicial e orientacao contextual curta dentro do fluxo real.
 - [ ] Instrumentar ativacao, uso diario e perguntas sem resposta.
 - [ ] Registrar auditoria da plataforma de loja, API, PDV e planilhas.
 
