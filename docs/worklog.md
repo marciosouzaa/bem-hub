@@ -4,6 +4,33 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-12 - Modelo Configuravel De Catalogo
+
+### Feito
+
+- Formulario de novo assistente ganhou modelo de catalogo com nome da marca e
+  tres tons de voz configuraveis.
+- Modelo preenche nome, area, descricao e instrucoes, mantendo tudo editavel
+  antes da persistencia.
+- Instrucoes exigem evidencia documental, citacao, abstinencia para preco,
+  estoque e politica ausentes, esclarecimento de ambiguidade e revisao humana
+  para excecoes sensiveis.
+- Contrato continua usando campos existentes; nenhuma migration ou regra de
+  negocio nova foi necessaria.
+- Gerador do modelo possui testes para linguagem, limites e fallback de marca.
+
+### Verificacao
+
+- `bun run test`: 18 testes passaram em 5 arquivos.
+- `bun run lint` passou.
+- `bun run build` passou com Next.js 16.2.9.
+
+### Proximo Passo
+
+Avancar trabalho local independente de dados do piloto. Convites, importacao e
+auditoria comercial permanecem gates externos, mas nao bloqueiam hardening,
+qualidade do dashboard ou preparacao tecnica dos fluxos seguintes.
+
 ## 2026-07-12 - Metricas Operacionais Do Assistente
 
 ### Feito

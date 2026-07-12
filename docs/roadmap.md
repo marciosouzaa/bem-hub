@@ -54,7 +54,7 @@ Status: em andamento. Equivale a Fase 1 do roadmap do piloto.
 - [x] Exibir fontes por resposta e persistir metadata suficiente para historico.
 - [x] Responder que nao ha contexto suficiente quando a evidencia for fraca.
 - [ ] Validar o pipeline com `docs/benchmarks/benchmark-rag.*`.
-- [ ] Preparar assistente de catalogo com linguagem configuravel da marca.
+- [x] Preparar assistente de catalogo com linguagem configuravel da marca.
 - [ ] Organizar onboarding guiado para dona e equipe em menos de 15 minutos.
 - [ ] Medir uso por organizacao e frequencia do assistente.
 - [ ] Auditar plataforma de e-commerce, estoque e origem dos dados do piloto.
