@@ -22,9 +22,7 @@ export async function extractDocumentText(file: File) {
     file.type ===
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
   ) {
-    throw new Error(
-      "Extracao de DOCX ainda nao esta habilitada. Envie TXT ou Markdown nesta etapa.",
-    );
+    return extractDocxText(file);
   }
 
   throw new Error("Tipo de arquivo nao suportado.");
@@ -126,6 +124,20 @@ async function extractPdfText(file: File) {
   } finally {
     await parser.destroy();
   }
+}
+
+async function extractDocxText(file: File) {
+  const mammoth = (await import("mammoth")).default;
+  const result = await mammoth.extractRawText({
+    buffer: Buffer.from(await file.arrayBuffer()),
+  });
+  const text = normalizeExtractedText(result.value);
+
+  if (!text) {
+    throw new Error("DOCX sem texto extraivel.");
+  }
+
+  return text;
 }
 
 function findChunkBoundary(text: string, start: number, hardEnd: number) {

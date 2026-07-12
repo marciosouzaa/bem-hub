@@ -101,7 +101,7 @@ Bloqueado pela auditoria da plataforma e disponibilidade dos dados.
 
 ## Descobertas
 
-- DOCX ainda nao tem parser e PDF escaneado ainda nao tem OCR.
+- PDF escaneado ainda nao tem OCR; DOCX textual agora possui extracao.
 - O download e a exclusao completa de documentos precisam de novo smoke test.
 - Foreign keys sem indice e policies permissivas ainda geram advisors.
 - Tipos Supabase oficiais foram regenerados apos estabilizacao do schema;

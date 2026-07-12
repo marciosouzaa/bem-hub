@@ -2,6 +2,13 @@
 
 Atualizado em 2026-07-12.
 
+## Handoff 2026-07-12 - DOCX Textual
+
+- DOCX agora usa Mammoth para extracao de texto cru no servidor.
+- Arquivos vazios falham explicitamente; HTML, macros e imagens nao sao
+  executados.
+- Testes de OOXML em memoria, lint e build passaram.
+
 ## Handoff 2026-07-12 - RLS E Automacoes No Remoto
 
 - Aplicadas migrations de 15 indices FK, policies de runs manuais, initplans

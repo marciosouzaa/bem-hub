@@ -4,6 +4,31 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-12 - Extracao DOCX
+
+### Feito
+
+- Adicionado `mammoth@1.12.0` para extrair texto cru de DOCX no runtime Node.
+- Pipeline existente agora aceita DOCX, normaliza paragrafos, cria chunks e
+  embeddings pelo mesmo fluxo tenant-scoped dos demais formatos.
+- Nenhum HTML do documento e renderizado; imagens, macros e formatacao nao sao
+  executadas.
+- DOCX vazio retorna erro especifico em vez de produzir documento pronto sem
+  conteudo.
+- `mammoth` foi externalizado no bundle server do Next.js.
+- Testes criam OOXML minimo em memoria e cobrem extracao e arquivo vazio.
+
+### Verificacao
+
+- `bun run test`: 26 testes passaram em 8 arquivos.
+- `bun run lint` passou.
+- `bun run build` passou com Next.js 16.2.9.
+
+### Proximo Passo
+
+Continuar lacunas automatizaveis. OCR de PDF escaneado permanece fora por custo
+e escolha de provider, mas nao bloqueia documentos textuais.
+
 ## 2026-07-12 - Tipos Oficiais Do Supabase
 
 ### Feito

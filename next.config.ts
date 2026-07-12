@@ -4,7 +4,7 @@ const nextConfig: NextConfig = {
   experimental: {
     proxyClientMaxBodySize: "6mb",
   },
-  serverExternalPackages: ["pdf-parse", "pdfjs-dist"],
+  serverExternalPackages: ["mammoth", "pdf-parse", "pdfjs-dist"],
 };
 
 export default nextConfig;
