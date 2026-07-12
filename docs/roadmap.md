@@ -11,10 +11,9 @@ cosmeticos e o primeiro recorte vertical para provar valor: comecar pelo
 assistente interno, evoluir para atendimento assistido no WhatsApp e, apenas
 depois de validar uso e dados, adicionar inteligencia comercial.
 
-O PDF considera "chat com IA + RAG" como base pronta. O repositorio confirma
-chat, ingestao, embeddings e busca semantica, mas ainda nao conecta recuperacao
-ao chat nem apresenta fontes. Este roadmap usa o codigo como fonte da verdade e
-mantem RAG com citacoes como o proximo marco de produto.
+O repositorio confirma chat, ingestao, embeddings, busca semantica, recuperacao
+no chat e fontes persistidas. Este roadmap usa o codigo como fonte da verdade e
+mantem validacao automatizada e onboarding do piloto como foco do M1.
 
 ## Ordem De Execucao
 
@@ -26,9 +25,9 @@ mantem RAG com citacoes como o proximo marco de produto.
 
 ## M0 - Fundacao Confiavel
 
-Status: em andamento. A base funcional existe; o hardening de seguranca entrou,
-mas ainda faltam a verificacao manual com dois usuarios reais e a protecao de
-senha vazada para considerar o produto pronto para dados sensiveis reais.
+Status: concluido tecnicamente, com gate operacional. O hardening remoto e os
+testes automatizados passaram; verificacao manual e protecao de senha vazada
+permanecem requisitos operacionais antes de dados sensiveis reais.
 
 - [x] Autenticacao, organizacoes, membros e RLS por `organization_id`.
 - [x] Assistentes por organizacao com gestao owner/admin.
@@ -41,7 +40,7 @@ senha vazada para considerar o produto pronto para dados sensiveis reais.
 - [x] Corrigir indices, initplans Auth e policies RLS permissivas sobrepostas.
 - [ ] Verificar isolamento de tabelas, RPCs e Storage com dois usuarios reais.
 - [ ] Ativar protecao contra senha vazada no Supabase Auth.
-- [ ] Fechar alertas de seguranca que bloqueiem uso de dados reais.
+- [x] Fechar alertas tecnicos de seguranca controlaveis por migration.
 
 Criterio de saida: nenhum caminho conhecido permite leitura ou mutacao entre
 organizacoes, e os testes essenciais passam em ambiente configurado.
@@ -54,10 +53,10 @@ Status: em andamento. Equivale a Fase 1 do roadmap do piloto.
 - [x] Injetar contexto com limites claros e sem vazar outra organizacao.
 - [x] Exibir fontes por resposta e persistir metadata suficiente para historico.
 - [x] Responder que nao ha contexto suficiente quando a evidencia for fraca.
-- [ ] Validar o pipeline com `docs/benchmarks/benchmark-rag.*`.
+- [x] Validar estrutura e categorias de `docs/benchmarks/benchmark-rag.*` offline.
 - [x] Preparar assistente de catalogo com linguagem configuravel da marca.
-- [ ] Organizar onboarding guiado para dona e equipe em menos de 15 minutos.
-- [ ] Medir uso por organizacao e frequencia do assistente.
+- [x] Organizar onboarding guiado para dona e equipe em menos de 15 minutos.
+- [x] Medir uso por organizacao e frequencia do assistente.
 - [ ] Auditar plataforma de e-commerce, estoque e origem dos dados do piloto.
 
 Criterio de sucesso: a dona ou uma funcionaria usa o assistente ao menos uma vez

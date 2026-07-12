@@ -16,7 +16,7 @@ a ponta antes de mudar de objetivo.
   verificacao proporcional ao risco.
 - Atualizar `docs/worklog.md` a cada checkpoint ou antes de encerrar a sessao.
 
-## BLOQUEADO - M0 Hardening Para Dados Reais
+## GATE OPERACIONAL - M0 Hardening Para Dados Reais
 
 Objetivo: eliminar os riscos conhecidos que impedem usar documentos e dados de
 clientes reais com seguranca.
@@ -49,7 +49,7 @@ o primeiro valor diario do piloto.
 - [x] Persistir metadata de fontes na mensagem do assistente.
 - [x] Renderizar fontes acessiveis com nome do documento e referencia util.
 - [x] Criar runner reproduzivel com validacao, filtros e relatorio JSON.
-- [ ] Cobrir casos literal, multi-chunk, ambiguo e sem resposta.
+- [x] Cobrir casos literal, multi-chunk, ambiguo e sem resposta.
 - [ ] Executar o benchmark externo sem indexar arquivos de resposta esperada.
 - [ ] Fazer smoke test com historico recarregado e mais de uma organizacao.
 
@@ -103,20 +103,21 @@ Bloqueado pela auditoria da plataforma e disponibilidade dos dados.
 
 - PDF escaneado ainda nao tem OCR; DOCX textual agora possui extracao.
 - O download e a exclusao completa de documentos precisam de novo smoke test.
-- Foreign keys sem indice e policies permissivas ainda geram advisors.
 - Tipos Supabase oficiais foram regenerados apos estabilizacao do schema;
   providers/status textuais agora sao validados nas fronteiras de dominio.
-- O PDF do piloto considera RAG pronto, mas o chat ainda nao recupera nem exibe fontes.
 - `roteiro-de-validacao-rag.md`, se ainda indexado no ambiente remoto, deve ser
   removido antes do benchmark porque contem respostas esperadas.
 - A migration `20260712160034_harden_tenant_security_functions.sql` foi
   aplicada remotamente; o proximo passo e validar isolamento com dois usuarios
   reais e registrar os advisories que ainda permanecerem.
-- Os 29 testes pgTAP de hardening estao prontos, mas exigem Docker/Supabase local
-  ou credencial de banco remoto para execucao.
+- Os 57 testes pgTAP de hardening estao prontos, mas exigem Docker/Supabase local
+  para execucao completa; contratos criticos tambem foram validados por SQL
+  transacional no remoto.
 - Migrations de indices, runs manuais e consolidacao RLS foram aplicadas
   remotamente. Advisors agora reportam zero foreign keys sem indice, zero
   initplans de Auth e zero policies permissivas sobrepostas.
+- Finalizacao do chat persiste resposta, atividade e uso atomicamente; falhas de
+  stream ou persistencia geram telemetria `chat.failed` sem conteudo sensivel.
 
 ## Concluido
 

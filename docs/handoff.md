@@ -2,6 +2,18 @@
 
 Atualizado em 2026-07-12.
 
+## Handoff 2026-07-13 - RAG E Persistencia Do Chat
+
+- Matriz automatica cobre literal, multi-chunk, ambiguo e sem resposta; corpus
+  offline valida 21 casos em quatro categorias.
+- `finalize_chat_completion` foi aplicada remotamente como RPC transacional,
+  `SECURITY INVOKER`, tenant-scoped e restrita a authenticated.
+- Resposta, atividade da conversa e `chat.completion` agora persistem juntas.
+- Falhas de stream ou persistencia geram logs estruturados e `chat.failed` sem
+  armazenar prompt ou resposta.
+- Teste remoto com rollback confirmou mensagem, uso e atividade; pgTAP possui
+  57 assertions preparadas.
+
 ## Handoff 2026-07-12 - Default De Assistente
 
 - `set_default_assistant` foi aplicada remotamente como RPC transacional,

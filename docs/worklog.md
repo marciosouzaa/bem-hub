@@ -4,6 +4,27 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-13 - RAG E Chat Confiavel
+
+### Feito
+
+- Matriz RAG automatica cobre literal, multi-chunk, ambiguidade, falta de
+  citacao e resposta inventada sem evidencia.
+- Corpus offline validou 21 casos e quatro categorias sem credenciais externas.
+- RPC remota `finalize_chat_completion` atomiciza mensagem, atividade e uso.
+- Falhas de stream/persistencia usam logger sanitizado e evento `chat.failed`.
+- Backlog, roadmap e handoff foram sincronizados com codigo e banco reais.
+
+### Verificacao
+
+- Suite chegou a 34 testes automatizados antes deste checkpoint.
+- Lint e build passaram com Next.js 16.2.9.
+- SQL remoto transacional confirmou os tres efeitos e executou rollback.
+
+### Proximo Passo
+
+Implementar importacao estruturada de catalogo e tabela de precos.
+
 ## 2026-07-12 - Atividade Do Chat Observavel
 
 ### Feito
