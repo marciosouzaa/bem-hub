@@ -76,6 +76,17 @@ export function serializeEmbedding(embedding: number[]) {
   return `[${embedding.join(",")}]`;
 }
 
+export function serializeEmbeddingBatch(
+  embeddings: number[][],
+  expectedCount: number,
+) {
+  if (embeddings.length !== expectedCount) {
+    throw new Error("Provider retornou quantidade invalida de embeddings.");
+  }
+
+  return embeddings.map(serializeEmbedding);
+}
+
 async function getOpenAIConnection(supabase: Supabase, organizationId: string) {
   const { data, error } = await supabase
     .from("ai_provider_connections")

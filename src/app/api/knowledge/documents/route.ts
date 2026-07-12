@@ -20,7 +20,7 @@ import {
 import {
   embedTexts,
   resolveOpenAIEmbeddingRuntime,
-  serializeEmbedding,
+  serializeEmbeddingBatch,
 } from "@/lib/ai/embeddings";
 import { DEFAULT_EMBEDDING_MODEL } from "@/lib/ai/models";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -167,6 +167,11 @@ export async function POST(request: Request) {
       chunks.map((chunk) => chunk.content),
     );
 
+    const serializedEmbeddings = serializeEmbeddingBatch(
+      embeddings,
+      chunks.length,
+    );
+
     const { error: chunksError } = await supabase.from("document_chunks").insert(
       chunks.map((chunk, index) => ({
         organization_id: organizationId,
@@ -174,7 +179,7 @@ export async function POST(request: Request) {
         content: chunk.content,
         chunk_index: chunk.chunkIndex,
         token_count: chunk.tokenCount,
-        embedding: serializeEmbedding(embeddings[index]),
+        embedding: serializedEmbeddings[index],
       })),
     );
 
@@ -182,7 +187,7 @@ export async function POST(request: Request) {
       throw new Error(`Falha ao salvar chunks: ${chunksError.message}`);
     }
 
-    await supabase
+    const { error: readyError } = await supabase
       .from("documents")
       .update({
         status: "ready",
@@ -194,7 +199,11 @@ export async function POST(request: Request) {
       .eq("id", documentId)
       .eq("organization_id", organizationId);
 
-    await supabase.from("usage_events").insert({
+    if (readyError) {
+      throw new Error(`Falha ao concluir documento: ${readyError.message}`);
+    }
+
+    const { error: usageError } = await supabase.from("usage_events").insert({
       organization_id: organizationId,
       user_id: user.id,
       event_type: "knowledge.document_ingested",
@@ -208,6 +217,10 @@ export async function POST(request: Request) {
       },
     });
 
+    if (usageError) {
+      console.error("Falha ao registrar uso da ingestao", usageError);
+    }
+
     return NextResponse.json({
       documentId,
       message: "Documento processado e pronto para busca semantica.",
@@ -219,7 +232,17 @@ export async function POST(request: Request) {
         ? error.message
         : "Falha ao processar documento.";
 
-    await supabase
+    const { error: cleanupError } = await supabase
+      .from("document_chunks")
+      .delete()
+      .eq("document_id", documentId)
+      .eq("organization_id", organizationId);
+
+    if (cleanupError) {
+      console.error("Falha ao limpar chunks do documento", cleanupError);
+    }
+
+    const { error: failedStatusError } = await supabase
       .from("documents")
       .update({
         status: "failed",
@@ -228,6 +251,10 @@ export async function POST(request: Request) {
       })
       .eq("id", documentId)
       .eq("organization_id", organizationId);
+
+    if (failedStatusError) {
+      console.error("Falha ao marcar documento como failed", failedStatusError);
+    }
 
     return NextResponse.json(
       {

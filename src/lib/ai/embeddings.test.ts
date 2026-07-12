@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { serializeEmbedding } from "./embeddings";
+import { serializeEmbedding, serializeEmbeddingBatch } from "./embeddings";
 
 describe("serializeEmbedding", () => {
   test("serializes numeric embeddings for pgvector Data API", () => {
@@ -8,5 +8,11 @@ describe("serializeEmbedding", () => {
 
   test("serializes an empty vector deterministically", () => {
     expect(serializeEmbedding([])).toBe("[]");
+  });
+
+  test("rejects an incomplete embedding batch", () => {
+    expect(() => serializeEmbeddingBatch([[0.1]], 2)).toThrow(
+      "quantidade invalida de embeddings",
+    );
   });
 });

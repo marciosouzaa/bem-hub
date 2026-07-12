@@ -4,6 +4,30 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-12 - Consistencia Da Ingestao
+
+### Feito
+
+- Update final para `documents.status = ready` deixou de ser ignorado; falha na
+  transicao agora interrompe processamento.
+- Quantidade de embeddings precisa corresponder exatamente aos chunks antes de
+  qualquer insert.
+- Falha depois de gravar chunks remove todos os chunks parciais do documento
+  dentro do tenant antes de marcar `failed`.
+- Erros de cleanup, status e telemetria sao registrados no servidor em vez de
+  falharem silenciosamente.
+- Serializacao em batch possui teste para resposta incompleta do provider.
+
+### Verificacao
+
+- `bun run test`: 27 testes passaram em 8 arquivos.
+- `bun run lint` passou.
+- `bun run build` passou com Next.js 16.2.9.
+
+### Proximo Passo
+
+Continuar auditoria de consistencia em exclusao, chat e automacoes.
+
 ## 2026-07-12 - Recovery E Loading Do Workspace
 
 ### Feito
