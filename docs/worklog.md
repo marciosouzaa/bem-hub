@@ -4,6 +4,30 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-12 - Metricas Operacionais Do Assistente
+
+### Feito
+
+- Reutilizados eventos `chat.completion` existentes para medir conclusoes nas
+  ultimas 24 horas, nos ultimos 7 dias e perguntas sem evidencia documental.
+- Dashboard substituiu percentual ficticio por metricas reais da organizacao.
+- Consulta filtra `organization_id`, periodo e status RAG no servidor.
+- Metricas ficam restritas a owner/admin, alinhadas a policy RLS de
+  `usage_events`; membros recebem estado informativo sem consulta proibida.
+- Calculo defensivo impede contagem sem evidencia acima do total do periodo.
+
+### Verificacao
+
+- `bun run test`: 16 testes passaram em 4 arquivos.
+- `bun run lint` passou.
+- `bun run build` passou com Next.js 16.2.9.
+
+### Proximo Passo
+
+Convite seguro de membros e importacao do catalogo continuam dependentes,
+respectivamente, de fluxo de entrega/aceite e arquivos reais do piloto.
+Auditoria da plataforma depende de informacao da cliente.
+
 ## 2026-07-12 - Onboarding Contextual Do Workspace
 
 ### Feito

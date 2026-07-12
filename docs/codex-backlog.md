@@ -65,7 +65,7 @@ minutos sem configuracao tecnica recorrente.
 - [ ] Importar catalogo e tabela de precos do piloto.
 - [ ] Permitir convite ou inclusao segura das tres funcionarias.
 - [x] Criar estado inicial e orientacao contextual curta dentro do fluxo real.
-- [ ] Instrumentar ativacao, uso diario e perguntas sem resposta.
+- [x] Instrumentar ativacao, uso diario e perguntas sem resposta.
 - [ ] Registrar auditoria da plataforma de loja, API, PDV e planilhas.
 
 Aceite: equipe acessa o workspace isolado, encontra o assistente correto e faz a

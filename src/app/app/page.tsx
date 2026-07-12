@@ -29,6 +29,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MotionItem, MotionPage, MotionSurface } from "@/components/ui/motion";
+import { getUsageSnapshot } from "@/features/analytics/queries";
 import { OnboardingChecklist } from "@/features/onboarding/onboarding-checklist";
 import { getOnboardingProgress } from "@/features/onboarding/queries";
 import { getRequiredWorkspace } from "@/features/organizations/queries";
@@ -64,6 +65,10 @@ export default async function WorkspacePage() {
     supabase,
     workspace.organization.id,
   );
+  const usage =
+    workspace.membership.role === "member"
+      ? null
+      : await getUsageSnapshot(supabase, workspace.organization.id);
   const firstName =
     workspace.profile.name?.split(" ")[0] ||
     workspace.profile.email?.split("@")[0] ||
@@ -115,26 +120,27 @@ export default async function WorkspacePage() {
               <MotionSurface className="h-full">
                 <Card className="flex h-full min-h-[166px] flex-col">
                   <CardContent className="flex flex-1 flex-col p-6 md:pt-6">
-                    <p className="text-sm text-muted-strong">
-                      Eficiência ativa
-                    </p>
-                    <div className="mt-5 flex h-12 items-end gap-2">
-                      {[38, 30, 46, 58, 38, 22].map((height, index) => (
-                        <span
-                          className={[
-                            "w-8 rounded-t-sm",
-                            index === 3
-                              ? "bg-primary shadow-[var(--shadow-glow)]"
-                              : "bg-sidebar-active",
-                          ].join(" ")}
-                          key={index}
-                          style={{ height }}
+                    <p className="text-sm text-muted-strong">Uso do assistente</p>
+                    {usage ? (
+                      <div className="mt-5 grid grid-cols-3 gap-4">
+                        <Metric
+                          label="Ultimas 24h"
+                          value={usage.completions24h}
                         />
-                      ))}
-                    </div>
-                    <p className="mt-4 text-3xl font-semibold text-primary">
-                      94.2%
-                    </p>
+                        <Metric
+                          label="Ultimos 7 dias"
+                          value={usage.completions7d}
+                        />
+                        <Metric
+                          label="Sem evidencia"
+                          value={usage.unanswered7d}
+                        />
+                      </div>
+                    ) : (
+                      <p className="mt-5 text-sm leading-6 text-muted">
+                        Metricas disponiveis para owner e admin.
+                      </p>
+                    )}
                   </CardContent>
                 </Card>
               </MotionSurface>
@@ -347,5 +353,14 @@ export default async function WorkspacePage() {
         </SplitPanel>
       </PageLayout>
     </MotionPage>
+  );
+}
+
+function Metric({ label, value }: { label: string; value: number | string }) {
+  return (
+    <div className="min-w-0">
+      <p className="text-2xl font-semibold text-primary">{value}</p>
+      <p className="mt-1 text-[11px] leading-4 text-muted">{label}</p>
+    </div>
   );
 }
