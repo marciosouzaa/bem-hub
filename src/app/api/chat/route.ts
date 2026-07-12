@@ -22,6 +22,7 @@ import {
   resolveAssistantRuntime,
 } from "@/lib/ai/runtime";
 import { EmbeddingRuntimeError } from "@/lib/ai/embeddings";
+import { getErrorDetails, logServerError } from "@/lib/observability/server";
 import { isMissingColumnError } from "@/lib/supabase/schema-errors";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -213,11 +214,43 @@ export async function POST(request: Request) {
         );
 
         if (completionError) {
-          console.error("Falha ao finalizar persistencia do chat", completionError);
+          logServerError("chat.completion.persistence_failed", completionError, {
+            organizationId,
+            conversationId: conversation.id,
+            assistantId: assistant.id,
+            provider: runtime.provider,
+            model: runtime.model,
+          });
+          await recordChatFailure(supabase, {
+            assistantId: assistant.id,
+            conversationId: conversation.id,
+            error: completionError,
+            model: runtime.model,
+            organizationId,
+            provider: runtime.provider,
+            stage: "persistence",
+            userId: user.id,
+          });
         }
       },
-      onError: ({ error }) => {
-        console.error("Falha no stream de chat", error);
+      onError: async ({ error }) => {
+        logServerError("chat.stream.failed", error, {
+          organizationId,
+          conversationId: conversation.id,
+          assistantId: assistant.id,
+          provider: runtime.provider,
+          model: runtime.model,
+        });
+        await recordChatFailure(supabase, {
+          assistantId: assistant.id,
+          conversationId: conversation.id,
+          error,
+          model: runtime.model,
+          organizationId,
+          provider: runtime.provider,
+          stage: "stream",
+          userId: user.id,
+        });
       },
     });
 
@@ -240,7 +273,7 @@ export async function POST(request: Request) {
       return Response.json({ error: error.message }, { status: error.status });
     }
 
-    console.error("Falha inesperada no chat", error);
+    logServerError("chat.request.failed", error, { route: "/api/chat" });
     return Response.json(
       { error: "Falha ao processar a conversa." },
       { status: 500 },
@@ -403,6 +436,44 @@ async function loadModelMessages(
       role: message.role === "user" ? ("user" as const) : ("assistant" as const),
       content: message.content,
     }));
+}
+
+async function recordChatFailure(
+  supabase: SupabaseServerClient,
+  event: {
+    assistantId: string;
+    conversationId: string;
+    error: unknown;
+    model: string;
+    organizationId: string;
+    provider: string;
+    stage: "stream" | "persistence";
+    userId: string;
+  },
+) {
+  const details = getErrorDetails(event.error);
+  const { error } = await supabase.from("usage_events").insert({
+    organization_id: event.organizationId,
+    user_id: event.userId,
+    event_type: "chat.failed",
+    model: event.model,
+    metadata: {
+      assistant_id: event.assistantId,
+      conversation_id: event.conversationId,
+      provider: event.provider,
+      stage: event.stage,
+      error_name: details.name,
+      error_code: details.code ?? null,
+    },
+  });
+
+  if (error) {
+    logServerError("chat.failure_telemetry.failed", error, {
+      organizationId: event.organizationId,
+      conversationId: event.conversationId,
+      stage: event.stage,
+    });
+  }
 }
 
 function createConversationTitle(message: string) {
