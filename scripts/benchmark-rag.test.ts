@@ -120,6 +120,63 @@ describe("evaluateCase", () => {
     expect(result.automaticPass).toBe(true);
     expect(result.expectedDocumentsFound).toBe(true);
   });
+
+  test("fails a literal answer without its required citation", () => {
+    const result = evaluateCase(
+      benchmarkCase({
+        answer: "17 dias corridos.",
+        documents: ["manual.md"],
+        shouldHaveAnswer: true,
+        allowParaphrase: false,
+      }),
+      "O prazo e de 17 dias corridos.",
+      ["manual.md"],
+      "grounded",
+      10,
+    );
+
+    expect(result.automaticPass).toBe(false);
+    expect(result.citationPresent).toBe(false);
+  });
+
+  test("passes an ambiguous case only with an explicit clarification signal", () => {
+    const testCase = benchmarkCase({
+      answer: "A pergunta e ambigua.",
+      documents: [],
+      shouldHaveAnswer: false,
+      allowParaphrase: true,
+    });
+    testCase.category = "ambiguous";
+
+    const result = evaluateCase(
+      testCase,
+      "A pergunta e ambigua; poderia especificar qual processo?",
+      ["manual.md", "politica.md"],
+      "grounded",
+      10,
+    );
+
+    expect(result.automaticPass).toBe(true);
+    expect(result.uncertaintyPresent).toBe(true);
+  });
+
+  test("fails an unanswerable case when the model invents a confident answer", () => {
+    const result = evaluateCase(
+      benchmarkCase({
+        answer: "Nao existe essa informacao no corpus.",
+        documents: [],
+        shouldHaveAnswer: false,
+        allowParaphrase: true,
+      }),
+      "O telefone oficial e (11) 5555-0101.",
+      [],
+      "no_match",
+      10,
+    );
+
+    expect(result.automaticPass).toBe(false);
+    expect(result.uncertaintyPresent).toBe(false);
+  });
 });
 
 function benchmarkCase({

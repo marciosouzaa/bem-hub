@@ -71,6 +71,25 @@ describe("selectChatKnowledge", () => {
     expect(result.systemContext).toContain("Conteudo 2");
     expect(result.systemContext).not.toContain("Conteudo 3");
   });
+
+  test("keeps ordered evidence across multiple documents", () => {
+    const result = selectChatKnowledge(
+      [
+        searchResult("a1", DOCUMENT_A, "Politica.md", 0.91, "Prazo de 43 dias"),
+        searchResult("b1", DOCUMENT_B, "Manual.md", 0.87, "Pagamento em 17 dias"),
+        searchResult("a2", DOCUMENT_A, "Politica.md", 0.83, "Minimo de 7 dias"),
+      ],
+      "text-embedding-3-small",
+    );
+
+    expect(result.knowledge.sources.map((source) => source.documentName)).toEqual([
+      "Politica.md",
+      "Manual.md",
+    ]);
+    expect(result.systemContext).toContain("[Fonte 1] Politica.md");
+    expect(result.systemContext).toContain("Trecho 2:\nMinimo de 7 dias");
+    expect(result.systemContext).toContain("[Fonte 2] Manual.md");
+  });
 });
 
 describe("knowledge context header", () => {
