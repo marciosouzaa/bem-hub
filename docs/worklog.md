@@ -4,6 +4,26 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-13 - Gestao Completa De Equipe
+
+### Feito
+
+- Settings lista membros ativos/removidos com nome, e-mail, papel e estado.
+- Owner/admin podem promover, rebaixar e remover acesso.
+- RPC `manage_organization_member` e `SECURITY INVOKER`, tenant-scoped e
+  protege owner contra alteracao ou remocao.
+- Perfis ficam visiveis apenas para colegas ativos da mesma organizacao.
+- pgTAP subiu para 70 assertions preparadas.
+
+### Verificacao
+
+- Teste SQL remoto transacional confirmou promocao e remocao com rollback.
+- ACL remota bloqueia anon; advisors nao ganharam alerta novo.
+
+### Proximo Passo
+
+Versionar e substituir catalogos importados sem manter precos obsoletos.
+
 ## 2026-07-13 - Auditoria De Dados Comerciais
 
 ### Feito

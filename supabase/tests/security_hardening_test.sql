@@ -1,5 +1,5 @@
 begin;
-select plan(61);
+select plan(70);
 
 select ok(
   not has_function_privilege('anon', 'public.bootstrap_owned_organization(uuid)', 'execute'),
@@ -101,6 +101,30 @@ select is(
   'member inclusion RPC is security definer'
 );
 select ok(
+  not has_function_privilege(
+    'anon',
+    'public.manage_organization_member(uuid,uuid,public.organization_role,public.member_status)',
+    'execute'
+  ),
+  'anon cannot manage organization members'
+);
+select ok(
+  has_function_privilege(
+    'authenticated',
+    'public.manage_organization_member(uuid,uuid,public.organization_role,public.member_status)',
+    'execute'
+  ),
+  'authenticated can call member management RPC'
+);
+select is(
+  (
+    select prosecdef from pg_proc
+    where oid = 'public.manage_organization_member(uuid,uuid,public.organization_role,public.member_status)'::regprocedure
+  ),
+  false,
+  'member management RPC is security invoker'
+);
+select ok(
   has_function_privilege('authenticated', 'public.is_org_member(uuid)', 'execute'),
   'authenticated can execute membership helper'
 );
@@ -164,6 +188,7 @@ select ok(
       'public.delete_assistant(uuid,uuid)'::regprocedure,
       'public.finalize_chat_completion(uuid,uuid,text,text,integer,integer,jsonb,jsonb)'::regprocedure,
       'public.add_organization_member_by_email(uuid,text,public.organization_role)'::regprocedure,
+      'public.manage_organization_member(uuid,uuid,public.organization_role,public.member_status)'::regprocedure,
       'private.is_org_member(uuid)'::regprocedure,
       'private.is_org_admin(uuid)'::regprocedure
     )
@@ -175,7 +200,8 @@ select ok(
 insert into auth.users (id, email)
 values
   ('10000000-0000-0000-0000-000000000001', 'tenant-a@example.test'),
-  ('20000000-0000-0000-0000-000000000002', 'tenant-b@example.test');
+  ('20000000-0000-0000-0000-000000000002', 'tenant-b@example.test'),
+  ('30000000-0000-0000-0000-000000000003', 'member-a@example.test');
 
 insert into public.organizations (id, name, slug, owner_id)
 values
@@ -204,6 +230,12 @@ values
     'b0000000-0000-0000-0000-000000000002',
     '20000000-0000-0000-0000-000000000002',
     'owner',
+    'active'
+  ),
+  (
+    'a0000000-0000-0000-0000-000000000001',
+    '30000000-0000-0000-0000-000000000003',
+    'member',
     'active'
   );
 
@@ -605,6 +637,56 @@ select throws_ok(
   '42501',
   'organization_admin_required',
   'tenant A cannot add members to tenant B'
+);
+select lives_ok(
+  $$select public.manage_organization_member(
+    'a0000000-0000-0000-0000-000000000001',
+    '30000000-0000-0000-0000-000000000003',
+    'admin',
+    'active'
+  )$$,
+  'tenant A admin can promote its member'
+);
+select is(
+  (select role from public.organization_members where user_id = '30000000-0000-0000-0000-000000000003'),
+  'admin'::public.organization_role,
+  'member promotion persists'
+);
+select lives_ok(
+  $$select public.manage_organization_member(
+    'a0000000-0000-0000-0000-000000000001',
+    '30000000-0000-0000-0000-000000000003',
+    'member',
+    'removed'
+  )$$,
+  'tenant A admin can remove its member'
+);
+select is(
+  (select status from public.organization_members where user_id = '30000000-0000-0000-0000-000000000003'),
+  'removed'::public.member_status,
+  'member removal persists'
+);
+select throws_ok(
+  $$select public.manage_organization_member(
+    'a0000000-0000-0000-0000-000000000001',
+    '10000000-0000-0000-0000-000000000001',
+    'member',
+    'removed'
+  )$$,
+  '42501',
+  'organization_owner_immutable',
+  'organization owner cannot be removed'
+);
+select throws_ok(
+  $$select public.manage_organization_member(
+    'b0000000-0000-0000-0000-000000000002',
+    '20000000-0000-0000-0000-000000000002',
+    'member',
+    'removed'
+  )$$,
+  '42501',
+  'organization_admin_required',
+  'tenant A cannot manage tenant B members'
 );
 
 reset role;

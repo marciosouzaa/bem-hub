@@ -777,6 +777,15 @@ export type Database = {
           similarity: number
         }[]
       }
+      manage_organization_member: {
+        Args: {
+          target_organization_id: string
+          target_role: Database["public"]["Enums"]["organization_role"]
+          target_status: Database["public"]["Enums"]["member_status"]
+          target_user_id: string
+        }
+        Returns: undefined
+      }
       set_default_assistant: {
         Args: { target_assistant_id: string; target_organization_id: string }
         Returns: undefined

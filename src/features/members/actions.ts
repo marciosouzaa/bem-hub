@@ -47,3 +47,33 @@ export async function addMemberAction(
   revalidatePath("/app/settings/account");
   return { ok: true, message: "Membro incluido no workspace." };
 }
+
+export async function updateMemberRoleAction(userId: string, formData: FormData) {
+  const role = z.enum(["admin", "member"]).safeParse(formData.get("role"));
+  if (!role.success) throw new Error("Papel de membro invalido.");
+  await manageMember(userId, role.data, "active");
+}
+
+export async function removeMemberAction(userId: string) {
+  await manageMember(userId, "member", "removed");
+}
+
+async function manageMember(
+  userId: string,
+  role: "admin" | "member",
+  status: "active" | "removed",
+) {
+  const workspace = await getRequiredWorkspace();
+  if (!(["owner", "admin"] as string[]).includes(workspace.membership.role)) {
+    throw new Error("Apenas administradores gerenciam membros.");
+  }
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.rpc("manage_organization_member", {
+    target_organization_id: workspace.organization.id,
+    target_user_id: userId,
+    target_role: role,
+    target_status: status,
+  });
+  if (error) throw new Error(`Falha ao gerenciar membro: ${error.message}`);
+  revalidatePath("/app/settings/account");
+}
