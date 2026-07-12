@@ -248,33 +248,13 @@ export async function deleteAssistantAction(
   const entitlements = await getEntitlements(supabase, workspace.organization.id);
   requireFeature(entitlements, "assistants");
 
-  const { data: assistant, error: readError } = await supabase
-    .from("assistants")
-    .select("id,is_default")
-    .eq("id", assistantId)
-    .eq("organization_id", workspace.organization.id)
-    .maybeSingle();
-
-  if (readError) {
-    throw new Error(`Falha ao buscar assistente: ${readError.message}`);
-  }
-
-  if (!assistant) {
-    throw new Error("Assistente nao encontrado.");
-  }
-
-  const { error } = await supabase
-    .from("assistants")
-    .delete()
-    .eq("id", assistantId)
-    .eq("organization_id", workspace.organization.id);
+  const { error } = await supabase.rpc("delete_assistant", {
+    target_assistant_id: assistantId,
+    target_organization_id: workspace.organization.id,
+  });
 
   if (error) {
     throw new Error(`Falha ao excluir assistente: ${error.message}`);
-  }
-
-  if (assistant.is_default) {
-    await promoteFallbackDefault(supabase, workspace.organization.id);
   }
 
   revalidatePath(ASSISTANTS_PATH);
@@ -419,27 +399,4 @@ async function setDefaultAssistant(
   if (error) {
     throw new Error(`Falha ao definir assistente padrao: ${error.message}`);
   }
-}
-
-async function promoteFallbackDefault(
-  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
-  organizationId: string,
-) {
-  const { data: fallback, error: fallbackError } = await supabase
-    .from("assistants")
-    .select("id")
-    .eq("organization_id", organizationId)
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
-
-  if (fallbackError) {
-    throw new Error(`Falha ao escolher novo padrao: ${fallbackError.message}`);
-  }
-
-  if (!fallback) {
-    return;
-  }
-
-  await setDefaultAssistant(supabase, organizationId, fallback.id);
 }

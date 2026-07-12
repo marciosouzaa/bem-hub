@@ -1,5 +1,5 @@
 begin;
-select plan(41);
+select plan(49);
 
 select ok(
   not has_function_privilege('anon', 'public.bootstrap_owned_organization(uuid)', 'execute'),
@@ -37,6 +37,19 @@ select is(
   (select prosecdef from pg_proc where oid = 'public.set_default_assistant(uuid,uuid)'::regprocedure),
   false,
   'default assistant RPC is security invoker'
+);
+select ok(
+  not has_function_privilege('anon', 'public.delete_assistant(uuid,uuid)', 'execute'),
+  'anon cannot delete an assistant through the RPC'
+);
+select ok(
+  has_function_privilege('authenticated', 'public.delete_assistant(uuid,uuid)', 'execute'),
+  'authenticated can call delete assistant RPC'
+);
+select is(
+  (select prosecdef from pg_proc where oid = 'public.delete_assistant(uuid,uuid)'::regprocedure),
+  false,
+  'delete assistant RPC is security invoker'
 );
 select ok(
   has_function_privilege('authenticated', 'public.is_org_member(uuid)', 'execute'),
@@ -99,6 +112,7 @@ select ok(
       'public.is_org_admin(uuid)'::regprocedure,
       'public.match_document_chunks(uuid,extensions.vector,integer)'::regprocedure,
       'public.set_default_assistant(uuid,uuid)'::regprocedure,
+      'public.delete_assistant(uuid,uuid)'::regprocedure,
       'private.is_org_member(uuid)'::regprocedure,
       'private.is_org_admin(uuid)'::regprocedure
     )
@@ -421,6 +435,55 @@ select throws_ok(
   '42501',
   'organization_admin_required',
   'tenant A cannot set tenant B default assistant'
+);
+select lives_ok(
+  $$
+    select public.delete_assistant(
+      'a0000000-0000-0000-0000-000000000001',
+      'a4000000-0000-0000-0000-000000000002'
+    )
+  $$,
+  'tenant A admin can atomically delete its default assistant'
+);
+select is(
+  (
+    select count(*)
+    from public.assistants
+    where organization_id = 'a0000000-0000-0000-0000-000000000001'
+      and is_default
+  ),
+  1::bigint,
+  'deleting a default promotes exactly one fallback'
+);
+select is(
+  (
+    select id
+    from public.assistants
+    where organization_id = 'a0000000-0000-0000-0000-000000000001'
+      and is_default
+  ),
+  'a4000000-0000-0000-0000-000000000001'::uuid,
+  'delete assistant RPC promotes the oldest fallback'
+);
+select is(
+  (
+    select count(*)
+    from public.assistants
+    where id = 'a4000000-0000-0000-0000-000000000002'
+  ),
+  0::bigint,
+  'delete assistant RPC removes the requested assistant'
+);
+select throws_ok(
+  $$
+    select public.delete_assistant(
+      'b0000000-0000-0000-0000-000000000002',
+      'b4000000-0000-0000-0000-000000000002'
+    )
+  $$,
+  '42501',
+  'organization_admin_required',
+  'tenant A cannot delete a tenant B assistant'
 );
 
 reset role;

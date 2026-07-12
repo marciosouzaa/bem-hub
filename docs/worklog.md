@@ -4,6 +4,31 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-12 - Exclusao Atomica De Assistente
+
+### Feito
+
+- Criada e aplicada remotamente RPC `delete_assistant` com `SECURITY INVOKER`,
+  search path vazio, ACL restrita e validacao server-side de admin/tenant.
+- Exclusao do assistente padrao e promocao do fallback agora ocorrem na mesma
+  transacao; `set_default_assistant` e delete serializam pelo lock da organizacao.
+- Action deixou de encadear delete e promocao em chamadas separadas.
+- Tipos Supabase incluem a nova RPC; pgTAP subiu para 49 assertions, incluindo
+  ACL, invoker, promocao e tentativa cross-tenant.
+
+### Verificacao
+
+- `bun run test`: 27 testes passaram em 8 arquivos.
+- `bun run lint` passou.
+- `bun run build` passou com Next.js 16.2.9.
+- Teste SQL remoto transacional confirmou exclusao e exatamente um default;
+  fixtures foram descartadas por rollback.
+- Advisors permaneceram sem regressao; apenas avisos conhecidos.
+
+### Proximo Passo
+
+Continuar falhas silenciosas restantes, com foco na persistencia do chat.
+
 ## 2026-07-12 - Assistente Padrao Atomico
 
 ### Feito
