@@ -13,12 +13,14 @@ short, then read the source docs relevant to the actual task.
 1. Read `AGENTS.md` first. It is the repository operating guide.
 2. Read `docs/handoff.md` for the latest known completed work, verification,
    follow-ups, and next step.
-3. Read `docs/codex-backlog.md` before choosing implementation work.
-4. If UI is involved, read `docs/design-system.md` and use
+3. Read `docs/worklog.md`, `docs/roadmap.md`, and `docs/codex-backlog.md` before
+   choosing implementation work.
+4. Read `docs/principles.md` before making autonomous technical decisions.
+5. If UI is involved, read `docs/design-system.md` and use
    `.codex/skills/bem-hub-frontend-design/SKILL.md`.
-5. If Next.js behavior is involved, read the relevant local guide under
+6. If Next.js behavior is involved, read the relevant local guide under
    `node_modules/next/dist/docs/` before writing code.
-6. Check `git status --short` and preserve unrelated user changes.
+7. Check `git status --short` and preserve unrelated user changes.
 
 ## Project Snapshot
 
@@ -80,18 +82,9 @@ Known follow-ups:
 
 ## Next Recommended Work
 
-Prioritize Assistants CRUD unless the user explicitly redirects:
-
-- List assistants scoped by organization.
-- Create, edit, and delete assistants.
-- Set the default assistant.
-- Validate inputs with Zod.
-- Enforce owner/admin management server-side.
-- Keep member usage read-only where appropriate.
-
-After that, continue in backlog order: chat persistence and streaming,
-knowledge base ingestion, RAG answering, manual automation templates, then
-billing and limits.
+Use `docs/codex-backlog.md` as the live source. At the 2026-07-12 checkpoint,
+the active work is M0 security hardening, followed by M1 RAG answering with
+persisted sources and benchmark validation.
 
 ## UI Orientation
 

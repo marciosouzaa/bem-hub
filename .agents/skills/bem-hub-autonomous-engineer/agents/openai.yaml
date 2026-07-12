@@ -1,0 +1,4 @@
+interface:
+  display_name: "BEM HUB Autonomous Engineer"
+  short_description: "Avanca marcos do BEM HUB com autonomia"
+  default_prompt: "Use $bem-hub-autonomous-engineer para escolher e executar continuamente o proximo marco de maior valor do BEM HUB."

@@ -1,214 +1,119 @@
 # Codex Backlog
 
-Each task should be implemented in a small PR-sized change with acceptance criteria and verification.
+Fila executavel do BEM HUB. O roadmap define a ordem dos marcos; este arquivo
+registra o proximo trabalho concreto, criterios de aceite e descobertas. Manter
+itens pequenos o bastante para commits coerentes, mas concluir o marco de ponta
+a ponta antes de mudar de objetivo.
 
-## 1. Supabase Auth and Organization Bootstrap
+## Regras Da Fila
 
-Status: implemented as the initial foundation. Keep hardening RLS and manual
-two-user verification on the follow-up list.
+- Trabalhar primeiro no item `AGORA`, salvo incidente, perda de dados ou falha
+  critica de seguranca.
+- Escolher o proximo item de maior impacto dentro do marco ativo sem esperar
+  confirmacao quando a decisao for tecnica e reversivel.
+- Mover achados nao bloqueantes para `Descobertas`; nao interromper a entrega.
+- Marcar como concluido apenas com implementacao, testes, documentacao e
+  verificacao proporcional ao risco.
+- Atualizar `docs/worklog.md` a cada checkpoint ou antes de encerrar a sessao.
 
-Scope:
-- Add login, signup, logout screens.
-- Create organization after first signup.
-- Store user membership.
-- Add server checks for authenticated routes.
-- Wire `src/proxy.ts` for Supabase SSR session refresh.
+## AGORA - M0 Hardening Para Dados Reais
 
-Likely files:
-- `src/app/auth/*`
-- `src/app/app/*`
-- `src/lib/supabase/*`
-- `supabase/migrations/*`
+Objetivo: eliminar os riscos conhecidos que impedem usar documentos e dados de
+clientes reais com seguranca.
 
-Acceptance:
-- User can sign up, log in, create organization, and access the workspace.
-- User A cannot read organization B data.
-- Owner can invite or add a member placeholder.
-- Supabase SSR auth refresh runs through `src/proxy.ts`.
+- [ ] Criar migration de hardening para `bootstrap_owned_organization`,
+  `is_org_member`, `is_org_admin` e `match_document_chunks`.
+- [ ] Fixar `search_path`, revisar `SECURITY DEFINER`, revogar execucao publica e
+  conceder apenas aos papeis necessarios.
+- [ ] Garantir que RPCs validem `auth.uid()` e `organization_id` sem confiar em
+  parametros fornecidos pelo cliente.
+- [ ] Adicionar testes ou verificacoes reproduziveis para acesso cruzado por RPC.
+- [ ] Revisar policies do bucket `knowledge-documents` e downloads assinados.
+- [ ] Rodar advisors Supabase e registrar alertas remanescentes.
+- [ ] Verificar com dois usuarios reais: tabelas, RPC, Storage e URL assinada.
+- [ ] Ativar protecao contra senha vazada no Supabase Auth ou registrar o bloqueio
+  operacional caso a configuracao dependa do painel.
 
-Verification:
-- `bun run lint`
-- `bun run build`
-- Manual test with two Supabase users.
+Aceite: usuario A nao le, busca, baixa, altera ou remove dados da organizacao B;
+roles anonimas nao executam funcoes internas; lint e build passam.
 
-## 2. Assistants CRUD
+## DEPOIS - M1 RAG No Chat Com Fontes
 
-Status: implemented.
+Objetivo: transformar a base de conhecimento em respostas confiaveis que geram
+o primeiro valor diario do piloto.
 
-Scope:
-- List assistants.
-- Create, edit, delete assistant.
-- Set default assistant.
-- Validate inputs with Zod.
+- [ ] Definir contrato de fonte/citacao na API, persistencia e UI.
+- [ ] Recuperar top chunks no servidor usando a organizacao autenticada.
+- [ ] Aplicar threshold, limite de contexto e deduplicacao de documentos.
+- [ ] Injetar instrucoes contra alucinacao e para insuficiencia de contexto.
+- [ ] Persistir metadata de fontes na mensagem do assistente.
+- [ ] Renderizar fontes acessiveis com nome do documento e referencia util.
+- [ ] Cobrir casos literal, multi-chunk, ambiguo e sem resposta.
+- [ ] Executar o benchmark externo sem indexar arquivos de resposta esperada.
+- [ ] Fazer smoke test com historico recarregado e mais de uma organizacao.
 
-Acceptance:
-- Assistants are scoped by organization.
-- Member can use assistants; owner/admin can manage them.
+Aceite: respostas fundamentadas citam documentos corretos; perguntas sem
+evidencia nao inventam resposta; nenhuma busca atravessa organizacoes.
 
-Verification:
-- `bun run lint`
-- `bun run build`
-- Production smoke test on Vercel.
+## PROXIMO - M1 Onboarding Do Piloto
 
-## 3. Chat Persistence and Streaming
+Objetivo: permitir que uma dona e sua equipe alcancem valor em menos de 15
+minutos sem configuracao tecnica recorrente.
 
-Status: implemented as the first functional version. Keep manual QA and UX
-polish on the follow-up list.
+- [ ] Definir checklist de configuracao do assistente de catalogo.
+- [ ] Importar catalogo e tabela de precos do piloto.
+- [ ] Permitir convite ou inclusao segura das tres funcionarias.
+- [ ] Criar estado inicial e orientacao contextual curta dentro do fluxo real.
+- [ ] Instrumentar ativacao, uso diario e perguntas sem resposta.
+- [ ] Registrar auditoria da plataforma de loja, API, PDV e planilhas.
 
-Scope:
-- Persist conversations and messages.
-- Connect UI to `/api/chat`.
-- Save model and usage metadata.
-- Support assistant instructions.
+Aceite: equipe acessa o workspace isolado, encontra o assistente correto e faz a
+primeira pergunta util sem ajuda do engenheiro.
 
-Acceptance:
-- User creates a conversation and receives streamed response.
-- Reloading the page keeps history.
-- Usage event is written after response.
+## FUTURO - M2 Atendimento Assistido
 
-Verification:
-- `bun run lint`
-- `bun run build`
-- Manual smoke test reported working once, but should be repeated after AI
-  provider connections.
+Bloqueado pelo gate de escolha do provedor WhatsApp e credenciais.
 
-## 3.5 AI Provider Connections
+- [ ] Definir contrato independente de provedor para canal de mensagens.
+- [ ] Implementar webhook seguro, idempotente e observavel.
+- [ ] Criar fila de rascunhos, aprovacao, edicao, envio e escalada.
+- [ ] Registrar auditoria e metricas de resolucao.
+- [ ] Validar duas semanas em modo assistido antes de automatizar.
 
-Status: implemented as account-managed provider connections.
+## FUTURO - M3 Inteligencia De Negocio
 
-Scope:
-- Store provider API keys per organization.
-- Encrypt keys server-side.
-- Support OpenAI, Claude/Anthropic, and Gemini.
-- Let assistants choose provider, connection, and model.
-- Keep legacy env var fallback for local development.
+Bloqueado pela auditoria da plataforma e disponibilidade dos dados.
 
-Acceptance:
-- Owner/admin can create provider connections.
-- Assistants can be configured with provider-specific model choices.
-- `/api/chat` resolves the assistant runtime from the selected connection.
-- Secrets never return to the client.
+- [ ] Criar modelo normalizado de produto, estoque, pedido e cliente.
+- [ ] Implementar importacao por planilha ou API confirmada.
+- [ ] Entregar digest diario e alertas de estoque.
+- [ ] Entregar recompra com aprovacao humana e ciclo configuravel.
+- [ ] Medir conversao e recomendacoes de produto.
 
-Verification:
-- `bun run lint`
-- `bun run build`
-- Supabase migration `0006_ai_provider_connections` applied remotely.
-- Manual end-to-end test still pending after the remote migration.
+## FUTURO - M4 Comercial
 
-## 4. Knowledge Base Ingestion
+- [ ] Checkout e cobranca reais.
+- [ ] Convites e gestao completa de membros.
+- [ ] Templates manuais por rotina validada.
+- [ ] Observabilidade, auditoria e runbooks.
+- [ ] Onboarding repetivel para novos pilotos.
 
-Status: implemented as the first ingestion slice for TXT, Markdown and
-text-based PDF. DOCX is accepted by the upload UI but currently recorded as
-failed with a clear extraction message until a parser is added.
+## Descobertas
 
-Scope:
-- Upload files to Supabase Storage.
-- Extract text by MIME type.
-- Chunk document text.
-- Generate embeddings.
-- Store `document_chunks`.
-- Add similarity search RPC.
+- DOCX ainda nao tem parser e PDF escaneado ainda nao tem OCR.
+- O download e a exclusao completa de documentos precisam de novo smoke test.
+- Foreign keys sem indice e policies permissivas ainda geram advisors.
+- Tipos Supabase devem ser regenerados quando o schema estabilizar.
+- O PDF do piloto considera RAG pronto, mas o chat ainda nao recupera nem exibe fontes.
+- `roteiro-de-validacao-rag.md`, se ainda indexado no ambiente remoto, deve ser
+  removido antes do benchmark porque contem respostas esperadas.
 
-Acceptance:
-- Ready documents can be searched semantically.
-- Failed documents show error status.
+## Concluido
 
-Current implementation:
-- `/app/knowledge` lists organization-scoped documents, status, chunks and
-  semantic search results.
-- `/api/knowledge/documents` accepts multipart uploads, validates admin role,
-  plan feature and document limit server-side.
-- Files are stored in private Supabase Storage bucket `knowledge-documents`.
-- TXT, Markdown and text-based PDF are extracted, chunked, embedded with OpenAI
-  `text-embedding-3-small`, and stored in `document_chunks`.
-- PDF extraction runs in the Node.js route runtime and keeps `pdf-parse` /
-  `pdfjs-dist` externalized from the Next.js server bundle to avoid worker
-  resolution failures.
-- Uploads use a 6 MB synchronous processing limit.
-- `documents` stores file size, chunk count, embedding model and processed
-  timestamp metadata.
-- Owners/admins can delete any document from `/app/knowledge`; deletion removes
-  the Storage object and cascades stored chunks.
-- Members can download the original private Storage object through
-  `GET /api/knowledge/documents/[documentId]`, which verifies
-  `organization_id` and redirects to a short-lived signed URL.
-
-Verification:
-- `bun run lint`
-- `bun run build`
-- User-reported smoke test: TXT and text-based PDF uploads process correctly
-  after the PDF parser fix.
-- User-reported smoke test on 2026-07-09: four Markdown files processed as
-  ready, totaling 49 chunks with no failures.
-
-Remaining:
-- Repeat upload/search smoke test against Supabase Storage and a real OpenAI
-  key after the next deploy.
-- Manually verify document download from the UI.
-- Manually verify deletion removes Storage object, `documents` row and chunks.
-- Add DOCX extraction parser and OCR for scanned PDFs.
-- Repeat two-user tenant isolation test for documents and storage objects.
-
-## 5. RAG Answering
-
-Status: next recommended implementation block. A controlled corpus and external
-benchmark are ready, but chat RAG has not been implemented or tested yet.
-
-Scope:
-- Retrieve top chunks before chat completion.
-- Inject context into the prompt.
-- Return sources to UI.
-
-Acceptance:
-- Answers cite document names.
-- Assistant can say when context is insufficient.
-
-Prepared validation assets:
-- Knowledge documents:
-  - `manual-de-reembolsos.md`
-  - `politica-de-ferias.md`
-  - `operacao-cliente-orion.md`
-- External benchmark files under `docs/benchmarks`:
-  - `benchmark-rag.csv`
-  - `benchmark-rag.json`
-  - `benchmark-rag.yaml`
-- `roteiro-de-validacao-rag.md` was accidentally indexed and must be deleted
-  from the knowledge base before testing because it contains expected answers.
-
-## 6. Manual Automation Templates
-
-Scope:
-- Implement templates as typed configs.
-- Add input form per template.
-- Execute via AI route handler.
-- Persist `automation_runs`.
-
-Acceptance:
-- User runs each MVP template and sees output history.
-
-## 7. Billing and Limits
-
-Status: partially implemented. Entitlements are active server-side and the
-temporary manual plan switcher exists in settings.
-
-Scope:
-- Seed plans.
-- Associate organization with subscription.
-- Enforce limits for users, assistants, documents, and monthly messages.
-
-Acceptance:
-- Free plan blocks over-limit actions.
-- Upgrade screen explains the required plan.
-- Owner/admin can switch plans manually during product construction.
-
-Current implementation:
-- `getEntitlements` reads `subscriptions` and `plans`.
-- Chat and assistants enforce feature/limit checks server-side.
-- `/app/settings/billing` lets owner/admin switch plans manually with status
-  `manual`.
-- `/app/upgrade` redirects to `/app/settings/billing`.
-
-Remaining:
-- Real checkout/gateway.
-- Billing history/invoices.
-- Full admin-only account billing rules and audit trail.
+- [x] Auth, organizacao e bootstrap multi-tenant.
+- [x] Assistants CRUD e selecao de provider/modelo.
+- [x] Chat persistente com streaming e limites.
+- [x] Conexoes organizacionais de IA com chaves criptografadas.
+- [x] Ingestao TXT, Markdown e PDF textual com embeddings.
+- [x] Busca semantica manual e exclusao de documentos.
+- [x] Fundacao de billing e troca manual de plano.

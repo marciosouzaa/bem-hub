@@ -20,6 +20,13 @@
   store `provider`, `provider_connection_id`, and `model`; route handlers
   resolve the encrypted organization connection before calling a provider.
 - Billing limits are checked server-side before AI or automation execution.
+- External channels and commerce platforms must be isolated behind domain
+  adapters. Webhooks, provider payloads, and vendor IDs must not become the
+  internal conversation or customer model.
+- Scheduled jobs must be idempotent, organization-scoped, observable, and
+  checked against server-side entitlements before execution.
+- Source metadata used by RAG must be persisted with assistant messages so a
+  reloaded conversation preserves the evidence shown at answer time.
 
 ## Initial App Boundaries
 
@@ -29,6 +36,32 @@
 - `src/lib`: infrastructure helpers for Supabase, AI, utilities.
 - `supabase/migrations`: database schema and policies.
 - `docs`: product and delivery context for Codex tasks.
+
+## Delivery Sources Of Truth
+
+- `docs/roadmap.md`: ordered product milestones and decision gates.
+- `docs/codex-backlog.md`: current executable queue and discoveries.
+- `docs/principles.md`: engineering and decision rules.
+- `docs/worklog.md`: latest operational checkpoint and next step.
+- `docs/handoff.md`: broader historical state and manual verification record.
+
+When a presentation or old handoff conflicts with the repository, verify the
+implementation and update the documents instead of assuming a feature is ready.
+
+## Pilot Extension Boundaries
+
+The core MVP remains a multi-tenant AI workspace. The cosmetics pilot adds a
+vertical sequence after the internal assistant proves value:
+
+1. RAG-backed internal catalog assistant.
+2. Provider-neutral assisted messaging channel.
+3. Commerce data adapter and scheduled business routines.
+
+WhatsApp providers such as Evolution API or Z-API must implement a channel
+contract owned by BEM HUB. Commerce providers such as Nuvemshop or Shopify must
+map into normalized product, stock, order, and customer contracts. Provider
+selection, credentials, automatic external sends, and personal-data policies
+are product or operational gates, not implementation details.
 
 ## AI Provider Runtime
 

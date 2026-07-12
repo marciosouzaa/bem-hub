@@ -36,6 +36,8 @@ usage/billing foundations.
 - `docs/codex-backlog.md`: current task order, acceptance criteria, and likely
   files.
 - `docs/roadmap.md`: 30/60/90 day sequencing.
+- `docs/principles.md`: engineering quality and autonomous decision rules.
+- `docs/worklog.md`: latest operational checkpoint, decisions, and next step.
 - `docs/risks.md`: product, technical, and commercial risks to guard against.
 - `docs/commercial-validation.md`: pilot packaging and validation metrics.
 - `docs/design-system.md`: visual language, UI tokens, component direction,
@@ -86,6 +88,11 @@ Follow this sequence unless the user explicitly asks otherwise:
 
 When selecting the next task, prefer completing acceptance criteria for the
 earliest unfinished backlog item over starting later roadmap work.
+
+For autonomous milestone execution, use
+`.agents/skills/bem-hub-autonomous-engineer/SKILL.md`. Treat
+`docs/roadmap.md` as the milestone order, `docs/codex-backlog.md` as the
+executable queue, and `docs/worklog.md` as the continuity checkpoint.
 
 ## Domain Contracts
 
@@ -169,5 +176,7 @@ are missing and which manual checks remain.
 - `src/proxy.ts` wires Supabase SSR session refresh and should stay aligned
   with `@supabase/ssr` guidance.
 - Advanced integrations, WhatsApp, autonomous agents, marketplace, white-label,
-  recurring scheduled automations, and granular permission matrices are out of
-  scope for the MVP.
+  recurring scheduled automations, and granular permission matrices remain out
+  of the core workspace MVP. `docs/roadmap.md` may introduce a narrow WhatsApp,
+  commerce, or scheduled-routine pilot only after its preceding milestone and
+  explicit product gates are satisfied.
