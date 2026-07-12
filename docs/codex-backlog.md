@@ -126,3 +126,4 @@ Bloqueado pela auditoria da plataforma e disponibilidade dos dados.
 - [x] Ingestao TXT, Markdown e PDF textual com embeddings.
 - [x] Busca semantica manual e exclusao de documentos.
 - [x] Fundacao de billing e troca manual de plano.
+- [x] Fundacao de automacoes manuais com resumo, resposta e checklist.

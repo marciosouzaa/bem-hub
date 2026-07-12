@@ -27,6 +27,9 @@
   checked against server-side entitlements before execution.
 - Source metadata used by RAG must be persisted with assistant messages so a
   reloaded conversation preserves the evidence shown at answer time.
+- Manual automations use static, typed templates and the organization default
+  assistant runtime. Inputs are untrusted data, runs persist status and output,
+  and no template sends data to an external customer channel.
 
 ## Initial App Boundaries
 
@@ -86,3 +89,15 @@ options.
 `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, and `GOOGLE_GENERATIVE_AI_API_KEY` remain
 development/legacy fallbacks only for assistants without a saved provider
 connection. Production should prefer organization-scoped provider connections.
+
+## Manual Automations
+
+`/app/automations` exposes only on-demand templates: summary, client reply
+draft, and checklist. Execution checks the `automations` entitlement on the
+server, resolves the default assistant runtime, persists `automation_runs`, and
+records `automation.completed` usage.
+
+Runs are scoped by `organization_id`. Members may create runs and update only
+runs they created; organization members may inspect history under RLS.
+Scheduling, automatic sends, external side effects, and autonomous execution
+remain out of scope.

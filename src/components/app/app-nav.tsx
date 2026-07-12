@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   MessageSquareText,
   Settings,
+  Zap,
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -23,6 +24,7 @@ const navItems: NavItem[] = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/app", exact: true },
   { icon: Bot, label: "Assistentes", href: "/app/assistants" },
   { icon: MessageSquareText, label: "Conversas", href: "/app/chat" },
+  { icon: Zap, label: "Automacoes", href: "/app/automations" },
   { icon: Database, label: "Base de conhecimento", href: "/app/knowledge" },
   { icon: Settings, label: "Configurações", href: "/app/settings" },
 ];

@@ -319,6 +319,52 @@ export type Database = {
           created_at?: string;
         }
       >;
+      automations: TableDefinition<
+        {
+          id: string;
+          organization_id: string;
+          name: string;
+          type: string;
+          template_key: string;
+          config: Json;
+          created_by: string;
+          created_at: string;
+        },
+        {
+          id?: string;
+          organization_id: string;
+          name: string;
+          type?: string;
+          template_key: string;
+          config?: Json;
+          created_by: string;
+          created_at?: string;
+        }
+      >;
+      automation_runs: TableDefinition<
+        {
+          id: string;
+          organization_id: string;
+          automation_id: string | null;
+          status: Database["public"]["Enums"]["run_status"];
+          input: Json;
+          output: Json | null;
+          error: string | null;
+          created_by: string;
+          created_at: string;
+        },
+        {
+          id?: string;
+          organization_id: string;
+          automation_id?: string | null;
+          status?: Database["public"]["Enums"]["run_status"];
+          input?: Json;
+          output?: Json | null;
+          error?: string | null;
+          created_by: string;
+          created_at?: string;
+        }
+      >;
       usage_events: TableDefinition<
         {
           id: string;

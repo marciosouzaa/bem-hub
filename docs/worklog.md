@@ -4,6 +4,36 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-12 - Automacoes Manuais Verticais
+
+### Feito
+
+- Criada rota `/app/automations` com resumo, rascunho de resposta ao cliente e
+  checklist operacional.
+- Execucao valida input com Zod, entitlement `automations`, sessao e
+  organizacao no servidor.
+- Provider, conexao e modelo sao resolvidos pelo assistente padrao do tenant;
+  UI nao escolhe nem injeta configuracao de provider.
+- Inputs sao tratados como dados nao confiaveis; templates proibem seguir
+  instrucoes embutidas, inventar fatos ou prometer condicoes nao confirmadas.
+- Runs persistem estados `running`, `succeeded` e `failed`, resultado, erro e
+  evento `automation.completed` com tokens.
+- Historico permite reabrir resultados persistidos e nunca envia mensagens ou
+  executa efeito externo automaticamente.
+- Migration `20260712221934_secure_manual_automation_runs.sql` restringe update
+  ao criador autenticado dentro da organizacao.
+
+### Verificacao
+
+- `bun run test`: 20 testes passaram em 6 arquivos.
+- `bun run lint` passou.
+- `bun run build` passou com Next.js 16.2.9 e rota `/app/automations`.
+
+### Proximo Passo
+
+Ampliar cobertura de falhas da action sem depender de chamada real ao provider
+e manter migration pronta para aplicacao remota autorizada.
+
 ## 2026-07-12 - Navegacao Alinhada Ao Produto Real
 
 ### Feito
