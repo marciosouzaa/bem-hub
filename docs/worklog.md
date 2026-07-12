@@ -4,6 +4,32 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-12 - Indices De Foreign Keys
+
+### Feito
+
+- Criada via Supabase CLI a migration
+  `20260712215654_add_foreign_key_indexes.sql`.
+- Adicionados 15 indices idempotentes para foreign keys ainda nao cobertas por
+  PK, unique ou indice composto existente.
+- Cobertos owners, planos, criadores, assistentes de conversa, usuarios,
+  organizacoes, automacoes e conexoes de IA.
+- Nenhuma policy, permissao, dado ou contrato da Data API foi alterado.
+
+### Verificacao
+
+- `bun run test`: 18 testes passaram em 5 arquivos.
+- `bun run lint` passou.
+- `bun run build` passou com Next.js 16.2.9.
+- `supabase db lint --local` tentou executar e retornou
+  `Failed to connect`; banco local/Docker segue indisponivel.
+
+### Proximo Passo
+
+Manter migration local commitada. Aplicacao remota nao sera feita sem
+autorizacao explicita. Continuar hardening e produto que possam ser validados
+pela suite automatizada.
+
 ## 2026-07-12 - Dashboard Sem Dados Ficticios
 
 ### Feito

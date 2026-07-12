@@ -29,7 +29,7 @@ clientes reais com seguranca.
   parametros fornecidos pelo cliente.
 - [x] Adicionar testes ou verificacoes reproduziveis para acesso cruzado por RPC.
 - [x] Revisar policies do bucket `knowledge-documents` e downloads assinados.
-- [ ] Rodar advisors Supabase e registrar alertas remanescentes.
+- [x] Rodar advisors Supabase e registrar alertas remanescentes.
 - [ ] Verificar com dois usuarios reais: tabelas, RPC, Storage e URL assinada.
 - [ ] Ativar protecao contra senha vazada no Supabase Auth ou registrar o bloqueio
   operacional caso a configuracao dependa do painel.
@@ -113,6 +113,9 @@ Bloqueado pela auditoria da plataforma e disponibilidade dos dados.
   reais e registrar os advisories que ainda permanecerem.
 - Os 29 testes pgTAP de hardening estao prontos, mas exigem Docker/Supabase local
   ou credencial de banco remoto para execucao.
+- A migration `20260712215654_add_foreign_key_indexes.sql` corrige localmente
+  os foreign keys sem indice; aplicacao remota e novo advisor permanecem como
+  operacoes externas, sem bloquear desenvolvimento local.
 
 ## Concluido
 
