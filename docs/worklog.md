@@ -4,6 +4,28 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-12 - Navegacao Alinhada Ao Produto Real
+
+### Feito
+
+- Removidos do menu cinco atalhos sem rota propria que redirecionavam para o
+  dashboard: Agentes IA, Automacoes, Documentos, Analytics e Time.
+- Navegacao agora apresenta apenas Dashboard, Assistentes, Conversas, Base de
+  conhecimento e Configuracoes, todos com fluxos utilizaveis.
+- Modulos futuros permanecem no roadmap e voltam ao menu quando entregarem uma
+  fatia vertical real.
+
+### Verificacao
+
+- `bun run test`: 18 testes passaram em 5 arquivos.
+- `bun run lint` passou.
+- `bun run build` passou com Next.js 16.2.9.
+
+### Proximo Passo
+
+Preparar automacoes manuais como nova rota somente junto de contrato de
+execucao, persistencia, entitlement e estados de falha; nao expor shell vazio.
+
 ## 2026-07-12 - Indices De Foreign Keys
 
 ### Feito
