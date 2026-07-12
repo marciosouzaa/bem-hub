@@ -752,6 +752,10 @@ export type Database = {
           similarity: number
         }[]
       }
+      set_default_assistant: {
+        Args: { target_assistant_id: string; target_organization_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       document_status: "uploaded" | "processing" | "ready" | "failed"

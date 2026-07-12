@@ -4,6 +4,33 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-12 - Assistente Padrao Atomico
+
+### Feito
+
+- Criada e aplicada remotamente RPC `set_default_assistant`.
+- RPC e `SECURITY INVOKER`, usa search path vazio, exige admin da organizacao,
+  valida assistente no tenant e atualiza todos os defaults atomicamente.
+- Anon nao executa; authenticated possui execute e ainda depende de RLS/admin.
+- Criacao de assistente nao limpa mais o default antes de confirmar insert; se
+  promocao falhar, novo registro e removido.
+- Edicao comum nao desmarca default acidentalmente; promocao e botao dedicado
+  usam a RPC transacional.
+- Tipos Supabase foram regenerados com a assinatura da RPC.
+- pgTAP possui 40 assertions cobrindo ACL, invoker, search path, default unico e
+  tentativa cross-tenant.
+
+### Verificacao
+
+- `bun run test`: 27 testes passaram em 8 arquivos.
+- `bun run lint` passou.
+- `bun run build` passou com Next.js 16.2.9.
+- Validacao SQL remota confirmou ACL e atributos da funcao.
+
+### Proximo Passo
+
+Continuar falhas silenciosas restantes e invariantes de dados.
+
 ## 2026-07-12 - Confirmacao De Exclusao Documental
 
 ### Feito

@@ -1,5 +1,5 @@
 begin;
-select plan(34);
+select plan(40);
 
 select ok(
   not has_function_privilege('anon', 'public.bootstrap_owned_organization(uuid)', 'execute'),
@@ -24,6 +24,19 @@ select ok(
 select ok(
   has_function_privilege('authenticated', 'public.bootstrap_owned_organization(uuid)', 'execute'),
   'authenticated can execute organization bootstrap'
+);
+select ok(
+  not has_function_privilege('anon', 'public.set_default_assistant(uuid,uuid)', 'execute'),
+  'anon cannot set a default assistant'
+);
+select ok(
+  has_function_privilege('authenticated', 'public.set_default_assistant(uuid,uuid)', 'execute'),
+  'authenticated can call default assistant RPC'
+);
+select is(
+  (select prosecdef from pg_proc where oid = 'public.set_default_assistant(uuid,uuid)'::regprocedure),
+  false,
+  'default assistant RPC is security invoker'
 );
 select ok(
   has_function_privilege('authenticated', 'public.is_org_member(uuid)', 'execute'),
@@ -85,6 +98,7 @@ select ok(
       'public.is_org_member(uuid)'::regprocedure,
       'public.is_org_admin(uuid)'::regprocedure,
       'public.match_document_chunks(uuid,extensions.vector,integer)'::regprocedure,
+      'public.set_default_assistant(uuid,uuid)'::regprocedure,
       'private.is_org_member(uuid)'::regprocedure,
       'private.is_org_admin(uuid)'::regprocedure
     )
@@ -148,6 +162,36 @@ values
     'b0000000-0000-0000-0000-000000000002',
     'running',
     '{"template_id":"summarize"}',
+    '20000000-0000-0000-0000-000000000002'
+  );
+
+insert into public.assistants (
+  id,
+  organization_id,
+  name,
+  instructions,
+  created_by
+)
+values
+  (
+    'a4000000-0000-0000-0000-000000000001',
+    'a0000000-0000-0000-0000-000000000001',
+    'Tenant A assistant 1',
+    'Tenant A instructions',
+    '10000000-0000-0000-0000-000000000001'
+  ),
+  (
+    'a4000000-0000-0000-0000-000000000002',
+    'a0000000-0000-0000-0000-000000000001',
+    'Tenant A assistant 2',
+    'Tenant A instructions',
+    '10000000-0000-0000-0000-000000000001'
+  ),
+  (
+    'b4000000-0000-0000-0000-000000000002',
+    'b0000000-0000-0000-0000-000000000002',
+    'Tenant B assistant',
+    'Tenant B instructions',
     '20000000-0000-0000-0000-000000000002'
   );
 
@@ -335,6 +379,37 @@ select throws_ok(
   '42501',
   'new row violates row-level security policy for table "conversations"',
   'tenant A cannot move its conversation into tenant B'
+);
+
+select lives_ok(
+  $$
+    select public.set_default_assistant(
+      'a0000000-0000-0000-0000-000000000001',
+      'a4000000-0000-0000-0000-000000000002'
+    )
+  $$,
+  'tenant A admin can set its default assistant'
+);
+select is(
+  (
+    select count(*)
+    from public.assistants
+    where organization_id = 'a0000000-0000-0000-0000-000000000001'
+      and is_default
+  ),
+  1::bigint,
+  'default assistant RPC leaves exactly one tenant A default'
+);
+select throws_ok(
+  $$
+    select public.set_default_assistant(
+      'b0000000-0000-0000-0000-000000000002',
+      'b4000000-0000-0000-0000-000000000002'
+    )
+  $$,
+  '42501',
+  'organization_admin_required',
+  'tenant A cannot set tenant B default assistant'
 );
 
 reset role;

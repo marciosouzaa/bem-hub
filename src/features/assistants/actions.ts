@@ -120,30 +120,52 @@ export async function createAssistantAction(
   }
 
   const shouldBeDefault = parsed.data.isDefault || count === 0;
-
-  if (shouldBeDefault) {
-    await unsetDefaultAssistants(supabase, workspace.organization.id);
-  }
-
-  const { error } = await supabase.from("assistants").insert({
-    organization_id: workspace.organization.id,
-    name: parsed.data.name,
-    description: parsed.data.description,
-    area: parsed.data.area,
-    instructions: parsed.data.instructions,
-    provider: parsed.data.provider,
-    provider_connection_id: parsed.data.providerConnectionId,
-    model: parsed.data.model,
-    temperature: parsed.data.temperature,
-    is_default: shouldBeDefault,
-    created_by: workspace.user.id,
-  });
+  const { data: createdAssistant, error } = await supabase
+    .from("assistants")
+    .insert({
+      organization_id: workspace.organization.id,
+      name: parsed.data.name,
+      description: parsed.data.description,
+      area: parsed.data.area,
+      instructions: parsed.data.instructions,
+      provider: parsed.data.provider,
+      provider_connection_id: parsed.data.providerConnectionId,
+      model: parsed.data.model,
+      temperature: parsed.data.temperature,
+      is_default: false,
+      created_by: workspace.user.id,
+    })
+    .select("id")
+    .single();
 
   if (error) {
     return {
       ok: false,
       message: `Falha ao criar assistente: ${error.message}`,
     };
+  }
+
+  if (shouldBeDefault) {
+    try {
+      await setDefaultAssistant(
+        supabase,
+        workspace.organization.id,
+        createdAssistant.id,
+      );
+    } catch (defaultError) {
+      await supabase
+        .from("assistants")
+        .delete()
+        .eq("id", createdAssistant.id)
+        .eq("organization_id", workspace.organization.id);
+      return {
+        ok: false,
+        message:
+          defaultError instanceof Error
+            ? defaultError.message
+            : "Falha ao definir assistente padrao.",
+      };
+    }
   }
 
   revalidatePath(ASSISTANTS_PATH);
@@ -183,10 +205,6 @@ export async function updateAssistantAction(
     return providerConnectionValidation.state;
   }
 
-  if (parsed.data.isDefault) {
-    await unsetDefaultAssistants(supabase, workspace.organization.id);
-  }
-
   const { error } = await supabase
     .from("assistants")
     .update({
@@ -198,7 +216,6 @@ export async function updateAssistantAction(
       provider_connection_id: parsed.data.providerConnectionId,
       model: parsed.data.model,
       temperature: parsed.data.temperature,
-      is_default: parsed.data.isDefault,
     })
     .eq("id", assistantId)
     .eq("organization_id", workspace.organization.id);
@@ -208,6 +225,10 @@ export async function updateAssistantAction(
       ok: false,
       message: `Falha ao atualizar assistente: ${error.message}`,
     };
+  }
+
+  if (parsed.data.isDefault) {
+    await setDefaultAssistant(supabase, workspace.organization.id, assistantId);
   }
 
   revalidatePath(ASSISTANTS_PATH);
@@ -268,17 +289,7 @@ export async function setDefaultAssistantAction(
   const entitlements = await getEntitlements(supabase, workspace.organization.id);
   requireFeature(entitlements, "assistants");
 
-  await unsetDefaultAssistants(supabase, workspace.organization.id);
-
-  const { error } = await supabase
-    .from("assistants")
-    .update({ is_default: true })
-    .eq("id", assistantId)
-    .eq("organization_id", workspace.organization.id);
-
-  if (error) {
-    throw new Error(`Falha ao definir assistente padrao: ${error.message}`);
-  }
+  await setDefaultAssistant(supabase, workspace.organization.id, assistantId);
 
   revalidatePath(ASSISTANTS_PATH);
 }
@@ -395,17 +406,18 @@ async function validateProviderConnection(
   return { ok: true };
 }
 
-async function unsetDefaultAssistants(
+async function setDefaultAssistant(
   supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
   organizationId: string,
+  assistantId: string,
 ) {
-  const { error } = await supabase
-    .from("assistants")
-    .update({ is_default: false })
-    .eq("organization_id", organizationId);
+  const { error } = await supabase.rpc("set_default_assistant", {
+    target_assistant_id: assistantId,
+    target_organization_id: organizationId,
+  });
 
   if (error) {
-    throw new Error(`Falha ao limpar padrao atual: ${error.message}`);
+    throw new Error(`Falha ao definir assistente padrao: ${error.message}`);
   }
 }
 
@@ -429,13 +441,5 @@ async function promoteFallbackDefault(
     return;
   }
 
-  const { error } = await supabase
-    .from("assistants")
-    .update({ is_default: true })
-    .eq("id", fallback.id)
-    .eq("organization_id", organizationId);
-
-  if (error) {
-    throw new Error(`Falha ao promover novo padrao: ${error.message}`);
-  }
+  await setDefaultAssistant(supabase, organizationId, fallback.id);
 }

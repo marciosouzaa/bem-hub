@@ -2,6 +2,13 @@
 
 Atualizado em 2026-07-12.
 
+## Handoff 2026-07-12 - Default De Assistente
+
+- `set_default_assistant` foi aplicada remotamente como RPC transacional,
+  `SECURITY INVOKER`, tenant-scoped e restrita a admin.
+- Actions de criar, editar, promover e fallback usam a mesma operacao atomica.
+- Tipos oficiais regenerados; pgTAP atual possui 40 assertions.
+
 ## Handoff 2026-07-12 - DOCX Textual
 
 - DOCX agora usa Mammoth para extracao de texto cru no servidor.
