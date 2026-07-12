@@ -183,67 +183,37 @@ export async function POST(request: Request) {
       messages,
       temperature: assistant.temperature,
       onEnd: async ({ text, usage, finishReason }) => {
-        const { error: assistantMessageError } = await supabase
-          .from("messages")
-          .insert({
-            organization_id: organizationId,
-            conversation_id: conversation.id,
-            role: "assistant",
-            content: text,
-            model: runtime.model,
-            tokens_input: usage.inputTokens ?? null,
-            tokens_output: usage.outputTokens ?? null,
-            metadata: {
+        const { error: completionError } = await supabase.rpc(
+          "finalize_chat_completion",
+          {
+            target_organization_id: organizationId,
+            target_conversation_id: conversation.id,
+            message_content: text,
+            model_name: runtime.model,
+            input_tokens: usage.inputTokens ?? null,
+            output_tokens: usage.outputTokens ?? null,
+            message_metadata: {
               assistant_id: assistant.id,
               provider: runtime.provider,
               provider_connection_id: runtime.providerConnectionId,
               finish_reason: finishReason,
               knowledge: rag.knowledge,
             },
-          });
-
-        if (assistantMessageError) {
-          console.error("Falha ao salvar resposta do chat", assistantMessageError);
-          return;
-        }
-
-        const { data: touchedConversation, error: conversationUpdateError } =
-          await supabase
-          .from("conversations")
-          .update({ updated_at: new Date().toISOString() })
-          .eq("id", conversation.id)
-          .eq("organization_id", organizationId)
-          .select("id")
-          .maybeSingle();
-
-        if (conversationUpdateError || !touchedConversation) {
-          console.error(
-            "Falha ao atualizar atividade da conversa",
-            conversationUpdateError ?? { conversationId: conversation.id },
-          );
-        }
-
-        const { error: usageError } = await supabase.from("usage_events").insert({
-          organization_id: organizationId,
-          user_id: user.id,
-          event_type: "chat.completion",
-          model: runtime.model,
-          tokens_input: usage.inputTokens ?? null,
-          tokens_output: usage.outputTokens ?? null,
-          metadata: {
-            assistant_id: assistant.id,
-            conversation_id: conversation.id,
-            provider: runtime.provider,
-            provider_connection_id: runtime.providerConnectionId,
-            finish_reason: finishReason,
-            knowledge_status: rag.knowledge.status,
-            knowledge_source_count: rag.knowledge.sources.length,
-            knowledge_embedding_model: rag.knowledge.embeddingModel,
+            usage_metadata: {
+              assistant_id: assistant.id,
+              conversation_id: conversation.id,
+              provider: runtime.provider,
+              provider_connection_id: runtime.providerConnectionId,
+              finish_reason: finishReason,
+              knowledge_status: rag.knowledge.status,
+              knowledge_source_count: rag.knowledge.sources.length,
+              knowledge_embedding_model: rag.knowledge.embeddingModel,
+            },
           },
-        });
+        );
 
-        if (usageError) {
-          console.error("Falha ao registrar uso do chat", usageError);
+        if (completionError) {
+          console.error("Falha ao finalizar persistencia do chat", completionError);
         }
       },
       onError: ({ error }) => {

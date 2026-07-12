@@ -735,6 +735,19 @@ export type Database = {
         Args: { target_assistant_id: string; target_organization_id: string }
         Returns: undefined
       }
+      finalize_chat_completion: {
+        Args: {
+          input_tokens: number | null
+          message_content: string
+          message_metadata: Json
+          model_name: string
+          output_tokens: number | null
+          target_conversation_id: string
+          target_organization_id: string
+          usage_metadata: Json
+        }
+        Returns: string
+      }
       is_org_admin: {
         Args: { target_organization_id: string }
         Returns: boolean

@@ -1,5 +1,5 @@
 begin;
-select plan(49);
+select plan(57);
 
 select ok(
   not has_function_privilege('anon', 'public.bootstrap_owned_organization(uuid)', 'execute'),
@@ -50,6 +50,31 @@ select is(
   (select prosecdef from pg_proc where oid = 'public.delete_assistant(uuid,uuid)'::regprocedure),
   false,
   'delete assistant RPC is security invoker'
+);
+select ok(
+  not has_function_privilege(
+    'anon',
+    'public.finalize_chat_completion(uuid,uuid,text,text,integer,integer,jsonb,jsonb)',
+    'execute'
+  ),
+  'anon cannot finalize chat completion'
+);
+select ok(
+  has_function_privilege(
+    'authenticated',
+    'public.finalize_chat_completion(uuid,uuid,text,text,integer,integer,jsonb,jsonb)',
+    'execute'
+  ),
+  'authenticated can finalize chat completion'
+);
+select is(
+  (
+    select prosecdef
+    from pg_proc
+    where oid = 'public.finalize_chat_completion(uuid,uuid,text,text,integer,integer,jsonb,jsonb)'::regprocedure
+  ),
+  false,
+  'chat completion RPC is security invoker'
 );
 select ok(
   has_function_privilege('authenticated', 'public.is_org_member(uuid)', 'execute'),
@@ -113,6 +138,7 @@ select ok(
       'public.match_document_chunks(uuid,extensions.vector,integer)'::regprocedure,
       'public.set_default_assistant(uuid,uuid)'::regprocedure,
       'public.delete_assistant(uuid,uuid)'::regprocedure,
+      'public.finalize_chat_completion(uuid,uuid,text,text,integer,integer,jsonb,jsonb)'::regprocedure,
       'private.is_org_member(uuid)'::regprocedure,
       'private.is_org_admin(uuid)'::regprocedure
     )
@@ -484,6 +510,64 @@ select throws_ok(
   '42501',
   'organization_admin_required',
   'tenant A cannot delete a tenant B assistant'
+);
+select lives_ok(
+  $$
+    select public.finalize_chat_completion(
+      'a0000000-0000-0000-0000-000000000001',
+      'a3000000-0000-0000-0000-000000000001',
+      'Resposta persistida atomicamente.',
+      'test-model',
+      10,
+      20,
+      '{"finish_reason":"stop"}',
+      '{"source":"pgtap"}'
+    )
+  $$,
+  'tenant A finalizes its chat completion atomically'
+);
+select is(
+  (
+    select count(*) from public.messages
+    where conversation_id = 'a3000000-0000-0000-0000-000000000001'
+      and role = 'assistant'
+  ),
+  1::bigint,
+  'chat completion RPC persists one assistant message'
+);
+select is(
+  (
+    select count(*) from public.usage_events
+    where organization_id = 'a0000000-0000-0000-0000-000000000001'
+      and event_type = 'chat.completion'
+  ),
+  1::bigint,
+  'chat completion RPC persists one usage event'
+);
+select is(
+  (
+    select updated_at > created_at from public.conversations
+    where id = 'a3000000-0000-0000-0000-000000000001'
+  ),
+  true,
+  'chat completion RPC touches conversation activity'
+);
+select throws_ok(
+  $$
+    select public.finalize_chat_completion(
+      'b0000000-0000-0000-0000-000000000002',
+      'a3000000-0000-0000-0000-000000000001',
+      'Cross tenant response.',
+      'test-model',
+      1,
+      1,
+      '{}',
+      '{}'
+    )
+  $$,
+  '42501',
+  'organization_member_required',
+  'tenant A cannot finalize tenant B chat data'
 );
 
 reset role;
