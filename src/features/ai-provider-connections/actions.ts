@@ -203,6 +203,10 @@ export async function setDefaultAiProviderConnectionAction(
     throw new Error("Conexão não encontrada.");
   }
 
+  if (!isSupportedProvider(connection.provider)) {
+    throw new Error("Provider da conexao e invalido.");
+  }
+
   await unsetDefaultConnections(
     supabase,
     workspace.organization.id,

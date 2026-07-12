@@ -17,7 +17,11 @@ import {
   isAcceptedDocument,
   sanitizeStorageFilename,
 } from "@/features/knowledge-base/processing";
-import { embedTexts, resolveOpenAIEmbeddingRuntime } from "@/lib/ai/embeddings";
+import {
+  embedTexts,
+  resolveOpenAIEmbeddingRuntime,
+  serializeEmbedding,
+} from "@/lib/ai/embeddings";
 import { DEFAULT_EMBEDDING_MODEL } from "@/lib/ai/models";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -170,7 +174,7 @@ export async function POST(request: Request) {
         content: chunk.content,
         chunk_index: chunk.chunkIndex,
         token_count: chunk.tokenCount,
-        embedding: embeddings[index],
+        embedding: serializeEmbedding(embeddings[index]),
       })),
     );
 

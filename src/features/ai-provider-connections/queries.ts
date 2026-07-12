@@ -1,5 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { AI_PROVIDER_DEFINITIONS, type AiProvider } from "@/lib/ai/providers";
+import {
+  AI_PROVIDER_DEFINITIONS,
+  isSupportedProvider,
+  type AiProvider,
+  type AiProviderConnectionStatus,
+} from "@/lib/ai/providers";
 import { isMissingRelationError } from "@/lib/supabase/schema-errors";
 import type { Database, Json } from "@/types/database";
 
@@ -11,7 +16,7 @@ export type AiProviderConnectionListItem = {
   provider: AiProvider;
   providerLabel: string;
   name: string;
-  status: Database["public"]["Enums"]["ai_provider_connection_status"];
+  status: AiProviderConnectionStatus;
   keyHint: string | null;
   defaultModel: string | null;
   availableModels: string[];
@@ -43,21 +48,34 @@ export async function listAiProviderConnections(
     throw new Error(`Falha ao buscar conexões de IA: ${error.message}`);
   }
 
-  return data.map((connection) => ({
-    id: connection.id,
-    organizationId: connection.organization_id,
-    provider: connection.provider,
-    providerLabel: AI_PROVIDER_DEFINITIONS[connection.provider].label,
-    name: connection.name,
-    status: connection.status,
-    keyHint: connection.key_hint,
-    defaultModel: connection.default_model,
-    availableModels: parseAvailableModels(connection.available_models),
-    isDefault: connection.is_default,
-    validatedAt: connection.validated_at,
-    createdAt: connection.created_at,
-    updatedAt: connection.updated_at,
-  }));
+  return data.map((connection) => {
+    if (
+      !isSupportedProvider(connection.provider) ||
+      !isConnectionStatus(connection.status)
+    ) {
+      throw new Error("Conexao de IA possui provider ou status invalido.");
+    }
+
+    return {
+      id: connection.id,
+      organizationId: connection.organization_id,
+      provider: connection.provider,
+      providerLabel: AI_PROVIDER_DEFINITIONS[connection.provider].label,
+      name: connection.name,
+      status: connection.status,
+      keyHint: connection.key_hint,
+      defaultModel: connection.default_model,
+      availableModels: parseAvailableModels(connection.available_models),
+      isDefault: connection.is_default,
+      validatedAt: connection.validated_at,
+      createdAt: connection.created_at,
+      updatedAt: connection.updated_at,
+    };
+  });
+}
+
+function isConnectionStatus(value: string): value is AiProviderConnectionStatus {
+  return value === "active" || value === "needs_attention" || value === "disabled";
 }
 
 function parseAvailableModels(value: Json): string[] {

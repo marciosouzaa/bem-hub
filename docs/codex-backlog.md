@@ -104,7 +104,8 @@ Bloqueado pela auditoria da plataforma e disponibilidade dos dados.
 - DOCX ainda nao tem parser e PDF escaneado ainda nao tem OCR.
 - O download e a exclusao completa de documentos precisam de novo smoke test.
 - Foreign keys sem indice e policies permissivas ainda geram advisors.
-- Tipos Supabase devem ser regenerados quando o schema estabilizar.
+- Tipos Supabase oficiais foram regenerados apos estabilizacao do schema;
+  providers/status textuais agora sao validados nas fronteiras de dominio.
 - O PDF do piloto considera RAG pronto, mas o chat ainda nao recupera nem exibe fontes.
 - `roteiro-de-validacao-rag.md`, se ainda indexado no ambiente remoto, deve ser
   removido antes do benchmark porque contem respostas esperadas.

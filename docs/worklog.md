@@ -4,6 +4,31 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-12 - Tipos Oficiais Do Supabase
+
+### Feito
+
+- `src/types/database.ts` foi substituido pelos tipos gerados do schema remoto
+  com PostgREST 14.5, incluindo relationships e assinaturas RPC reais.
+- Roles textuais de mensagens agora passam por narrowing/validacao antes de
+  entrar no contrato do AI SDK e da UI.
+- `provider` e `status`, armazenados como `text` com CHECK no banco, deixaram de
+  fingir enums PostgreSQL e sao validados nas fronteiras de dominio.
+- Pgvector agora usa representacao string oficial da Data API; embeddings
+  continuam numericos internamente e sao serializados somente na persistencia
+  e chamada RPC.
+- Adicionado teste unitario da serializacao pgvector.
+
+### Verificacao
+
+- `bun run test`: 24 testes passaram em 7 arquivos.
+- `bun run lint` passou.
+- `bun run build` passou com os tipos oficiais e Next.js 16.2.9.
+
+### Proximo Passo
+
+Continuar proximo item local de produto sem depender de verificacao manual.
+
 ## 2026-07-12 - Migrations Remotas E RLS Consolidado
 
 ### Feito

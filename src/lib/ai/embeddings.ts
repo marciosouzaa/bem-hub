@@ -72,6 +72,10 @@ export async function embedTexts(
   return result.embeddings;
 }
 
+export function serializeEmbedding(embedding: number[]) {
+  return `[${embedding.join(",")}]`;
+}
+
 async function getOpenAIConnection(supabase: Supabase, organizationId: string) {
   const { data, error } = await supabase
     .from("ai_provider_connections")

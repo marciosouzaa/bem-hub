@@ -5,13 +5,13 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { LanguageModel } from "ai";
 import { decryptSecret } from "@/lib/security/encryption";
 import type { Database } from "@/types/database";
-import type { AiProvider } from "./providers";
+import { isSupportedProvider, type AiProvider } from "./providers";
 
 type Supabase = SupabaseClient<Database>;
 
 type AssistantRuntimeSource = {
   id: string;
-  provider: AiProvider;
+  provider: string;
   provider_connection_id: string | null;
   model: string;
 };
@@ -38,11 +38,21 @@ export async function resolveAssistantRuntime(
   organizationId: string,
   assistant: AssistantRuntimeSource,
 ): Promise<AssistantRuntime> {
+  if (!isSupportedProvider(assistant.provider)) {
+    throw new AiRuntimeError("Provider configurado no assistente e invalido.", 400);
+  }
+
   const providerConnectionId = assistant.provider_connection_id;
   const connection = providerConnectionId
     ? await getConnection(supabase, organizationId, assistant, providerConnectionId)
     : null;
-  const provider = connection?.provider ?? assistant.provider;
+  const providerValue = connection?.provider ?? assistant.provider;
+
+  if (!isSupportedProvider(providerValue)) {
+    throw new AiRuntimeError("Provider resolvido para o assistente e invalido.", 400);
+  }
+
+  const provider = providerValue;
   const model = assistant.model;
   const apiKey = connection
     ? decryptSecret(connection.encrypted_api_key)
@@ -109,6 +119,10 @@ async function getConnection(
 
   if (data.status !== "active") {
     throw new AiRuntimeError("Conexão de IA não está ativa.", 400);
+  }
+
+  if (!isSupportedProvider(data.provider)) {
+    throw new AiRuntimeError("Provider configurado na conexao e invalido.", 400);
   }
 
   if (data.provider !== assistant.provider) {

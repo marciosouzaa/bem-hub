@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { AiProvider } from "@/lib/ai/providers";
+import { isSupportedProvider, type AiProvider } from "@/lib/ai/providers";
 import { isMissingColumnError } from "@/lib/supabase/schema-errors";
 import type { Database } from "@/types/database";
 
@@ -54,7 +54,7 @@ export async function listAssistants(
     description: assistant.description,
     area: assistant.area,
     instructions: assistant.instructions,
-    provider: assistant.provider,
+    provider: parseAssistantProvider(assistant.provider),
     providerConnectionId: assistant.provider_connection_id,
     model: assistant.model,
     temperature: Number(assistant.temperature),
@@ -62,6 +62,14 @@ export async function listAssistants(
     createdBy: assistant.created_by,
     createdAt: assistant.created_at,
   }));
+}
+
+function parseAssistantProvider(value: string): AiProvider {
+  if (!isSupportedProvider(value)) {
+    throw new Error("Assistente possui provider invalido.");
+  }
+
+  return value;
 }
 
 async function listAssistantsFromLegacySchema(

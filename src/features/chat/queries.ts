@@ -1,6 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
-import type { ChatMessage, ConversationListItem } from "./types";
+import {
+  chatRoleSchema,
+  type ChatMessage,
+  type ConversationListItem,
+} from "./types";
 import { parseMessageKnowledgeContext } from "./sources";
 
 type Supabase = SupabaseClient<Database>;
@@ -68,7 +72,7 @@ export async function listConversationMessages(
     id: message.id,
     organizationId: message.organization_id,
     conversationId: message.conversation_id,
-    role: message.role,
+    role: chatRoleSchema.parse(message.role),
     content: message.content,
     model: message.model,
     tokensInput: message.tokens_input,

@@ -1,10 +1,11 @@
 import type { LanguageModel } from "ai";
-import type { Database } from "@/types/database";
 
-export type AiProvider = Database["public"]["Enums"]["ai_provider"];
+export type AiProvider = "openai" | "anthropic" | "gemini" | "open-source";
 
 export type AiProviderConnectionStatus =
-  Database["public"]["Enums"]["ai_provider_connection_status"];
+  | "active"
+  | "needs_attention"
+  | "disabled";
 
 export type AiProviderDefinition = {
   provider: AiProvider;

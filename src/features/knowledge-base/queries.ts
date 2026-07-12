@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { embedText } from "@/lib/ai/embeddings";
+import { embedText, serializeEmbedding } from "@/lib/ai/embeddings";
 import type { EmbeddingRuntime } from "@/lib/ai/embeddings";
 import type { Database } from "@/types/database";
 
@@ -73,7 +73,7 @@ export async function searchKnowledgeDocuments(
   const embedding = await embedText(runtime, query);
   const { data, error } = await supabase.rpc("match_document_chunks", {
     target_organization_id: organizationId,
-    query_embedding: embedding,
+    query_embedding: serializeEmbedding(embedding),
     match_count: 8,
   });
 

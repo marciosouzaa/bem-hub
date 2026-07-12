@@ -420,7 +420,7 @@ async function loadModelMessages(
   return data
     .filter((message) => message.role === "user" || message.role === "assistant")
     .map((message) => ({
-      role: message.role,
+      role: message.role === "user" ? ("user" as const) : ("assistant" as const),
       content: message.content,
     }));
 }
