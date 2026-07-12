@@ -2,6 +2,18 @@
 
 Atualizado em 2026-07-12.
 
+## Handoff 2026-07-12 - RAG No Chat
+
+- Implementada recuperacao semantica antes do chat com threshold e limites.
+- Contexto recuperado e tratado como dado nao confiavel no prompt.
+- Fontes sao persistidas em metadata e exibidas no stream/historico.
+- Estados sem documentos e sem evidencia relevante sao explicitos na UI.
+- Cinco testes Bun, lint e build passaram.
+- Benchmark real, QA autenticado e verificacao visual permanecem pendentes por
+  falta de credenciais/sessao de usuario e navegador integrado indisponivel.
+- O proximo passo e executar `docs/benchmarks/benchmark-rag.*` contra o corpus
+  remoto e calibrar o threshold com resultados, nao por intuicao.
+
 ## Handoff 2026-07-12 - Hardening M0
 
 - Criada a migration local

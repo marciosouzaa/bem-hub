@@ -16,7 +16,7 @@ a ponta antes de mudar de objetivo.
   verificacao proporcional ao risco.
 - Atualizar `docs/worklog.md` a cada checkpoint ou antes de encerrar a sessao.
 
-## AGORA - M0 Hardening Para Dados Reais
+## BLOQUEADO - M0 Hardening Para Dados Reais
 
 Objetivo: eliminar os riscos conhecidos que impedem usar documentos e dados de
 clientes reais com seguranca.
@@ -37,17 +37,17 @@ clientes reais com seguranca.
 Aceite: usuario A nao le, busca, baixa, altera ou remove dados da organizacao B;
 roles anonimas nao executam funcoes internas; lint e build passam.
 
-## DEPOIS - M1 RAG No Chat Com Fontes
+## AGORA - M1 RAG No Chat Com Fontes
 
 Objetivo: transformar a base de conhecimento em respostas confiaveis que geram
 o primeiro valor diario do piloto.
 
-- [ ] Definir contrato de fonte/citacao na API, persistencia e UI.
-- [ ] Recuperar top chunks no servidor usando a organizacao autenticada.
-- [ ] Aplicar threshold, limite de contexto e deduplicacao de documentos.
-- [ ] Injetar instrucoes contra alucinacao e para insuficiencia de contexto.
-- [ ] Persistir metadata de fontes na mensagem do assistente.
-- [ ] Renderizar fontes acessiveis com nome do documento e referencia util.
+- [x] Definir contrato de fonte/citacao na API, persistencia e UI.
+- [x] Recuperar top chunks no servidor usando a organizacao autenticada.
+- [x] Aplicar threshold, limite de contexto e deduplicacao de documentos.
+- [x] Injetar instrucoes contra alucinacao e para insuficiencia de contexto.
+- [x] Persistir metadata de fontes na mensagem do assistente.
+- [x] Renderizar fontes acessiveis com nome do documento e referencia util.
 - [ ] Cobrir casos literal, multi-chunk, ambiguo e sem resposta.
 - [ ] Executar o benchmark externo sem indexar arquivos de resposta esperada.
 - [ ] Fazer smoke test com historico recarregado e mais de uma organizacao.

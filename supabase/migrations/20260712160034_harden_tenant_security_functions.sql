@@ -87,6 +87,10 @@ as $$
     dc.content,
     1 - (dc.embedding <=> query_embedding) as similarity
   from public.document_chunks dc
+  inner join public.documents d
+    on d.id = dc.document_id
+    and d.organization_id = dc.organization_id
+    and d.status = 'ready'
   where dc.organization_id = target_organization_id
     and dc.embedding is not null
     and public.is_org_member(target_organization_id)

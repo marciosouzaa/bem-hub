@@ -4,6 +4,51 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-12 - M1 RAG Vertical Implementado
+
+### Feito
+
+- Chat consulta apenas quando o plano libera knowledge base e ha documentos
+  prontos; organizacoes sem documentos continuam usando o chat normalmente.
+- Busca semantica ganhou threshold inicial de `0.45`, limite de 8 chunks, ate 3
+  chunks por documento e 12 mil caracteres de contexto.
+- Chunks foram agrupados por documento e injetados como fontes numeradas.
+- Prompt trata documentos como entrada nao confiavel, exige evidencia para fatos
+  internos e instrui resposta explicita quando faltar contexto.
+- Contexto RAG e persistido em `messages.metadata.knowledge` e em usage metadata.
+- O stream envia contexto compacto em header para exibir fontes sem esperar
+  recarregar o historico.
+- UI mostra documentos consultados, quantidade de trechos e estados sem
+  evidencia/documentos, com links autenticados para os originais.
+- Corrigida navegacao de conversa nova para nao remontar o componente durante o
+  streaming.
+- Busca vetorial agora exclui documentos que nao estejam `ready`.
+
+### Verificacao
+
+- `bun test`: 5 testes passaram, cobrindo threshold, agrupamento, limite por
+  documento, header UTF-8 e regras do prompt.
+- `bun run lint` passou sem warnings.
+- `bun run build` passou com Next.js 16.2.9.
+- `/api/chat` sem sessao retorna 401 no servidor local.
+- Servidor de desenvolvimento existente continua em `http://localhost:3000`.
+
+### Pendente
+
+- Executar benchmark RAG com os documentos remotos e remover antes o roteiro que
+  contem o gabarito.
+- Validar respostas literais, multi-chunk, ambiguas e sem resposta.
+- Confirmar persistencia e fontes apos recarregar uma conversa autenticada.
+- Verificar visualmente desktop/mobile; navegador integrado e credenciais de
+  login nao estavam disponiveis nesta sessao.
+- Ajustar threshold apenas com evidencias do benchmark.
+
+### Proximo Passo
+
+Executar o benchmark autenticado e corrigir qualidade/citacoes. Se a credencial
+continuar indisponivel, criar um runner de benchmark desacoplado da UI com
+entrada por organizacao e relatorio comparavel, sem indexar o gabarito.
+
 ## 2026-07-12 - M0 Hardening Preparado
 
 ### Feito

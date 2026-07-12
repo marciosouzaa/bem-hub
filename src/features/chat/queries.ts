@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
 import type { ChatMessage, ConversationListItem } from "./types";
+import { parseMessageKnowledgeContext } from "./sources";
 
 type Supabase = SupabaseClient<Database>;
 
@@ -53,7 +54,7 @@ export async function listConversationMessages(
   const { data, error } = await supabase
     .from("messages")
     .select(
-      "id,organization_id,conversation_id,role,content,tokens_input,tokens_output,model,created_at",
+      "id,organization_id,conversation_id,role,content,tokens_input,tokens_output,model,metadata,created_at",
     )
     .eq("organization_id", organizationId)
     .eq("conversation_id", conversationId)
@@ -72,6 +73,7 @@ export async function listConversationMessages(
     model: message.model,
     tokensInput: message.tokens_input,
     tokensOutput: message.tokens_output,
+    knowledge: parseMessageKnowledgeContext(message.metadata),
     createdAt: message.created_at,
   }));
 }

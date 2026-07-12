@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { ChatKnowledgeContext } from "./sources";
 
 export const chatRoleSchema = z.enum(["user", "assistant", "system"]);
 
@@ -23,5 +24,6 @@ export type ChatMessage = {
   model: string | null;
   tokensInput: number | null;
   tokensOutput: number | null;
+  knowledge: ChatKnowledgeContext | null;
   createdAt: string;
 };

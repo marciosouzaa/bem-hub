@@ -45,12 +45,12 @@ organizacoes, e os testes essenciais passam em ambiente configurado.
 
 ## M1 - Assistente Interno De Catalogo
 
-Status: proximo marco de valor. Equivale a Fase 1 do roadmap do piloto.
+Status: em andamento. Equivale a Fase 1 do roadmap do piloto.
 
-- [ ] Recuperar chunks relevantes antes de cada resposta do chat.
-- [ ] Injetar contexto com limites claros e sem vazar outra organizacao.
-- [ ] Exibir fontes por resposta e persistir metadata suficiente para historico.
-- [ ] Responder que nao ha contexto suficiente quando a evidencia for fraca.
+- [x] Recuperar chunks relevantes antes de cada resposta do chat.
+- [x] Injetar contexto com limites claros e sem vazar outra organizacao.
+- [x] Exibir fontes por resposta e persistir metadata suficiente para historico.
+- [x] Responder que nao ha contexto suficiente quando a evidencia for fraca.
 - [ ] Validar o pipeline com `docs/benchmarks/benchmark-rag.*`.
 - [ ] Preparar assistente de catalogo com linguagem configuravel da marca.
 - [ ] Organizar onboarding guiado para dona e equipe em menos de 15 minutos.

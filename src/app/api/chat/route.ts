@@ -8,11 +8,20 @@ import {
   requireFeature,
   requireLimitAvailable,
 } from "@/features/billing/entitlements";
+import {
+  buildChatSystemPrompt,
+  retrieveChatKnowledge,
+} from "@/features/chat/rag";
+import {
+  CHAT_KNOWLEDGE_HEADER,
+  encodeKnowledgeContextHeader,
+} from "@/features/chat/sources";
 import { getOrCreateWorkspace } from "@/features/organizations/bootstrap";
 import {
   AiRuntimeError,
   resolveAssistantRuntime,
 } from "@/lib/ai/runtime";
+import { EmbeddingRuntimeError } from "@/lib/ai/embeddings";
 import { isMissingColumnError } from "@/lib/supabase/schema-errors";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -115,6 +124,12 @@ export async function POST(request: Request) {
       organizationId,
       assistant,
     );
+    const rag = await retrieveChatKnowledge({
+      entitlements,
+      organizationId,
+      query: body.data.message,
+      supabase,
+    });
     const conversation = await resolveConversation(supabase, {
       assistantId: assistant.id,
       conversationId: body.data.conversationId,
@@ -164,9 +179,7 @@ export async function POST(request: Request) {
 
     const result = streamText({
       model: runtime.languageModel,
-      system:
-        assistant.instructions ||
-        "Você é um assistente corporativo do BEM HUB. Responda com clareza, cite limites quando faltar contexto e evite inventar dados.",
+      system: buildChatSystemPrompt(assistant.instructions, rag.systemContext),
       messages,
       temperature: assistant.temperature,
       onEnd: async ({ text, usage, finishReason }) => {
@@ -185,6 +198,7 @@ export async function POST(request: Request) {
               provider: runtime.provider,
               provider_connection_id: runtime.providerConnectionId,
               finish_reason: finishReason,
+              knowledge: rag.knowledge,
             },
           });
 
@@ -212,6 +226,9 @@ export async function POST(request: Request) {
             provider: runtime.provider,
             provider_connection_id: runtime.providerConnectionId,
             finish_reason: finishReason,
+            knowledge_status: rag.knowledge.status,
+            knowledge_source_count: rag.knowledge.sources.length,
+            knowledge_embedding_model: rag.knowledge.embeddingModel,
           },
         });
 
@@ -226,11 +243,16 @@ export async function POST(request: Request) {
 
     return result.toTextStreamResponse({
       headers: {
+        [CHAT_KNOWLEDGE_HEADER]: encodeKnowledgeContextHeader(rag.knowledge),
         "x-conversation-id": conversation.id,
       },
     });
   } catch (error) {
     if (error instanceof AiRuntimeError) {
+      return Response.json({ error: error.message }, { status: error.status });
+    }
+
+    if (error instanceof EmbeddingRuntimeError) {
       return Response.json({ error: error.message }, { status: error.status });
     }
 

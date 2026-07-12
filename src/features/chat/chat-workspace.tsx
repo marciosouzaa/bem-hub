@@ -2,6 +2,7 @@
 
 import {
   Bot,
+  FileText,
   Loader2,
   MessageSquareText,
   Plus,
@@ -18,8 +19,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { AssistantListItem } from "@/features/assistants/queries";
 import type { ChatMessage, ConversationListItem } from "./types";
+import {
+  CHAT_KNOWLEDGE_HEADER,
+  decodeKnowledgeContextHeader,
+  type ChatKnowledgeContext,
+} from "./sources";
 
-type LocalMessage = Pick<ChatMessage, "id" | "role" | "content" | "createdAt">;
+type LocalMessage = Pick<
+  ChatMessage,
+  "id" | "role" | "content" | "createdAt" | "knowledge"
+>;
 
 type ChatWorkspaceProps = {
   assistants: AssistantListItem[];
@@ -52,6 +61,7 @@ export function ChatWorkspace({
       role: message.role,
       content: message.content,
       createdAt: message.createdAt,
+      knowledge: message.knowledge,
     })),
   );
   const [input, setInput] = useState("");
@@ -92,12 +102,14 @@ export function ChatWorkspace({
       role: "user",
       content: message,
       createdAt: new Date().toISOString(),
+      knowledge: null,
     };
     const assistantMessage: LocalMessage = {
       id: crypto.randomUUID(),
       role: "assistant",
       content: "",
       createdAt: new Date().toISOString(),
+      knowledge: null,
     };
 
     setInput("");
@@ -122,11 +134,22 @@ export function ChatWorkspace({
       }
 
       const nextConversationId = response.headers.get("x-conversation-id");
-      if (nextConversationId && nextConversationId !== conversationId) {
+      const shouldNavigateToConversation =
+        nextConversationId && nextConversationId !== conversationId;
+      const knowledge = decodeKnowledgeContextHeader(
+        response.headers.get(CHAT_KNOWLEDGE_HEADER),
+      );
+
+      if (knowledge) {
+        setMessages((current) =>
+          current.map((item) =>
+            item.id === assistantMessage.id ? { ...item, knowledge } : item,
+          ),
+        );
+      }
+
+      if (shouldNavigateToConversation) {
         setConversationId(nextConversationId);
-        router.replace(`/app/chat?conversationId=${nextConversationId}`, {
-          scroll: false,
-        });
       }
 
       const reader = response.body.getReader();
@@ -148,7 +171,13 @@ export function ChatWorkspace({
         );
       }
 
-      router.refresh();
+      if (shouldNavigateToConversation) {
+        router.replace(`/app/chat?conversationId=${nextConversationId}`, {
+          scroll: false,
+        });
+      } else {
+        router.refresh();
+      }
     } catch (caught) {
       if (controller.signal.aborted) {
         setError("Resposta interrompida.");
@@ -380,7 +409,61 @@ function MessageBubble({ message }: { message: LocalMessage }) {
         <p className="whitespace-pre-wrap break-words">
           {message.content || "Preparando resposta..."}
         </p>
+        {!isUser && message.content ? (
+          <KnowledgeSources knowledge={message.knowledge} />
+        ) : null}
       </div>
+    </div>
+  );
+}
+
+function KnowledgeSources({
+  knowledge,
+}: {
+  knowledge: ChatKnowledgeContext | null;
+}) {
+  if (!knowledge) {
+    return null;
+  }
+
+  if (knowledge.status !== "grounded") {
+    const label =
+      knowledge.status === "no_documents"
+        ? "Base de conhecimento sem documentos prontos"
+        : knowledge.status === "disabled"
+          ? "Resposta sem consulta à base de conhecimento"
+          : "Nenhuma evidência relevante encontrada na base";
+
+    return (
+      <p className="mt-3 border-t border-panel-border pt-3 text-xs text-muted">
+        {label}
+      </p>
+    );
+  }
+
+  return (
+    <div className="mt-3 border-t border-panel-border pt-3">
+      <p className="flex items-center gap-2 text-xs font-medium text-muted-strong">
+        <FileText aria-hidden="true" className="size-3.5 text-primary" />
+        Fontes consultadas
+      </p>
+      <ul className="mt-2 space-y-1.5">
+        {knowledge.sources.map((source) => (
+          <li key={source.documentId}>
+            <a
+              className="inline-flex max-w-full items-center gap-2 text-xs text-primary underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45"
+              href={`/api/knowledge/documents/${source.documentId}`}
+              rel="noreferrer"
+              target="_blank"
+            >
+              <span className="truncate">{source.documentName}</span>
+              <span className="shrink-0 text-muted">
+                {source.chunkCount} {source.chunkCount === 1 ? "trecho" : "trechos"}
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
