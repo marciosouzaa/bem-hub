@@ -85,7 +85,7 @@ as $$
     dc.id,
     dc.document_id,
     dc.content,
-    1 - (dc.embedding <=> query_embedding) as similarity
+    1 - (dc.embedding OPERATOR(extensions.<=>) query_embedding) as similarity
   from public.document_chunks dc
   inner join public.documents d
     on d.id = dc.document_id
@@ -94,7 +94,7 @@ as $$
   where dc.organization_id = target_organization_id
     and dc.embedding is not null
     and public.is_org_member(target_organization_id)
-  order by dc.embedding <=> query_embedding
+  order by dc.embedding OPERATOR(extensions.<=>) query_embedding
   limit least(greatest(coalesce(match_count, 6), 1), 20);
 $$;
 

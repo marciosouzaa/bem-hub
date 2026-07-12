@@ -108,9 +108,9 @@ Bloqueado pela auditoria da plataforma e disponibilidade dos dados.
 - O PDF do piloto considera RAG pronto, mas o chat ainda nao recupera nem exibe fontes.
 - `roteiro-de-validacao-rag.md`, se ainda indexado no ambiente remoto, deve ser
   removido antes do benchmark porque contem respostas esperadas.
-- A migration `20260712160034_harden_tenant_security_functions.sql` ainda nao foi
-  aplicada remotamente; o endpoint atual permite que `anon` execute
-  `is_org_member`, confirmado por resposta HTTP 200.
+- A migration `20260712160034_harden_tenant_security_functions.sql` foi
+  aplicada remotamente; o proximo passo e validar isolamento com dois usuarios
+  reais e registrar os advisories que ainda permanecerem.
 - Os 29 testes pgTAP de hardening estao prontos, mas exigem Docker/Supabase local
   ou credencial de banco remoto para execucao.
 

@@ -26,8 +26,9 @@ mantem RAG com citacoes como o proximo marco de produto.
 
 ## M0 - Fundacao Confiavel
 
-Status: em andamento. A base funcional existe; o hardening de seguranca ainda
-impede considerar o produto pronto para dados sensiveis reais.
+Status: em andamento. A base funcional existe; o hardening de seguranca entrou,
+mas ainda faltam a verificacao manual com dois usuarios reais e a protecao de
+senha vazada para considerar o produto pronto para dados sensiveis reais.
 
 - [x] Autenticacao, organizacoes, membros e RLS por `organization_id`.
 - [x] Assistentes por organizacao com gestao owner/admin.
@@ -36,6 +37,7 @@ impede considerar o produto pronto para dados sensiveis reais.
 - [x] Upload, extracao, chunks, embeddings e busca semantica.
 - [x] Entitlements e troca manual de plano no servidor.
 - [x] Preparar hardening de funcoes `SECURITY DEFINER` e permissoes de execucao.
+- [x] Aplicar hardening remoto de funcoes `SECURITY DEFINER` e RPCs vetoriais.
 - [ ] Verificar isolamento de tabelas, RPCs e Storage com dois usuarios reais.
 - [ ] Ativar protecao contra senha vazada no Supabase Auth.
 - [ ] Fechar alertas de seguranca que bloqueiem uso de dados reais.

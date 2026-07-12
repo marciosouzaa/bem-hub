@@ -156,3 +156,39 @@ Iniciar M0 pelo inventario das funcoes `SECURITY DEFINER`, criar migration que
 restrinja execucao e adicionar uma verificacao reproduzivel de isolamento. Em
 seguida, sem esperar confirmacao, continuar para RAG no chat se nao houver
 bloqueio de credencial ou decisao de produto.
+
+## 2026-07-12 - Hardening Remoto Aplicado
+
+### Feito
+
+- Reautenticado o Supabase MCP com `codex mcp login supabase`.
+- Instaladas as skills `supabase` e `supabase-postgres-best-practices`.
+- Aplicada remotamente a migration
+  `20260712160034_harden_tenant_security_functions.sql`.
+- Corrigido o SQL de recuperacao vetorial para qualificar o operador
+  `extensions.<=>` com `OPERATOR(...)`, permitindo aplicar a migration com
+  `search_path` vazio.
+- Validados `list_migrations`, `get_advisors` de seguranca e performance.
+- Instalada a skill `JuliusBrussee/caveman` pedida pelo usuario.
+
+### Decisoes
+
+- Manter `bootstrap_owned_organization` como o unico RPC `SECURITY DEFINER`
+  exposto em `public`, porque o fluxo de bootstrap ainda depende dele.
+- Qualificar operadores de vector search explicitamente em vez de reabrir o
+  `search_path`, para preservar o hardening.
+
+### Falta
+
+- Verificar com dois usuarios reais o isolamento de tabelas, RPCs, Storage e
+  download assinado.
+- Resolver ou aceitar os advisories remanescentes de autenticacao e indices.
+- Rodar o teste manual com dois usuarios quando houver credenciais disponíveis.
+
+### Verificacao
+
+- `mcp__supabase.apply_migration` retornou `success: true`.
+- `mcp__supabase.list_migrations` passou a incluir
+  `20260712160034_harden_tenant_security_functions`.
+- `mcp__supabase.get_advisors` reportou o warning esperado sobre
+  `bootstrap_owned_organization` como `SECURITY DEFINER` exposto.
