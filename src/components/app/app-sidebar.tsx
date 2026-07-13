@@ -18,7 +18,10 @@ type AppSidebarProps = {
 export function AppSidebar({ canManage, collapsed = false, mobile = false, onClose, onToggle, organization }: AppSidebarProps) {
   const compact = collapsed && !mobile;
 
-  return <aside className="flex h-full min-h-0 flex-col border-r border-panel-border bg-sidebar">
+  return <aside className="relative flex h-full min-h-0 flex-col border-r border-panel-border bg-sidebar">
+    {!mobile ? <Button aria-label={compact ? "Expandir menu" : "Recolher menu"} className="absolute -right-4 top-6 z-50 border border-panel-border bg-panel-elevated shadow-[var(--shadow-card)]" onClick={onToggle} size="icon" title={compact ? "Expandir menu" : "Recolher menu"} variant="secondary">
+      {compact ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="size-4" />}
+    </Button> : null}
     <div className={cn("flex h-20 shrink-0 items-center border-b border-panel-border/70", compact ? "justify-center px-3" : "px-5")}>
       <Link aria-label="BEM HUB - Dashboard" className="flex min-w-0 items-center gap-3" href="/app" onClick={onClose}>
         <span className="flex size-10 shrink-0 items-center justify-center rounded-[var(--radius-control)] bg-primary text-primary-foreground shadow-[var(--shadow-glow)]"><TerminalSquare className="size-5" /></span>
@@ -36,9 +39,6 @@ export function AppSidebar({ canManage, collapsed = false, mobile = false, onClo
         <Link href="/app/chat" onClick={onClose}><Sparkles className="size-4" />{!compact ? "Perguntar a IA" : <span className="sr-only">Perguntar a IA</span>}</Link>
       </Button>
       {!compact ? <div className="rounded-[var(--radius-card)] border border-panel-border bg-panel p-3 shadow-[var(--shadow-card)]"><p className="text-[10px] uppercase tracking-[0.12em] text-muted">Workspace</p><p className="mt-1.5 truncate text-sm font-medium">{organization}</p><p className="mt-1 text-xs text-muted">{canManage ? "Gerenciamento ativo" : "Acesso de membro"}</p></div> : null}
-      {!mobile ? <Button aria-label={compact ? "Expandir menu" : "Recolher menu"} className={cn("w-full", compact && "px-0")} onClick={onToggle} size={compact ? "icon" : "sm"} title={compact ? "Expandir menu" : undefined} variant="ghost">
-        {compact ? <PanelLeftOpen className="size-4" /> : <><PanelLeftClose className="size-4" /><span>Recolher menu</span></>}
-      </Button> : null}
     </div>
   </aside>;
 }

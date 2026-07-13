@@ -35,6 +35,7 @@ export function WorkspaceShell({ children, email, name, organization, role }: Wo
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const desktop = useSyncExternalStore(subscribeToViewport, getDesktopSnapshot, getDesktopServerSnapshot);
   const canManage = ["owner", "admin"].includes(role);
+  const sidebarWidth = collapsed ? 80 : 256;
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => setCollapsed(window.localStorage.getItem(STORAGE_KEY) === "true"));
@@ -63,8 +64,8 @@ export function WorkspaceShell({ children, email, name, organization, role }: Wo
     });
   }
 
-  return <div className="h-screen overflow-hidden bg-background text-foreground supports-[height:100dvh]:h-dvh">
-    {desktop ? <div className={cn("fixed inset-y-0 left-0 z-40 transition-[width] duration-300 ease-out", collapsed ? "w-20" : "w-64")}>
+  return <div className="overflow-hidden bg-background text-foreground" style={{ height: "100vh" }}>
+    {desktop ? <div className="fixed z-40 transition-[width] duration-300 ease-out" style={{ bottom: 0, left: 0, top: 0, width: sidebarWidth }}>
       <AppSidebar canManage={canManage} collapsed={collapsed} onToggle={toggleSidebar} organization={organization} />
     </div> : null}
 
@@ -75,7 +76,7 @@ export function WorkspaceShell({ children, email, name, organization, role }: Wo
       </div>
     </div> : null}
 
-    <section className={cn("flex h-screen min-w-0 flex-col overflow-hidden transition-[margin] duration-300 ease-out supports-[height:100dvh]:h-dvh", desktop && (collapsed ? "ml-20" : "ml-64"))}>
+    <section className="fixed flex min-w-0 flex-col overflow-hidden transition-[left] duration-300 ease-out" style={{ bottom: 0, left: desktop ? sidebarWidth : 0, right: 0, top: 0 }}>
       <header className="flex h-16 shrink-0 items-center gap-3 border-b border-panel-border bg-background/95 px-4 backdrop-blur md:px-6 lg:px-8">
         {!desktop ? <Button aria-expanded={drawerOpen} aria-label="Abrir menu" onClick={() => setDrawerOpen(true)} ref={menuButtonRef} size="icon" variant="ghost"><Menu className="size-5" /></Button> : null}
         <div className="min-w-0 flex-1"><CommandSearch containerClassName="max-w-3xl" /></div>
