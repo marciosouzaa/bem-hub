@@ -1,7 +1,7 @@
 "use client";
 
 import { Bell, Menu, TerminalSquare } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { AppSidebar } from "@/components/app/app-sidebar";
 import { CommandSearch } from "@/components/app/command-search";
 import { UserMenu } from "@/components/app/user-menu";
@@ -17,12 +17,23 @@ type WorkspaceShellProps = {
 };
 
 const STORAGE_KEY = "bem-hub:sidebar-collapsed";
+const DESKTOP_QUERY = "(min-width: 768px)";
+
+function subscribeToViewport(callback: () => void) {
+  const query = window.matchMedia(DESKTOP_QUERY);
+  query.addEventListener("change", callback);
+  return () => query.removeEventListener("change", callback);
+}
+
+function getDesktopSnapshot() { return window.matchMedia(DESKTOP_QUERY).matches; }
+function getDesktopServerSnapshot() { return true; }
 
 export function WorkspaceShell({ children, email, name, organization, role }: WorkspaceShellProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const desktop = useSyncExternalStore(subscribeToViewport, getDesktopSnapshot, getDesktopServerSnapshot);
   const canManage = ["owner", "admin"].includes(role);
 
   useEffect(() => {
@@ -52,21 +63,21 @@ export function WorkspaceShell({ children, email, name, organization, role }: Wo
     });
   }
 
-  return <div className="flex h-dvh overflow-hidden bg-background text-foreground">
-    <div className={cn("hidden h-dvh shrink-0 transition-[width] duration-300 ease-out md:block", collapsed ? "w-20" : "w-64")}>
+  return <div className="h-screen overflow-hidden bg-background text-foreground supports-[height:100dvh]:h-dvh">
+    {desktop ? <div className={cn("fixed inset-y-0 left-0 z-40 transition-[width] duration-300 ease-out", collapsed ? "w-20" : "w-64")}>
       <AppSidebar canManage={canManage} collapsed={collapsed} onToggle={toggleSidebar} organization={organization} />
-    </div>
+    </div> : null}
 
-    <div className={cn("fixed inset-0 z-50 md:hidden", drawerOpen ? "pointer-events-auto" : "pointer-events-none")} aria-hidden={!drawerOpen} inert={!drawerOpen}>
+    {!desktop ? <div className={cn("fixed inset-0 z-50", drawerOpen ? "pointer-events-auto" : "pointer-events-none")} aria-hidden={!drawerOpen} inert={!drawerOpen}>
       <button aria-label="Fechar menu" className={cn("absolute inset-0 bg-black/65 backdrop-blur-sm transition-opacity duration-300", drawerOpen ? "opacity-100" : "opacity-0")} onClick={() => setDrawerOpen(false)} tabIndex={drawerOpen ? 0 : -1} />
-      <div aria-label="Menu principal" aria-modal="true" className={cn("relative h-dvh w-[min(88vw,320px)] shadow-[var(--shadow-popover)] transition-transform duration-300 ease-out", drawerOpen ? "translate-x-0" : "-translate-x-full")} ref={drawerRef} role="dialog">
+      <div aria-label="Menu principal" aria-modal="true" className={cn("relative h-screen w-[min(88vw,320px)] shadow-[var(--shadow-popover)] transition-transform duration-300 ease-out supports-[height:100dvh]:h-dvh", drawerOpen ? "translate-x-0" : "-translate-x-full")} ref={drawerRef} role="dialog">
         <AppSidebar canManage={canManage} mobile onClose={() => setDrawerOpen(false)} organization={organization} />
       </div>
-    </div>
+    </div> : null}
 
-    <section className="flex h-dvh min-w-0 flex-1 flex-col overflow-hidden">
+    <section className={cn("flex h-screen min-w-0 flex-col overflow-hidden transition-[margin] duration-300 ease-out supports-[height:100dvh]:h-dvh", desktop && (collapsed ? "ml-20" : "ml-64"))}>
       <header className="flex h-16 shrink-0 items-center gap-3 border-b border-panel-border bg-background/95 px-4 backdrop-blur md:px-6 lg:px-8">
-        <Button aria-expanded={drawerOpen} aria-label="Abrir menu" className="md:hidden" onClick={() => setDrawerOpen(true)} ref={menuButtonRef} size="icon" variant="ghost"><Menu className="size-5" /></Button>
+        {!desktop ? <Button aria-expanded={drawerOpen} aria-label="Abrir menu" onClick={() => setDrawerOpen(true)} ref={menuButtonRef} size="icon" variant="ghost"><Menu className="size-5" /></Button> : null}
         <div className="min-w-0 flex-1"><CommandSearch containerClassName="max-w-3xl" /></div>
         <Button aria-label="Abrir terminal" className="hidden sm:inline-flex" size="icon" variant="ghost"><TerminalSquare className="size-5" /></Button>
         <Button aria-label="Notificacoes" size="icon" variant="ghost"><Bell className="size-5" /></Button>
