@@ -53,11 +53,11 @@ export function WorkspaceShell({ children, email, name, organization, role }: Wo
   }
 
   return <div className="flex h-dvh overflow-hidden bg-background text-foreground">
-    <div className={cn("hidden h-dvh shrink-0 transition-[width] duration-300 ease-out lg:block", collapsed ? "w-20" : "w-64")}>
+    <div className={cn("hidden h-dvh shrink-0 transition-[width] duration-300 ease-out md:block", collapsed ? "w-20" : "w-64")}>
       <AppSidebar canManage={canManage} collapsed={collapsed} onToggle={toggleSidebar} organization={organization} />
     </div>
 
-    <div className={cn("fixed inset-0 z-50 lg:hidden", drawerOpen ? "pointer-events-auto" : "pointer-events-none")} aria-hidden={!drawerOpen} inert={!drawerOpen}>
+    <div className={cn("fixed inset-0 z-50 md:hidden", drawerOpen ? "pointer-events-auto" : "pointer-events-none")} aria-hidden={!drawerOpen} inert={!drawerOpen}>
       <button aria-label="Fechar menu" className={cn("absolute inset-0 bg-black/65 backdrop-blur-sm transition-opacity duration-300", drawerOpen ? "opacity-100" : "opacity-0")} onClick={() => setDrawerOpen(false)} tabIndex={drawerOpen ? 0 : -1} />
       <div aria-label="Menu principal" aria-modal="true" className={cn("relative h-dvh w-[min(88vw,320px)] shadow-[var(--shadow-popover)] transition-transform duration-300 ease-out", drawerOpen ? "translate-x-0" : "-translate-x-full")} ref={drawerRef} role="dialog">
         <AppSidebar canManage={canManage} mobile onClose={() => setDrawerOpen(false)} organization={organization} />
@@ -66,7 +66,7 @@ export function WorkspaceShell({ children, email, name, organization, role }: Wo
 
     <section className="flex h-dvh min-w-0 flex-1 flex-col overflow-hidden">
       <header className="flex h-16 shrink-0 items-center gap-3 border-b border-panel-border bg-background/95 px-4 backdrop-blur md:px-6 lg:px-8">
-        <Button aria-expanded={drawerOpen} aria-label="Abrir menu" className="lg:hidden" onClick={() => setDrawerOpen(true)} ref={menuButtonRef} size="icon" variant="ghost"><Menu className="size-5" /></Button>
+        <Button aria-expanded={drawerOpen} aria-label="Abrir menu" className="md:hidden" onClick={() => setDrawerOpen(true)} ref={menuButtonRef} size="icon" variant="ghost"><Menu className="size-5" /></Button>
         <div className="min-w-0 flex-1"><CommandSearch containerClassName="max-w-3xl" /></div>
         <Button aria-label="Abrir terminal" className="hidden sm:inline-flex" size="icon" variant="ghost"><TerminalSquare className="size-5" /></Button>
         <Button aria-label="Notificacoes" size="icon" variant="ghost"><Bell className="size-5" /></Button>
