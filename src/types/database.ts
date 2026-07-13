@@ -776,8 +776,10 @@ export type Database = {
         Args: { target_organization_id: string }
         Returns: Json
       }
+      get_support_conversation: { Args: { target_conversation_id: string; target_organization_id: string }; Returns: Json }
       list_channel_connections: { Args: { target_organization_id: string }; Returns: Json }
-      register_channel_connection: { Args: { connection_kind: string; connection_name: string; connection_phone: string; target_organization_id: string }; Returns: string }
+      register_channel_connection: { Args: { connection_auth_method: string; connection_kind: string; connection_name: string; connection_phone: string; target_organization_id: string }; Returns: string }
+      delete_channel_connection: { Args: { target_connection_id: string; target_organization_id: string }; Returns: undefined }
       is_org_admin: {
         Args: { target_organization_id: string }
         Returns: boolean

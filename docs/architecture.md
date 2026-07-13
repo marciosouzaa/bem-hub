@@ -109,6 +109,10 @@ require stable provider IDs for idempotency. Replies begin as drafts and cannot
 reach `sent` without explicit `approved`; terminal states stay immutable. No
 adapter sends externally before BSP selection and operational approval.
 
+`/app/channels` owns CRUD, numero, modalidade e metodo de autenticacao QR/PIN.
+`/app/support` owns only the attendance inbox and conversation detail. Channel
+configuration must never be embedded in the attendance workflow.
+
 Each channel connection represents one independent number and declares
 `official` or `unofficial`. Connections never share credentials, provider IDs
 or webhook state. Choosing an unofficial adapter is an explicit organization

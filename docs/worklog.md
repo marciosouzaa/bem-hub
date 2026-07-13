@@ -4,6 +4,25 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-13 - Separacao Canais E Atendimento
+
+### Correcao
+
+- `/app/channels` agora possui cadastro, listagem e exclusao de numeros.
+- Cada canal escolhe API oficial/nao oficial e autenticacao QR/PIN.
+- QR/PIN real fica bloqueado ate adapter/fornecedor escolhido, sem simulacao.
+- `/app/support` lista somente conversas; cada item abre detalhe/historico.
+
+### Verificacao
+
+- `bun run test`: 51 testes passaram em 13 arquivos.
+- Lint e build passaram com rotas `/app/channels` e `/app/support/[id]`.
+- Migration remota e teste QR transacional com rollback passaram.
+
+### Pendente
+
+- Escolha dos fornecedores para gerar QR/PIN, autenticar webhook e enviar.
+
 ## 2026-07-13 - Contrato De Webhook M2
 
 - Adapter autentica payload antes do evento interno.

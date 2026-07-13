@@ -1,0 +1,9 @@
+import { ArrowLeft, UserRound } from "lucide-react";
+import Link from "next/link";
+import { PageHeader, PageLayout } from "@/components/app";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { getRequiredWorkspace } from "@/features/organizations/queries";
+import { getSupportConversation } from "@/features/support/queries";
+
+export default async function SupportConversationPage({params}:{params:Promise<{conversationId:string}>}){const workspace=await getRequiredWorkspace();const{conversationId}=await params;const conversation=await getSupportConversation(workspace.organization.id,conversationId);return <PageLayout className="space-y-6"><Button asChild size="sm" variant="ghost"><Link href="/app/support"><ArrowLeft className="size-4"/>Voltar</Link></Button><PageHeader eyebrow={`${conversation.channel.name} · ${conversation.channel.phoneNumber}`} title={conversation.contact.name??conversation.contact.phone??"Contato"} description={`Atendimento ${conversation.status}. Respostas externas serao liberadas depois da conexao do fornecedor.`}/><Card><CardContent className="space-y-4 p-5 md:pt-5">{conversation.messages.length?conversation.messages.map((message)=><div className={message.direction==="outbound"?"ml-auto max-w-[80%] rounded-xl bg-sidebar-active p-4":"max-w-[80%] rounded-xl border border-panel-border bg-panel-elevated p-4"} key={message.id}><p className="whitespace-pre-wrap text-sm leading-6">{message.content}</p><p className="mt-2 text-xs text-muted">{message.direction==="inbound"?"Contato":"Equipe"} · {message.status}</p></div>):<div className="py-12 text-center"><UserRound className="mx-auto size-7 text-muted"/><p className="mt-3 text-sm text-muted-strong">Nenhuma mensagem neste atendimento.</p></div>}</CardContent></Card></PageLayout>}

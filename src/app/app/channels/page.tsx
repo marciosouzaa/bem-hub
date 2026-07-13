@@ -1,0 +1,11 @@
+import { QrCode, Radio, Trash2 } from "lucide-react";
+import { PageHeader, PageLayout } from "@/components/app";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getRequiredWorkspace } from "@/features/organizations/queries";
+import { deleteConnectionAction } from "@/features/support/actions";
+import { ConnectionForm } from "@/features/support/connection-form";
+import { listChannelConnections } from "@/features/support/queries";
+
+export default async function ChannelsPage(){const workspace=await getRequiredWorkspace();const connections=await listChannelConnections(workspace.organization.id);const canManage=["owner","admin"].includes(workspace.membership.role);return <PageLayout size="wide" className="space-y-7"><PageHeader eyebrow="Infraestrutura de atendimento" title="Canais" description="Cadastre e conecte cada numero independentemente. Oficial e nao oficial nunca compartilham sessao ou credencial."/><div className="grid gap-6 xl:grid-cols-[320px_1fr]"><Card><CardHeader><CardTitle>Novo canal</CardTitle></CardHeader><CardContent><ConnectionForm canManage={canManage}/></CardContent></Card><section className="space-y-3">{connections.map((connection)=><Card key={connection.id}><CardContent className="grid gap-4 p-4 md:grid-cols-[1fr_auto] md:items-center md:pt-4"><div className="flex gap-3"><span className="flex size-10 items-center justify-center rounded-md bg-sidebar-active text-primary">{connection.authMethod==="qr"?<QrCode className="size-5"/>:<Radio className="size-5"/>}</span><div><p className="font-medium">{connection.name}</p><p className="mt-1 text-xs text-muted">{connection.phoneNumber} · {connection.authMethod==="qr"?"QR Code":"PIN Code"}</p></div></div><div className="flex items-center gap-2"><Badge>{connection.kind==="official"?"Oficial":"Nao oficial"}</Badge><Button disabled size="sm" variant="secondary">Fornecedor pendente</Button>{canManage?<form action={deleteConnectionAction.bind(null,connection.id)}><Button aria-label={`Excluir ${connection.name}`} size="icon" type="submit" variant="danger"><Trash2 className="size-4"/></Button></form>:null}</div></CardContent></Card>)}</section></div></PageLayout>}
