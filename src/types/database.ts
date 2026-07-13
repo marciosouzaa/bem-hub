@@ -776,6 +776,8 @@ export type Database = {
         Args: { target_organization_id: string }
         Returns: Json
       }
+      list_channel_connections: { Args: { target_organization_id: string }; Returns: Json }
+      register_channel_connection: { Args: { connection_kind: string; connection_name: string; connection_phone: string; target_organization_id: string }; Returns: string }
       is_org_admin: {
         Args: { target_organization_id: string }
         Returns: boolean

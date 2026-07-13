@@ -4,6 +4,24 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-13 - Numeros E Conexoes M2
+
+### Feito
+
+- Admin registra numeros oficiais ou nao oficiais independentemente.
+- Numero fica `pending` e sem segredo ate fornecedor ser escolhido.
+- Normalizacao e unicidade por tenant ocorrem na RPC server-side.
+- Inbox lista todas as conexoes e seu risco/modalidade separadamente.
+
+### Verificacao
+
+- SQL remoto transacional confirmou cadastro/listagem e rollback.
+- Lint, build e advisors passaram sem regressao.
+
+### Proximo Passo
+
+Preparar webhook idempotente neutro sem autenticacao especifica de fornecedor.
+
 ## 2026-07-13 - Fundacao Da Inbox M2
 
 ### Feito

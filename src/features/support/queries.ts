@@ -14,3 +14,6 @@ export async function listSupportInbox(organizationId: string) {
   if (error) throw new Error(`Falha ao carregar atendimentos: ${error.message}`);
   return z.array(itemSchema).parse(data);
 }
+
+const connectionSchema=z.object({id:z.string().uuid(),kind:z.enum(["official","unofficial"]),provider:z.string(),name:z.string(),phoneNumber:z.string(),status:z.string()});
+export async function listChannelConnections(organizationId:string){const supabase=await createSupabaseServerClient();const{data,error}=await supabase.rpc("list_channel_connections",{target_organization_id:organizationId});if(error)throw new Error(`Falha ao listar canais: ${error.message}`);return z.array(connectionSchema).parse(data)}
