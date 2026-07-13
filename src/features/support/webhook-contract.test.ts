@@ -1,0 +1,3 @@
+import{describe,expect,test}from"bun:test";import{inboundIdempotencyKey,verifiedInboundEventSchema}from"./webhook-contract";
+const event={connectionId:"10000000-0000-4000-8000-000000000001",providerMessageId:"msg-1",senderId:"contact-1",senderPhone:"+5511999999999",senderName:"Ana",text:"Ola",receivedAt:"2026-07-13T10:00:00.000Z"};
+describe("verified webhook contract",()=>{test("accepts normalized events",()=>expect(verifiedInboundEventSchema.safeParse(event).success).toBe(true));test("scopes idempotency by connection",()=>expect(inboundIdempotencyKey(event)).toBe(`${event.connectionId}:msg-1`));test("rejects missing provider ID",()=>expect(verifiedInboundEventSchema.safeParse({...event,providerMessageId:""}).success).toBe(false))});

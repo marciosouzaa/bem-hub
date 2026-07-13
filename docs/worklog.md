@@ -4,6 +4,13 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-13 - Contrato De Webhook M2
+
+- Adapter autentica payload antes do evento interno.
+- Idempotencia usa conexao mais ID do provider.
+- Endpoint publico aguarda fornecedor e mecanismo de autenticacao.
+- Proximo: rascunho assistido e aprovacao humana sem envio externo.
+
 ## 2026-07-13 - Numeros E Conexoes M2
 
 ### Feito
