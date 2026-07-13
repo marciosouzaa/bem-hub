@@ -73,11 +73,13 @@ primeira pergunta util sem ajuda do engenheiro.
 
 ## FUTURO - M2 Atendimento Assistido
 
-Bloqueado pelo gate de escolha do provedor WhatsApp e credenciais.
+Adapters de conexao e envio continuam bloqueados pelo gate de fornecedor; o
+fluxo interno de atendimento pode avancar sem esse gate.
 
 - [ ] Definir contrato independente de provedor para canal de mensagens.
 - [ ] Implementar webhook seguro, idempotente e observavel.
-- [ ] Criar fila de rascunhos, aprovacao, edicao, envio e escalada.
+- [x] Criar rascunhos, aprovacao, rejeicao e escalada sem envio externo.
+- [ ] Adicionar edicao de rascunho e envio via adapter autenticado.
 - [ ] Registrar auditoria e metricas de resolucao.
 - [ ] Validar duas semanas em modo assistido antes de automatizar.
 

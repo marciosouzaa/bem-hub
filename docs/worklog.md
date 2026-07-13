@@ -4,6 +4,25 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-13 - Revisao Humana No Atendimento
+
+### Feito
+
+- Detalhe do atendimento cria rascunho sem qualquer envio externo.
+- Operador aprova, rejeita ou escala; transicoes sao atomicas e server-side.
+- Escalada eleva atendimento para prioridade alta; revisao guarda ator e data.
+- Migration `manage_support_drafts` aplicada remotamente.
+
+### Verificacao
+
+- 51 testes, lint e build passaram.
+- RPC remota validada com dados temporarios e rollback.
+- Advisors sem nova regressao; permanecem apenas avisos conhecidos.
+
+### Proximo Passo
+
+Permitir edicao de rascunho ainda pendente e preparar geracao por IA sem envio.
+
 ## 2026-07-13 - Separacao Canais E Atendimento
 
 ### Correcao

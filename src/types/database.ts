@@ -777,6 +777,8 @@ export type Database = {
         Returns: Json
       }
       get_support_conversation: { Args: { target_conversation_id: string; target_organization_id: string }; Returns: Json }
+      create_support_draft: { Args: { draft_content: string; target_conversation_id: string; target_organization_id: string }; Returns: string }
+      review_support_draft: { Args: { review_decision: string; target_message_id: string; target_organization_id: string }; Returns: undefined }
       list_channel_connections: { Args: { target_organization_id: string }; Returns: Json }
       register_channel_connection: { Args: { connection_auth_method: string; connection_kind: string; connection_name: string; connection_phone: string; target_organization_id: string }; Returns: string }
       update_channel_connection: { Args: { connection_auth_method: string; connection_name: string; connection_phone: string; target_connection_id: string; target_organization_id: string }; Returns: undefined }
