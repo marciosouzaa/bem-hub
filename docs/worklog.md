@@ -13,11 +13,21 @@ do marco ativo.
 - Mobile usa drawer modal com overlay, Escape, ciclo e retorno de foco.
 - Shell separa busca server-side, comportamento client e navegacao visual.
 - Antigo menu mobile baseado em `details` foi removido.
+- Geometria critica usa limites explicitos: sidebar fixa em `80px/256px` e
+  painel central acompanha a largura sem ficar por baixo dela.
+- Estado retraido renderiza somente icones; controle fica no rodape.
 
 ### Verificacao
 
 - 51 testes, lint e build passaram.
-- Browser visual integrado indisponivel nesta sessao; sem teste manual.
+- Usuario validou visualmente o estado final como estavel em desktop.
+- Browser visual integrado permaneceu indisponivel para automacao.
+- Commits: `9abf4d0`, `05f232f`, `564d28b`, `3b7abea`, `a3c10c9`.
+
+### Proximo Passo
+
+Retomar geracao de rascunho de atendimento por IA sem envio externo. Nao
+refatorar novamente o shell sem regressao reproduzivel.
 
 ## 2026-07-13 - Revisao Humana No Atendimento
 

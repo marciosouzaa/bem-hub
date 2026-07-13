@@ -1,6 +1,25 @@
 # Handoff Notes
 
-Atualizado em 2026-07-12.
+Atualizado em 2026-07-13.
+
+## Handoff 2026-07-13 - Shell, Canais E Atendimento
+
+- Shell foi separado em `AppShell` server-side, `WorkspaceShell` interativo e
+  `AppSidebar` visual.
+- Sidebar desktop e fixa no viewport, ocupa `256px` expandida e `80px`
+  retraida; somente o painel central possui scroll vertical.
+- Header pertence ao painel central e nunca invade a sidebar.
+- Mobile renderiza exclusivamente drawer modal; desktop renderiza
+  exclusivamente sidebar. Preferencia de retracao persiste em `localStorage`.
+- Usuario confirmou visualmente que o estado final da sidebar esta estavel.
+- `/app/channels` possui CRUD independente por numero, modalidade oficial ou
+  nao oficial e autenticacao planejada por QR/PIN.
+- `/app/support` lista atendimentos; `/app/support/[conversationId]` abre o
+  historico e permite criar, editar, aprovar, rejeitar ou escalar rascunhos.
+- Aprovacao nunca marca mensagem como enviada. Envio, QR/PIN real e webhook
+  publico aguardam escolha e implementacao dos adapters de fornecedor.
+- Migrations de suporte e revisao humana foram aplicadas remotamente.
+- Proximo passo seguro: gerar rascunho por IA sem envio externo.
 
 ## Handoff 2026-07-13 - Onboarding Do Piloto
 
