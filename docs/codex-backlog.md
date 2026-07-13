@@ -79,7 +79,8 @@ fluxo interno de atendimento pode avancar sem esse gate.
 - [ ] Definir contrato independente de provedor para canal de mensagens.
 - [ ] Implementar webhook seguro, idempotente e observavel.
 - [x] Criar rascunhos, aprovacao, rejeicao e escalada sem envio externo.
-- [ ] Adicionar edicao de rascunho e envio via adapter autenticado.
+- [x] Permitir edicao somente enquanto o rascunho aguarda revisao.
+- [ ] Adicionar envio via adapter autenticado.
 - [ ] Registrar auditoria e metricas de resolucao.
 - [ ] Validar duas semanas em modo assistido antes de automatizar.
 

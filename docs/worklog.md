@@ -10,8 +10,9 @@ do marco ativo.
 
 - Detalhe do atendimento cria rascunho sem qualquer envio externo.
 - Operador aprova, rejeita ou escala; transicoes sao atomicas e server-side.
+- Rascunho pode ser editado antes da revisao e fica imutavel depois dela.
 - Escalada eleva atendimento para prioridade alta; revisao guarda ator e data.
-- Migration `manage_support_drafts` aplicada remotamente.
+- Migrations `manage_support_drafts` e `edit_support_drafts` aplicadas remotamente.
 
 ### Verificacao
 
@@ -21,7 +22,7 @@ do marco ativo.
 
 ### Proximo Passo
 
-Permitir edicao de rascunho ainda pendente e preparar geracao por IA sem envio.
+Preparar geracao de rascunho por IA sem envio externo.
 
 ## 2026-07-13 - Separacao Canais E Atendimento
 

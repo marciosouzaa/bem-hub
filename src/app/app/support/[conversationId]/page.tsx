@@ -4,7 +4,7 @@ import { PageHeader, PageLayout } from "@/components/app";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getRequiredWorkspace } from "@/features/organizations/queries";
-import { createDraftAction, reviewDraftAction } from "@/features/support/actions";
+import { createDraftAction, reviewDraftAction, updateDraftAction } from "@/features/support/actions";
 import { getSupportConversation } from "@/features/support/queries";
 
 export default async function SupportConversationPage({ params }: { params: Promise<{ conversationId: string }> }) {
@@ -18,7 +18,7 @@ export default async function SupportConversationPage({ params }: { params: Prom
     <PageHeader eyebrow={`${conversation.channel.name} · ${conversation.channel.phoneNumber}`} title={conversation.contact.name ?? conversation.contact.phone ?? "Contato"} description={`Atendimento ${conversation.status}. Aprovar prepara a resposta; envio externo aguarda o fornecedor.`} />
     <Card><CardContent className="space-y-4 p-5 md:pt-5">
       {conversation.messages.length ? conversation.messages.map((message) => <div className={message.direction === "outbound" ? "ml-auto max-w-[80%] rounded-xl bg-sidebar-active p-4" : "max-w-[80%] rounded-xl border border-panel-border bg-panel-elevated p-4"} key={message.id}>
-        <p className="whitespace-pre-wrap text-sm leading-6">{message.content}</p>
+        {message.status === "draft" ? <form action={updateDraftAction.bind(null, conversationId, message.id)} className="space-y-2"><textarea aria-label="Conteudo do rascunho" className="min-h-24 w-full rounded-lg border border-panel-border bg-panel-elevated p-3 text-sm outline-none focus:border-primary" defaultValue={message.content} maxLength={10000} name="content" required /><Button size="sm" type="submit" variant="outline">Salvar edicao</Button></form> : <p className="whitespace-pre-wrap text-sm leading-6">{message.content}</p>}
         <p className="mt-2 text-xs text-muted">{message.direction === "inbound" ? "Contato" : "Equipe"} · {message.status}</p>
         {message.status === "draft" ? <div className="mt-3 flex flex-wrap gap-2">
           <form action={reviewDraftAction.bind(null, conversationId, message.id, "approved")}><Button size="sm" type="submit">Aprovar</Button></form>

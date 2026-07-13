@@ -1,5 +1,5 @@
 begin;
-select plan(93);
+select plan(95);
 
 select ok(
   not has_function_privilege('anon', 'public.bootstrap_owned_organization(uuid)', 'execute'),
@@ -830,10 +830,18 @@ select lives_ok(
 );
 select is((select count(*) from public.support_messages where organization_id='a0000000-0000-0000-0000-000000000001' and status='draft'),1::bigint,'draft is persisted without sending');
 select lives_ok(
+  $$select public.update_support_draft('a0000000-0000-0000-0000-000000000001',(select id from public.support_messages where organization_id='a0000000-0000-0000-0000-000000000001' and status='draft' limit 1),'Resposta editada')$$,
+  'tenant A edits its pending draft'
+);
+select lives_ok(
   $$select public.review_support_draft('a0000000-0000-0000-0000-000000000001',(select id from public.support_messages where organization_id='a0000000-0000-0000-0000-000000000001' and status='draft' limit 1),'approved')$$,
   'tenant A approves its draft'
 );
 select is((select count(*) from public.support_messages where organization_id='a0000000-0000-0000-0000-000000000001' and status='approved'),1::bigint,'approval does not mark message as sent');
+select throws_ok(
+  $$select public.update_support_draft('a0000000-0000-0000-0000-000000000001',(select id from public.support_messages where organization_id='a0000000-0000-0000-0000-000000000001' and status='approved' limit 1),'Alteracao tardia')$$,
+  'P0002','draft_not_found_or_already_reviewed','approved draft is immutable'
+);
 select throws_ok(
   $$select public.create_support_draft('b0000000-0000-0000-0000-000000000002',(select id from public.support_conversations where organization_id='a0000000-0000-0000-0000-000000000001' limit 1),'Tentativa cruzada')$$,
   '42501','organization_member_required','tenant A cannot draft for tenant B'
