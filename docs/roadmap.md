@@ -65,14 +65,15 @@ tecnico recorrente.
 
 ## M2 - Atendimento Assistido No WhatsApp
 
-Status: planejado. Equivale a Fase 2 do PDF e comeca somente apos M1 validado.
+Status: fundacao iniciada. Contatos, conexoes independentes por numero,
+atendimentos, mensagens e inbox existem; adapters aguardam fornecedor.
 
 Gate de produto: escolher Evolution API, Z-API ou outro BSP, definir custos,
 termos e credenciais. A integracao deve ficar atras de um adapter de canal para
 evitar acoplamento do dominio ao fornecedor.
 
 - [ ] Receber mensagens por webhook com verificacao de autenticidade e idempotencia.
-- [ ] Modelar contatos e conversas externas com isolamento por organizacao.
+- [x] Modelar contatos e conversas externas com isolamento por organizacao.
 - [ ] Gerar rascunho usando catalogo, preco, disponibilidade e tom da marca.
 - [ ] Criar modo assistido: aprovar, editar ou escalar antes de enviar.
 - [ ] Escalar reclamacao, devolucao, pagamento e baixa confianca para humano.

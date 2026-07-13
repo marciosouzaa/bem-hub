@@ -4,6 +4,24 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-13 - Fundacao Da Inbox M2
+
+### Feito
+
+- Schema multi-tenant para conexoes, contatos, atendimentos e mensagens.
+- Cada numero e conexao independente `official` ou `unofficial`.
+- Inbox inicial lista contato, numero, canal, prioridade e estado.
+- RLS protege todas as tabelas; IDs externos de mensagem sao idempotentes.
+
+### Pendente De Gate
+
+- Escolher fornecedor oficial e fornecedor nao oficial para finalizar adapters,
+  credenciais, webhooks e envio. Risco do nao oficial e opt-in consciente.
+
+### Proximo Passo
+
+Adicionar gestao de conexoes por numero sem credenciais de fornecedor.
+
 ## 2026-07-13 - Hardening Operacional
 
 ### Feito

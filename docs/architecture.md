@@ -109,6 +109,11 @@ require stable provider IDs for idempotency. Replies begin as drafts and cannot
 reach `sent` without explicit `approved`; terminal states stay immutable. No
 adapter sends externally before BSP selection and operational approval.
 
+Each channel connection represents one independent number and declares
+`official` or `unofficial`. Connections never share credentials, provider IDs
+or webhook state. Choosing an unofficial adapter is an explicit organization
+decision; disabling it must not affect official numbers or stored attendance.
+
 Normalized commerce contracts live in `src/features/commerce`. Money uses
 integer cents, stock uses non-negative integers, external IDs stay strings and
 orders use ISO timestamps. Spreadsheet import maps provider columns into these

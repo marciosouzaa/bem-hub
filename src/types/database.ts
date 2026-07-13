@@ -772,6 +772,10 @@ export type Database = {
         }
         Returns: string
       }
+      get_support_inbox: {
+        Args: { target_organization_id: string }
+        Returns: Json
+      }
       is_org_admin: {
         Args: { target_organization_id: string }
         Returns: boolean

@@ -1,5 +1,5 @@
 begin;
-select plan(82);
+select plan(87);
 
 select ok(
   not has_function_privilege('anon', 'public.bootstrap_owned_organization(uuid)', 'execute'),
@@ -138,6 +138,19 @@ select is(
   'catalog activation RPC is security invoker'
 );
 select ok(
+  not has_function_privilege('anon', 'public.get_support_inbox(uuid)', 'execute'),
+  'anon cannot read support inbox'
+);
+select ok(
+  has_function_privilege('authenticated', 'public.get_support_inbox(uuid)', 'execute'),
+  'authenticated can call support inbox RPC'
+);
+select is(
+  (select prosecdef from pg_proc where oid = 'public.get_support_inbox(uuid)'::regprocedure),
+  false,
+  'support inbox RPC is security invoker'
+);
+select ok(
   has_function_privilege('authenticated', 'public.is_org_member(uuid)', 'execute'),
   'authenticated can execute membership helper'
 );
@@ -203,6 +216,7 @@ select ok(
       'public.add_organization_member_by_email(uuid,text,public.organization_role)'::regprocedure,
       'public.manage_organization_member(uuid,uuid,public.organization_role,public.member_status)'::regprocedure,
       'public.activate_catalog_version(uuid,uuid)'::regprocedure,
+      'public.get_support_inbox(uuid)'::regprocedure,
       'private.is_org_member(uuid)'::regprocedure,
       'private.is_org_admin(uuid)'::regprocedure
     )
@@ -419,6 +433,19 @@ values
     'b0000000-0000-0000-0000-000000000002/b1000000-0000-0000-0000-000000000002/tenant-b.txt',
     '20000000-0000-0000-0000-000000000002'
   );
+
+insert into public.channel_connections (id, organization_id, kind, provider, display_name, phone_number)
+values
+  ('ca000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', 'official', 'pending-provider', 'Canal A', '+551100000001'),
+  ('cb000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000002', 'unofficial', 'pending-provider', 'Canal B', '+551100000002');
+insert into public.contacts (id, organization_id, name, phone)
+values
+  ('c1000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', 'Contato A', '+551199999001'),
+  ('c2000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000002', 'Contato B', '+551199999002');
+insert into public.support_conversations (organization_id, contact_id, channel_connection_id)
+values
+  ('a0000000-0000-0000-0000-000000000001', 'c1000000-0000-0000-0000-000000000001', 'ca000000-0000-0000-0000-000000000001'),
+  ('b0000000-0000-0000-0000-000000000002', 'c2000000-0000-0000-0000-000000000002', 'cb000000-0000-0000-0000-000000000002');
 
 create temporary table tenant_a_results (
   member_own boolean,
@@ -796,6 +823,9 @@ select throws_ok(
 );
 
 reset role;
+
+select is(jsonb_array_length(public.get_support_inbox('a0000000-0000-0000-0000-000000000001')), 1, 'tenant A inbox returns its attendance');
+select is(jsonb_array_length(public.get_support_inbox('b0000000-0000-0000-0000-000000000002')), 0, 'tenant A inbox cannot read tenant B attendance');
 
 select is((select member_own from tenant_a_results), true, 'tenant A user is a member of tenant A');
 select is((select member_other from tenant_a_results), false, 'tenant A user is not a member of tenant B');
