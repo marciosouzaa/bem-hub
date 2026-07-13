@@ -61,10 +61,11 @@ export function AppNav({ className, collapsed = false, onNavigate }: AppNavProps
             href={href}
             key={label}
             onClick={onNavigate}
+            style={collapsed ? { justifyContent: "center", paddingLeft: 0, paddingRight: 0 } : undefined}
             title={collapsed ? label : undefined}
           >
             <Icon aria-hidden="true" className="size-4 shrink-0" />
-            <span className={cn("truncate transition-opacity duration-150", collapsed && "sr-only")}>{label}</span>
+            {!collapsed ? <span className="truncate">{label}</span> : null}
           </Link>
         );
       })}
