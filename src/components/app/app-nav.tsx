@@ -35,13 +35,15 @@ const navItems: NavItem[] = [
 
 type AppNavProps = {
   className?: string;
+  collapsed?: boolean;
+  onNavigate?: () => void;
 };
 
-export function AppNav({ className }: AppNavProps) {
+export function AppNav({ className, collapsed = false, onNavigate }: AppNavProps) {
   const pathname = usePathname();
 
   return (
-    <nav className={cn("mt-10 space-y-1", className)}>
+    <nav aria-label="Navegacao principal" className={cn("space-y-1", className)}>
       {navItems.map(({ icon: Icon, label, href, exact }) => {
         const active = exact
           ? pathname === href
@@ -50,16 +52,19 @@ export function AppNav({ className }: AppNavProps) {
         return (
           <Link
             className={cn(
-              "flex h-10 w-full items-center gap-3 rounded-[var(--radius-control)] px-3 text-left text-sm transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45 focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar",
+              "flex h-10 w-full items-center rounded-[var(--radius-control)] text-left text-sm transition-[color,background-color,box-shadow,padding,gap] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45 focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar",
+              collapsed ? "justify-center px-0" : "gap-3 px-3",
               active
                 ? "bg-sidebar-active text-primary shadow-[inset_3px_0_0_var(--primary)]"
                 : "text-muted-strong hover:bg-panel-subtle hover:text-foreground",
             )}
             href={href}
             key={label}
+            onClick={onNavigate}
+            title={collapsed ? label : undefined}
           >
-            <Icon className="size-4 shrink-0" />
-            <span className="truncate">{label}</span>
+            <Icon aria-hidden="true" className="size-4 shrink-0" />
+            <span className={cn("truncate transition-opacity duration-150", collapsed && "sr-only")}>{label}</span>
           </Link>
         );
       })}

@@ -4,6 +4,21 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-13 - App Shell E Drawer
+
+### Feito
+
+- Sidebar desktop fixa e independente do scroll central.
+- Menu retrai de 256px para 80px e persiste preferencia no navegador.
+- Mobile usa drawer modal com overlay, Escape, ciclo e retorno de foco.
+- Shell separa busca server-side, comportamento client e navegacao visual.
+- Antigo menu mobile baseado em `details` foi removido.
+
+### Verificacao
+
+- 51 testes, lint e build passaram.
+- Browser visual integrado indisponivel nesta sessao; sem teste manual.
+
 ## 2026-07-13 - Revisao Humana No Atendimento
 
 ### Feito
