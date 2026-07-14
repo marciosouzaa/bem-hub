@@ -4,6 +4,41 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-13 - Fundacao Frontend Aplicada
+
+### Feito
+
+- Primitives compartilhadas implementadas para input, textarea, select,
+  checkbox, campo, secao, spinner, skeleton, vazio, erro e botao de icone.
+- Dialog, confirmacao, dropdown e drawer usam Radix com estilo e tokens proprios
+  do BEM HUB.
+- `EntityDrawer` abre novo/editar pela direita, possui footer fixo, bloqueia
+  fechamento durante submit e confirma descarte quando o formulario esta sujo.
+- DataTable headless implementada com TanStack Table, ordenacao, responsividade,
+  loading, vazio, erro, paginacao, click por teclado, signal edge e dropdown por
+  linha.
+- Canais migrados do formulario fixo e edicao em `details` para DataTable,
+  busca, menu por linha e editor lateral; dominio foi separado de Atendimento.
+- Assistentes migrados de cards e formularios embutidos para DataTable e drawer
+  complexo com React Hook Form + Zod, preservando limites, papeis e providers.
+- Conexoes de IA migradas para DataTable e drawer de criacao, preservando
+  criptografia, chave write-only, escopo da organizacao e conexao padrao.
+
+### Verificacao
+
+- `bun test`: 51 testes passaram.
+- `bun run lint`: passou sem alertas.
+- `bun run build`: passou com Next.js 16.2.9.
+- Verificacao visual automatizada nao executada: navegador integrado nao estava
+  disponivel nesta sessao.
+
+### Proximo Passo
+
+Fazer smoke visual autenticado em desktop/mobile e, depois, aplicar os mesmos
+contratos onde forem realmente CRUD: equipe/convites e futuros contatos. Nao
+converter chat, composer, upload ou execucao de automacao em drawer apenas por
+uniformidade.
+
 ## 2026-07-13 - Padroes Frontend E CRUD
 
 ### Feito

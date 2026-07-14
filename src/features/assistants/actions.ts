@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+
+import { assistantEditorSchema, type AssistantEditorData } from "@/features/assistants/assistant-editor-schema";
 import {
   getEntitlementErrorMessage,
   getEntitlements,
@@ -9,74 +11,19 @@ import {
   requireLimitAvailable,
 } from "@/features/billing/entitlements";
 import { getOrCreateWorkspace } from "@/features/organizations/bootstrap";
-import {
-  AI_PROVIDER_DEFINITIONS,
-  isSupportedProvider,
-  type AiProvider,
-} from "@/lib/ai/providers";
-import { DEFAULT_OPENAI_MODEL } from "@/lib/ai/models";
+import type { AiProvider } from "@/lib/ai/providers";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const ASSISTANTS_PATH = "/app/assistants";
 
-const assistantFormSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(2, "Informe pelo menos 2 caracteres.")
-    .max(80, "Use no maximo 80 caracteres."),
-  description: z
-    .string()
-    .trim()
-    .max(180, "Use no maximo 180 caracteres.")
-    .optional()
-    .transform((value) => value || null),
-  area: z
-    .string()
-    .trim()
-    .max(60, "Use no maximo 60 caracteres.")
-    .optional()
-    .transform((value) => value || null),
-  instructions: z
-    .string()
-    .trim()
-    .min(10, "Descreva instrucoes com pelo menos 10 caracteres.")
-    .max(4000, "Use no maximo 4000 caracteres."),
-  provider: z.string().refine(isSupportedProvider, "Provider inválido."),
-  providerConnectionId: z
-    .string()
-    .uuid("Conexão de IA inválida.")
-    .nullable(),
-  model: z
-    .string()
-    .trim()
-    .min(1, "Informe o modelo.")
-    .max(80, "Use no maximo 80 caracteres."),
-  temperature: z.coerce
-    .number()
-    .min(0, "Use um valor entre 0 e 2.")
-    .max(2, "Use um valor entre 0 e 2."),
-  isDefault: z.boolean(),
-});
+export type AssistantMutationResult =
+  | { ok: true; message: string }
+  | { ok: false; message: string; errors?: Partial<Record<keyof AssistantEditorData, string[]>> };
 
-export type AssistantFormState = {
-  ok: boolean;
-  message: string | null;
-  errors?: Partial<Record<keyof z.infer<typeof assistantFormSchema>, string[]>>;
-};
-
-export async function createAssistantAction(
-  _previousState: AssistantFormState,
-  formData: FormData,
-): Promise<AssistantFormState> {
-  const parsed = parseAssistantForm(formData);
-
+export async function createAssistantAction(input: unknown): Promise<AssistantMutationResult> {
+  const parsed = assistantEditorSchema.safeParse(input);
   if (!parsed.success) {
-    return {
-      ok: false,
-      message: "Revise os campos destacados.",
-      errors: parsed.error.flatten().fieldErrors,
-    };
+    return { ok: false, message: "Revise os campos destacados.", errors: parsed.error.flatten().fieldErrors };
   }
 
   const { supabase, workspace } = await getAdminWorkspace();
@@ -85,233 +32,140 @@ export async function createAssistantAction(
     .select("id", { count: "exact", head: true })
     .eq("organization_id", workspace.organization.id);
 
-  if (countError) {
-    return {
-      ok: false,
-      message: `Falha ao validar assistentes existentes: ${countError.message}`,
-    };
-  }
+  if (countError) return { ok: false, message: "Não foi possível validar o limite de assistentes." };
 
   try {
-    const entitlements = await getEntitlements(
-      supabase,
-      workspace.organization.id,
-    );
+    const entitlements = await getEntitlements(supabase, workspace.organization.id);
     requireFeature(entitlements, "assistants");
     requireLimitAvailable(entitlements, "assistants", count ?? 0);
   } catch (error) {
-    return {
-      ok: false,
-      message:
-        getEntitlementErrorMessage(error) ??
-        "Falha ao validar limites do plano.",
-    };
+    return { ok: false, message: getEntitlementErrorMessage(error) ?? "Falha ao validar limites do plano." };
   }
 
-  const providerConnectionValidation = await validateProviderConnection(
+  const connectionValidation = await validateProviderConnection(
     supabase,
     workspace.organization.id,
     parsed.data.provider,
     parsed.data.providerConnectionId,
   );
-
-  if (!providerConnectionValidation.ok) {
-    return providerConnectionValidation.state;
-  }
+  if (!connectionValidation.ok) return connectionValidation;
 
   const shouldBeDefault = parsed.data.isDefault || count === 0;
   const { data: createdAssistant, error } = await supabase
     .from("assistants")
     .insert({
-      organization_id: workspace.organization.id,
-      name: parsed.data.name,
-      description: parsed.data.description,
       area: parsed.data.area,
+      created_by: workspace.user.id,
+      description: parsed.data.description,
       instructions: parsed.data.instructions,
+      is_default: false,
+      model: parsed.data.model,
+      name: parsed.data.name,
+      organization_id: workspace.organization.id,
       provider: parsed.data.provider,
       provider_connection_id: parsed.data.providerConnectionId,
-      model: parsed.data.model,
       temperature: parsed.data.temperature,
-      is_default: false,
-      created_by: workspace.user.id,
     })
     .select("id")
     .single();
 
-  if (error) {
-    return {
-      ok: false,
-      message: `Falha ao criar assistente: ${error.message}`,
-    };
-  }
+  if (error) return { ok: false, message: "Não foi possível criar o assistente." };
 
   if (shouldBeDefault) {
     try {
-      await setDefaultAssistant(
-        supabase,
-        workspace.organization.id,
-        createdAssistant.id,
-      );
+      await setDefaultAssistant(supabase, workspace.organization.id, createdAssistant.id);
     } catch (defaultError) {
-      await supabase
-        .from("assistants")
-        .delete()
-        .eq("id", createdAssistant.id)
-        .eq("organization_id", workspace.organization.id);
+      await supabase.from("assistants").delete().eq("id", createdAssistant.id).eq("organization_id", workspace.organization.id);
       return {
         ok: false,
-        message:
-          defaultError instanceof Error
-            ? defaultError.message
-            : "Falha ao definir assistente padrao.",
+        message: defaultError instanceof Error ? defaultError.message : "Falha ao definir o assistente padrão.",
       };
     }
   }
 
   revalidatePath(ASSISTANTS_PATH);
-
-  return {
-    ok: true,
-    message: "Assistente criado.",
-  };
+  return { ok: true, message: "Assistente criado." };
 }
 
-export async function updateAssistantAction(
-  assistantId: string,
-  _previousState: AssistantFormState,
-  formData: FormData,
-): Promise<AssistantFormState> {
-  const parsed = parseAssistantForm(formData);
-
-  if (!parsed.success) {
-    return {
-      ok: false,
-      message: "Revise os campos destacados.",
-      errors: parsed.error.flatten().fieldErrors,
-    };
+export async function updateAssistantAction(assistantId: string, input: unknown): Promise<AssistantMutationResult> {
+  const id = z.string().uuid().safeParse(assistantId);
+  const parsed = assistantEditorSchema.safeParse(input);
+  if (!id.success || !parsed.success) {
+    return { ok: false, message: "Revise os campos destacados.", errors: parsed.success ? undefined : parsed.error.flatten().fieldErrors };
   }
 
   const { supabase, workspace } = await getAdminWorkspace();
   const entitlements = await getEntitlements(supabase, workspace.organization.id);
   requireFeature(entitlements, "assistants");
-  const providerConnectionValidation = await validateProviderConnection(
+
+  const connectionValidation = await validateProviderConnection(
     supabase,
     workspace.organization.id,
     parsed.data.provider,
     parsed.data.providerConnectionId,
   );
-
-  if (!providerConnectionValidation.ok) {
-    return providerConnectionValidation.state;
-  }
+  if (!connectionValidation.ok) return connectionValidation;
 
   const { error } = await supabase
     .from("assistants")
     .update({
-      name: parsed.data.name,
-      description: parsed.data.description,
       area: parsed.data.area,
+      description: parsed.data.description,
       instructions: parsed.data.instructions,
+      model: parsed.data.model,
+      name: parsed.data.name,
       provider: parsed.data.provider,
       provider_connection_id: parsed.data.providerConnectionId,
-      model: parsed.data.model,
       temperature: parsed.data.temperature,
     })
-    .eq("id", assistantId)
+    .eq("id", id.data)
     .eq("organization_id", workspace.organization.id);
 
-  if (error) {
-    return {
-      ok: false,
-      message: `Falha ao atualizar assistente: ${error.message}`,
-    };
-  }
-
-  if (parsed.data.isDefault) {
-    await setDefaultAssistant(supabase, workspace.organization.id, assistantId);
-  }
+  if (error) return { ok: false, message: "Não foi possível atualizar o assistente." };
+  if (parsed.data.isDefault) await setDefaultAssistant(supabase, workspace.organization.id, id.data);
 
   revalidatePath(ASSISTANTS_PATH);
-
-  return {
-    ok: true,
-    message: "Assistente atualizado.",
-  };
+  return { ok: true, message: "Assistente atualizado." };
 }
 
-export async function deleteAssistantAction(
-  assistantId: string,
-  formData: FormData,
-) {
-  void formData;
+export async function deleteAssistantAction(assistantId: string): Promise<AssistantMutationResult> {
+  const id = z.string().uuid().safeParse(assistantId);
+  if (!id.success) return { ok: false, message: "Assistente inválido." };
+
   const { supabase, workspace } = await getAdminWorkspace();
   const entitlements = await getEntitlements(supabase, workspace.organization.id);
   requireFeature(entitlements, "assistants");
-
   const { error } = await supabase.rpc("delete_assistant", {
-    target_assistant_id: assistantId,
+    target_assistant_id: id.data,
     target_organization_id: workspace.organization.id,
   });
 
-  if (error) {
-    throw new Error(`Falha ao excluir assistente: ${error.message}`);
-  }
-
+  if (error) return { ok: false, message: "Não foi possível excluir o assistente." };
   revalidatePath(ASSISTANTS_PATH);
+  return { ok: true, message: "Assistente excluído." };
 }
 
-export async function setDefaultAssistantAction(
-  assistantId: string,
-  formData: FormData,
-) {
-  void formData;
+export async function setDefaultAssistantAction(assistantId: string): Promise<AssistantMutationResult> {
+  const id = z.string().uuid().safeParse(assistantId);
+  if (!id.success) return { ok: false, message: "Assistente inválido." };
+
   const { supabase, workspace } = await getAdminWorkspace();
   const entitlements = await getEntitlements(supabase, workspace.organization.id);
   requireFeature(entitlements, "assistants");
-
-  await setDefaultAssistant(supabase, workspace.organization.id, assistantId);
-
+  await setDefaultAssistant(supabase, workspace.organization.id, id.data);
   revalidatePath(ASSISTANTS_PATH);
-}
-
-function parseAssistantForm(formData: FormData) {
-  return assistantFormSchema.safeParse({
-    name: formData.get("name"),
-    description: formData.get("description"),
-    area: formData.get("area"),
-    instructions: formData.get("instructions"),
-    provider: formData.get("provider") || "openai",
-    providerConnectionId: formData.get("providerConnectionId") || null,
-    model:
-      formData.get("model") ||
-      AI_PROVIDER_DEFINITIONS[
-        isSupportedProvider(String(formData.get("provider")))
-          ? (formData.get("provider") as AiProvider)
-          : "openai"
-      ].defaultModel ||
-      DEFAULT_OPENAI_MODEL,
-    temperature: formData.get("temperature"),
-    isDefault: formData.get("isDefault") === "on",
-  });
+  return { ok: true, message: "Assistente padrão atualizado." };
 }
 
 async function getAdminWorkspace() {
   const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-
-  if (error || !user) {
-    throw new Error("Sessao expirada. Entre novamente.");
-  }
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error || !user) throw new Error("Sessão expirada. Entre novamente.");
 
   const workspace = await getOrCreateWorkspace(supabase, { user });
-
-  if (!["owner", "admin"].includes(workspace.membership.role)) {
+  if (workspace.membership.role !== "owner" && workspace.membership.role !== "admin") {
     throw new Error("Apenas owners e admins podem gerenciar assistentes.");
   }
-
   return { supabase, workspace };
 }
 
@@ -320,16 +174,8 @@ async function validateProviderConnection(
   organizationId: string,
   provider: AiProvider,
   providerConnectionId: string | null,
-): Promise<
-  | { ok: true }
-  | {
-      ok: false;
-      state: AssistantFormState;
-    }
-> {
-  if (!providerConnectionId) {
-    return { ok: true };
-  }
+): Promise<AssistantMutationResult> {
+  if (!providerConnectionId) return { ok: true, message: "Conexão por ambiente." };
 
   const { data, error } = await supabase
     .from("ai_provider_connections")
@@ -338,52 +184,16 @@ async function validateProviderConnection(
     .eq("organization_id", organizationId)
     .maybeSingle();
 
-  if (error) {
-    return {
-      ok: false,
-      state: {
-        ok: false,
-        message: `Falha ao validar conexão de IA: ${error.message}`,
-      },
-    };
+  if (error || !data) {
+    return { ok: false, message: "Conexão de IA não encontrada nesta organização.", errors: { providerConnectionId: ["Selecione uma conexão válida."] } };
   }
-
-  if (!data) {
-    return {
-      ok: false,
-      state: {
-        ok: false,
-        message: "Conexão de IA não encontrada nesta organização.",
-        errors: { providerConnectionId: ["Selecione uma conexão válida."] },
-      },
-    };
-  }
-
   if (data.provider !== provider) {
-    return {
-      ok: false,
-      state: {
-        ok: false,
-        message: "A conexão selecionada pertence a outro provider.",
-        errors: {
-          providerConnectionId: ["Selecione uma conexão compatível."],
-        },
-      },
-    };
+    return { ok: false, message: "A conexão selecionada pertence a outro provedor.", errors: { providerConnectionId: ["Selecione uma conexão compatível."] } };
   }
-
   if (data.status !== "active") {
-    return {
-      ok: false,
-      state: {
-        ok: false,
-        message: "A conexão selecionada não está ativa.",
-        errors: { providerConnectionId: ["Use uma conexão ativa."] },
-      },
-    };
+    return { ok: false, message: "A conexão selecionada não está ativa.", errors: { providerConnectionId: ["Use uma conexão ativa."] } };
   }
-
-  return { ok: true };
+  return { ok: true, message: "Conexão validada." };
 }
 
 async function setDefaultAssistant(
@@ -395,8 +205,5 @@ async function setDefaultAssistant(
     target_assistant_id: assistantId,
     target_organization_id: organizationId,
   });
-
-  if (error) {
-    throw new Error(`Falha ao definir assistente padrao: ${error.message}`);
-  }
+  if (error) throw new Error("Falha ao definir o assistente padrão.");
 }

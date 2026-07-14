@@ -2,6 +2,26 @@
 
 Atualizado em 2026-07-13.
 
+## Handoff 2026-07-13 - Fundacao Frontend E CRUDs
+
+- Fundacao reutilizavel agora inclui DataTable, EntityDrawer, Dialog,
+  ConfirmDialog, DropdownMenu, campos de formulario e estados de tela.
+- Dependencias adicionadas: `@tanstack/react-table`,
+  `@radix-ui/react-dialog` e `@radix-ui/react-dropdown-menu`.
+- `/app/channels` usa tabela limpa, acoes por linha e drawer para novo/editar;
+  queries/actions de canais nao ficam mais no dominio de Atendimento.
+- `/app/assistants` usa o mesmo contrato com formulario complexo RHF + Zod;
+  regras de plano, owner/admin, provider e conexao continuam server-side.
+- `/app/settings/ai-providers` usa tabela e drawer de criacao; segredo permanece
+  criptografado e nunca retorna para edicao.
+- Fluxos operacionais de chat, upload, rascunho de atendimento e execucao de
+  automacao nao foram convertidos: nao sao cadastros CRUD.
+- Suite final: 51 testes, lint e build passaram.
+- QA visual autenticado desktop/mobile permanece pendente porque o navegador
+  integrado estava indisponivel.
+- Proxima adocao segura: equipe/convites; depois contatos quando o modulo ganhar
+  CRUD real. Revisar automacoes separadamente antes de remover os `details`.
+
 ## Handoff 2026-07-13 - Shell, Canais E Atendimento
 
 - Shell foi separado em `AppShell` server-side, `WorkspaceShell` interativo e

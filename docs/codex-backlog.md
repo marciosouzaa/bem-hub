@@ -83,6 +83,13 @@ fluxo interno de atendimento pode avancar sem esse gate.
 - [ ] Adicionar envio via adapter autenticado.
 - [ ] Registrar auditoria e metricas de resolucao.
 - [ ] Validar duas semanas em modo assistido antes de automatizar.
+- [x] Implementar fundacao reutilizavel de DataTable, EntityDrawer, formularios
+  e estados de tela.
+- [x] Migrar Canais, Assistentes e Conexoes de IA para os novos contratos de
+  cadastro sem alterar identidade visual ou regras server-side.
+- [ ] Fazer QA visual autenticado dos novos drawers e tabelas em desktop/mobile.
+- [ ] Migrar equipe/convites e o futuro CRUD de contatos; manter composer,
+  upload e acoes operacionais fora do padrao de cadastro.
 
 ## FUTURO - M3 Inteligencia De Negocio
 
