@@ -42,6 +42,8 @@ usage/billing foundations.
 - `docs/commercial-validation.md`: pilot packaging and validation metrics.
 - `docs/design-system.md`: visual language, UI tokens, component direction,
   and product voice for interface work.
+- `docs/frontend-engineering-patterns.md`: frontend file architecture, size
+  budgets, CRUD composition, right-side editors, and reusable DataTable rules.
 - `.codex/skills/bem-hub-frontend-design/SKILL.md`: repo-local skill for UI
   design tasks. Use it whenever changing app screens or shared UI components.
 
@@ -130,6 +132,12 @@ the migration.
 - Keep Portuguese UI copy by default.
 - Use existing local primitives (`Button`, `Card`, `Badge`) and established
   Tailwind tokens from `src/app/globals.css`.
+- Open every create/edit record flow in a right-side `EntityDrawer`; reserve
+  centered dialogs for confirmations, destructive actions, and short blocking
+  decisions.
+- Use the shared `DataTable` for administrative records. Keep it visually calm:
+  one control bar, row actions in a dropdown, and no permanent per-row button
+  toolbar.
 - Use `lucide-react` icons for recognizable actions.
 - Use green as an operational signal for primary actions, active agents,
   healthy states, and live processing. Use muted gray for idle/pending and
@@ -149,6 +157,9 @@ the migration.
 - Prefer server components by default; add client components only for actual
   interactivity.
 - Reuse existing folders and naming conventions before adding new structure.
+- Use descriptive kebab-case component filenames; do not add generic
+  `component.tsx` files. Follow the file-size budgets in
+  `docs/frontend-engineering-patterns.md`.
 - Keep changes scoped and avoid broad refactors unrelated to the task.
 - Use environment variables for secrets and configurable model choices.
 - Do not require Supabase/OpenAI credentials for `npm run build`; features that

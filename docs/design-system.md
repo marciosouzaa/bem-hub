@@ -459,6 +459,15 @@ Required reusable primitives:
 - `CommandSearch`
 - `SplitPanel`
 - `ContextPanel`
+- `DataTable`
+- `DataTableControlBar`
+- `RowActionsMenu`
+- `EntityDrawer`
+- `FormField`
+- `FormSection`
+- `ConfirmDialog`
+- `ErrorState`
+- `Pagination`
 
 AI-specific components:
 
@@ -481,6 +490,29 @@ Implementation rule: create shared components when the same UI pattern appears
 in two screens or when a domain component owns behavior/state beyond basic
 presentation. Shared components should represent the target system, not just
 the current screen implementation.
+
+Detailed composition, file budgets, and CRUD contracts live in
+`docs/frontend-engineering-patterns.md`.
+
+## CRUD And Data Views
+
+Administrative lists use the shared `DataTable`. Its visual language is calm:
+one control bar, horizontal dividers, sticky muted header, compact identity
+column, semantic status, and a fixed dropdown action column. Avoid permanent
+per-row button toolbars. Bulk actions appear only after selection.
+
+The BEM HUB distinction is an optional `signal edge`: a subtle 2px left rail on
+rows that require attention, are processing, failed, or unhealthy. Normal rows
+remain neutral. This signal must encode real state, never decoration.
+
+Creating and editing records always uses an `EntityDrawer` entering from the
+right. The list remains visible as context on desktop; mobile uses a full-width
+drawer. Centered dialogs are reserved for confirmations, destructive actions,
+and short blocking decisions.
+
+Default data-table pagination is explicit/cursor based. Infinite scroll belongs
+to chronological feeds, conversations, and timelines, not every administrative
+table.
 
 ## Buttons
 

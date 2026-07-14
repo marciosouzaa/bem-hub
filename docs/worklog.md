@@ -4,6 +4,33 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-13 - Padroes Frontend E CRUD
+
+### Feito
+
+- Arquitetura frontend de referencia foi analisada em componentes, reutilizacao,
+  estrutura de arquivos, formularios, drawers e tabelas.
+- Padrao proprio registrado em `docs/frontend-engineering-patterns.md`, sem
+  referencias identificaveis a repositorios externos.
+- Novo/editar passa a abrir sempre em `EntityDrawer` lateral direito.
+- DataTable sera compartilhada, com acoes por linha em dropdown e assinatura
+  visual `signal edge`, sem toolbar permanente de botoes.
+- Foram definidos orcamentos de arquivo, fronteiras server/client, estrutura por
+  feature, estados obrigatorios, acessibilidade e ordem de adocao.
+
+### Decisoes
+
+- Nao criar DataTable monolitica nem `CrudPage` universal.
+- Paginacao explicita/cursor e padrao para tabelas; infinite scroll fica em
+  feeds, conversas e timelines.
+- Nomes de componentes devem ser descritivos; `component.tsx` generico fica
+  proibido.
+
+### Proximo Passo
+
+Implementar primitives ausentes e validar `EntityDrawer` + DataTable minima em
+um CRUD pequeno antes de migrar canais, contatos e assistentes.
+
 ## 2026-07-13 - Definicao Do Atendimento WhatsApp
 
 ### Feito
