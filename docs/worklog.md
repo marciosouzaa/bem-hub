@@ -4,6 +4,33 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-13 - Definicao Do Atendimento WhatsApp
+
+### Feito
+
+- Fluxos de canais, contatos e atendimento foram analisados de ponta a ponta,
+  mantendo somente o que pertence ao escopo do BEM HUB.
+- Plano proprio registrado em `docs/atendimento-whatsapp-plan.md`.
+- Direcao proposta: Meta Cloud API direta no oficial; spike de Z-API para o
+  piloto nao oficial, com Wuzapi como fallback self-hosted.
+- Modelo separa credencial, identidade externa, revisao humana, entrega,
+  webhook idempotente, outbox e leitura por operador.
+- UX proposta usa inbox, conversa e contexto; somente WhatsApp no MVP.
+
+### Riscos Encontrados
+
+- O modelo atual mistura modalidade oficial/nao oficial com QR/PIN.
+- Status atual de mensagem mistura revisao e entrega.
+- Mutacoes diretas e armazenamento de segredos precisam endurecimento antes de
+  conectar um numero real.
+- O conector nao oficial depende de gate juridico, comercial e de autenticacao
+  de webhook.
+
+### Proximo Passo
+
+Executar a Fase 0 do plano: fixtures dos contratos e spike dos dois provedores.
+Nao retomar geracao de IA antes de provar o transporte real de texto.
+
 ## 2026-07-13 - App Shell E Drawer
 
 ### Feito
