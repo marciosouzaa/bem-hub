@@ -2,6 +2,22 @@
 
 Atualizado em 2026-07-17.
 
+## Handoff 2026-07-17 - Callback Uazapi Não Chegou
+
+- Canal real está `connected`; credencial substituída e válida.
+- Endpoint interno está `active` e sem erro. Uazapi confirma por `GET /webhook`
+  uma configuração habilitada para `messages` em `bem-hub.vercel.app`.
+- Nenhum callback entrou: `last_received_at`/`webhook_verified_at` nulos e zero
+  eventos, mensagens ou conversas no banco.
+- A inbox vazia é consequência da ausência do callback, não falha de refresh.
+- Primeiro teste amanhã: mensagem de texto de outro WhatsApp para o número
+  conectado. Mensagem própria, envio via API e grupo são intencionalmente
+  ignorados.
+- Se ainda falhar: procurar POST da rota de webhook nos logs da Vercel. Ausência
+  de POST aponta para Uazapi; POST com erro aponta para rota/normalizador.
+- Não avançar para envio/outbox antes da mensagem real aparecer uma única vez
+  em `/app/support`.
+
 ## Handoff 2026-07-17 - Webhook Global E Entrada Uazapi
 
 - Rota global provider-neutral recebe callbacks; Uazapi é o primeiro adapter de

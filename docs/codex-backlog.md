@@ -81,6 +81,8 @@ fluxo interno de atendimento pode avancar sem esse gate.
   criptografadas, saúde, QR/código e desconexão.
 - [x] Implementar webhook provider-neutral seguro, idempotente e observável,
   com entrada Uazapi normalizada.
+- [ ] Validar callback real Uazapi: uma mensagem de outro número deve preencher
+  `last_received_at`, criar um evento e aparecer uma única vez na inbox.
 - [x] Criar rascunhos, aprovacao, rejeicao e escalada sem envio externo.
 - [x] Permitir edicao somente enquanto o rascunho aguarda revisao.
 - [ ] Adicionar envio via adapter autenticado.
@@ -138,9 +140,9 @@ Bloqueado pela auditoria da plataforma e disponibilidade dos dados.
 - Advisor sinaliza `add_organization_member_by_email` como `SECURITY DEFINER`
   executavel por authenticated; e intencional para consultar `auth.users`, com
   admin/tenant/papel/limite/owner validados dentro da RPC e anon revogado.
-- Uazapi e Z-API foram escolhidas para o primeiro piloto não oficial. A
-  fundação local está pronta, mas migration, chave Supabase server-side e smoke
-  real ainda bloqueiam declarar conexão operacional.
+- Uazapi e Z-API foram escolhidas para o primeiro piloto não oficial. Uazapi já
+  conecta e registra callback em produção; ainda não houve entrega observada.
+  Z-API continua somente com conexão/saúde, sem normalizador de webhook.
 
 ## Concluido
 

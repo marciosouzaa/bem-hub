@@ -65,14 +65,15 @@ tecnico recorrente.
 
 ## M2 - Atendimento Assistido No WhatsApp
 
-Status: fundacao iniciada. Contatos, conexoes independentes por numero,
-atendimentos, mensagens e inbox existem; adapters aguardam fornecedor.
+Status: fundacao e primeiro adapter em validação operacional. Canal Uazapi real
+conecta e registra webhook, mas o primeiro callback ainda não chegou ao BEM HUB.
 
 Gate de produto: escolher Evolution API, Z-API ou outro BSP, definir custos,
 termos e credenciais. A integracao deve ficar atras de um adapter de canal para
 evitar acoplamento do dominio ao fornecedor.
 
-- [ ] Receber mensagens por webhook com verificacao de autenticidade e idempotencia.
+- [ ] Validar em produção o recebimento real por webhook; implementação segura
+  e idempotente já existe, mas o callback Uazapi ainda não foi observado.
 - [x] Modelar contatos e conversas externas com isolamento por organizacao.
 - [ ] Gerar rascunho usando catalogo, preco, disponibilidade e tom da marca.
 - [ ] Criar modo assistido: aprovar, editar ou escalar antes de enviar.

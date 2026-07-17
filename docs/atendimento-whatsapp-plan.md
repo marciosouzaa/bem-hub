@@ -452,6 +452,8 @@ desativada sem apagar historico.
 - [x] registrar webhook idempotente;
 - [x] resolver identidade, upsert de contato e conversa ativa;
 - [x] persistir texto e status de mensagens;
+- [ ] validar callback real Uazapi; configuração está ativa no provedor, mas
+  nenhum evento chegou ao endpoint até o checkpoint de 2026-07-17;
 - publicar atualizacao autenticada por Supabase Realtime;
 - criar `/app/contacts` minimo.
 

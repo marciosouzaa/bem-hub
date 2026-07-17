@@ -4,6 +4,41 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-17 - Uazapi Conectada, Callback Ainda Ausente
+
+### Confirmado Em Produção
+
+- Nova credencial Uazapi foi validada; canal aparece como `connected`.
+- Webhook foi configurado às `2026-07-17 04:33:39 UTC` e o endpoint interno
+  está `active`, sem erro registrado.
+- Consulta direta `GET /webhook` da Uazapi retornou HTTP 200 com uma
+  configuração habilitada para `messages`, apontando para
+  `bem-hub.vercel.app`.
+- Filtros ativos excluem `wasSentByApi`, mensagens `fromMe` e grupos, evitando
+  loop e entradas fora do piloto.
+
+### Bloqueio Observado
+
+- `last_received_at` e `webhook_verified_at` continuam nulos.
+- Banco possui zero `channel_webhook_events`, zero `support_messages` e zero
+  `support_conversations`.
+- Portanto, a lista de Atendimento não está desatualizada: nenhum callback
+  alcançou o BEM HUB.
+
+### Retomada Amanhã
+
+1. Manter a instância gratuita viva e conectada.
+2. Enviar mensagem de texto **de outro número** para o número conectado; não
+   testar enviando pelo próprio número, por API ou em grupo, pois esses eventos
+   são excluídos.
+3. Atualizar `/app/support` e verificar se o canal muda para
+   `Entrada confirmada`.
+4. Se continuar vazio, abrir os logs da Function na Vercel e procurar `POST`
+   em `/api/webhooks/channels/uazapi/...`.
+5. Se não houver POST, investigar entrega/callback na Uazapi. Se houver POST,
+   registrar status HTTP e corrigir verificação/normalização do payload.
+6. Somente após entrada real aparecer uma vez, iniciar envio por outbox.
+
 ## 2026-07-17 - Entrada Uazapi Implementada
 
 ### Feito
