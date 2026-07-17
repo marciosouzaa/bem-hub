@@ -1,5 +1,5 @@
 begin;
-select plan(100);
+select plan(113);
 
 select ok(
   not has_function_privilege('anon', 'public.bootstrap_owned_organization(uuid)', 'execute'),
@@ -173,6 +173,87 @@ select ok(
 select ok(
   not has_table_privilege('authenticated', 'public.channel_credentials', 'select'),
   'authenticated cannot read encrypted channel credentials'
+);
+select ok(
+  not has_table_privilege('anon', 'public.channel_webhook_endpoints', 'select'),
+  'anon cannot discover webhook endpoints'
+);
+select ok(
+  not has_table_privilege('authenticated', 'public.channel_webhook_endpoints', 'select'),
+  'authenticated cannot discover webhook endpoint secrets'
+);
+select ok(
+  not has_table_privilege('anon', 'public.channel_webhook_events', 'select'),
+  'anon cannot read webhook processing events'
+);
+select ok(
+  not has_table_privilege('authenticated', 'public.channel_webhook_events', 'select'),
+  'authenticated cannot read internal webhook processing events'
+);
+select ok(
+  not has_table_privilege('anon', 'public.contact_identities', 'select'),
+  'anon cannot read provider contact identities'
+);
+select ok(
+  not has_table_privilege('authenticated', 'public.contact_identities', 'select'),
+  'authenticated cannot read provider contact identities directly'
+);
+select ok(
+  not has_function_privilege(
+    'anon',
+    'public.ingest_channel_inbound_message(uuid,text,text,text,text,text,text,text,timestamptz,text)',
+    'execute'
+  ),
+  'anon cannot execute inbound webhook ingestion'
+);
+select ok(
+  not has_function_privilege(
+    'authenticated',
+    'public.ingest_channel_inbound_message(uuid,text,text,text,text,text,text,text,timestamptz,text)',
+    'execute'
+  ),
+  'authenticated cannot execute inbound webhook ingestion'
+);
+select ok(
+  has_function_privilege(
+    'service_role',
+    'public.ingest_channel_inbound_message(uuid,text,text,text,text,text,text,text,timestamptz,text)',
+    'execute'
+  ),
+  'service role can execute inbound webhook ingestion'
+);
+select is(
+  (
+    select prosecdef
+    from pg_proc
+    where oid = 'public.ingest_channel_inbound_message(uuid,text,text,text,text,text,text,text,timestamptz,text)'::regprocedure
+  ),
+  false,
+  'inbound webhook ingestion is security invoker'
+);
+select ok(
+  (
+    select bool_and(relrowsecurity)
+    from pg_class
+    where oid in (
+      'public.channel_webhook_endpoints'::regclass,
+      'public.channel_webhook_events'::regclass,
+      'public.contact_identities'::regclass
+    )
+  ),
+  'internal webhook tables enforce RLS'
+);
+select has_column(
+  'public',
+  'channel_connections',
+  'webhook_configured_at',
+  'channel connection records provider webhook configuration'
+);
+select has_column(
+  'public',
+  'support_messages',
+  'channel_connection_id',
+  'support messages retain their provider channel'
 );
 select ok(
   not has_function_privilege(

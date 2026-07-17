@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { RadioTower } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useForm, useWatch, type UseFormRegisterReturn } from "react-hook-form";
@@ -13,6 +14,7 @@ import { FormSection } from "@/components/ui/form-section";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import {
+  configureChannelWebhookAction,
   configureChannelProviderAction,
   disconnectChannelProviderAction,
   refreshChannelProviderHealthAction,
@@ -180,22 +182,61 @@ export function ChannelProviderDrawer({
           {pairing ? <PairingPanel pairing={pairing} /> : null}
 
           {channel.hasCredentials ? (
-            <FormSection
-              description="Atualize o estado antes de reconectar ou diagnosticar uma falha."
-              title="Operação"
-            >
-              <div className="flex flex-wrap gap-2">
-                <Button disabled={operating} onClick={runPairing} type="button" variant="secondary">
-                  {channel.authMethod === "pin" ? "Gerar código" : "Gerar QR Code"}
-                </Button>
-                <Button disabled={operating} onClick={() => runOperation(() => refreshChannelProviderHealthAction(channel.id))} type="button" variant="ghost">
-                  Atualizar estado
-                </Button>
-                <Button disabled={operating} onClick={() => setDisconnectOpen(true)} type="button" variant="danger">
-                  Desconectar
-                </Button>
-              </div>
-            </FormSection>
+            <>
+              <FormSection
+                description="Um endpoint seguro recebe eventos do provedor e os transforma em atendimentos."
+                title="Recebimento"
+              >
+                <div className="flex flex-col gap-4 rounded-[var(--radius-panel)] border border-panel-border bg-panel-subtle p-4">
+                  <div className="flex items-start gap-3">
+                    <RadioTower className="mt-0.5 size-4 text-primary" aria-hidden="true" />
+                    <div>
+                      <p className="text-sm font-medium text-foreground">
+                        {channel.webhookVerifiedAt
+                          ? "Entrada confirmada"
+                          : channel.webhookConfiguredAt
+                            ? "Aguardando primeira mensagem"
+                            : "Entrada ainda não ativada"}
+                      </p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {channel.webhookVerifiedAt
+                          ? "O BEM HUB já recebeu eventos deste canal."
+                          : channel.webhookConfiguredAt
+                            ? "Envie uma mensagem de outro número para validar."
+                            : "Ative para configurar o webhook automaticamente no provedor."}
+                      </p>
+                    </div>
+                  </div>
+                  <div>
+                    <Button
+                      disabled={operating}
+                      onClick={() => runOperation(() => configureChannelWebhookAction(channel.id))}
+                      type="button"
+                      variant="secondary"
+                    >
+                      {channel.webhookConfiguredAt ? "Reconfigurar recebimento" : "Ativar recebimento"}
+                    </Button>
+                  </div>
+                </div>
+              </FormSection>
+
+              <FormSection
+                description="Atualize o estado antes de reconectar ou diagnosticar uma falha."
+                title="Operação"
+              >
+                <div className="flex flex-wrap gap-2">
+                  <Button disabled={operating} onClick={runPairing} type="button" variant="secondary">
+                    {channel.authMethod === "pin" ? "Gerar código" : "Gerar QR Code"}
+                  </Button>
+                  <Button disabled={operating} onClick={() => runOperation(() => refreshChannelProviderHealthAction(channel.id))} type="button" variant="ghost">
+                    Atualizar estado
+                  </Button>
+                  <Button disabled={operating} onClick={() => setDisconnectOpen(true)} type="button" variant="danger">
+                    Desconectar
+                  </Button>
+                </div>
+              </FormSection>
+            </>
           ) : null}
         </form>
       </EntityDrawer>

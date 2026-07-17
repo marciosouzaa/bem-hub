@@ -4,6 +4,70 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-17 - Entrada Uazapi Implementada
+
+### Feito
+
+- Criado endpoint global `/api/webhooks/channels/[provider]/[endpointToken]`;
+  providers só verificam e normalizam para o evento interno
+  `message.received`.
+- Uazapi configura o callback automaticamente, recebe apenas mensagens de
+  entrada e exclui grupos, mensagens próprias e envios feitos pela API.
+- Endpoint usa segredo opaco de alta entropia armazenado somente como SHA-256.
+- Ingestão idempotente cria identidade, contato, conversa ativa e mensagem,
+  mantendo escopo por organização e conexão.
+- Drawer de canal ganhou ativação e estados `Aguardando primeira mensagem` e
+  `Entrada confirmada`.
+- Migrations `channel_webhook_ingestion`, índices de FKs e dois reparos do alvo
+  de conflito foram aplicadas no Supabase remoto.
+- Smoke SQL processou a fatia completa e os dados temporários foram removidos;
+  verificação final confirmou zero resíduos.
+
+### Verificação
+
+- 62 testes passaram.
+- `bun run lint` e `bun run build` passaram.
+- RLS ativo nas três tabelas internas; `anon` e `authenticated` sem leitura;
+  somente `service_role` executa a RPC de ingestão.
+- Advisors: nenhuma nova falha de segurança; índices de FKs corrigidos.
+
+### Próximo Passo
+
+- Publicar o código com `APP_BASE_URL`, `SUPABASE_SECRET_KEY` e
+  `APP_ENCRYPTION_KEY` na Vercel.
+- Rotacionar o token Uazapi exposto nas capturas, substituir a credencial no
+  BEM HUB, clicar em `Ativar recebimento` e validar mensagem real em
+  `/app/support`.
+- Depois fechar envio de texto via outbox/adapter; Z-API pluga no mesmo webhook.
+
+## 2026-07-17 - Backend De Canais Liberado
+
+### Feito
+
+- Migration `20260717025135_add_channel_provider_connections.sql` aplicada no
+  Supabase remoto.
+- `SUPABASE_SECRET_KEY` configurada localmente e reportada como configurada na
+  Vercel; nenhum valor secreto foi registrado no repositório.
+- Cliente administrativo autenticou com a nova secret key e leu
+  `channel_credentials` com sucesso.
+- Verificado que `channel_credentials` mantém RLS ativo, nega acesso a
+  `anon`/`authenticated` e permite acesso somente ao backend.
+- `APP_ENCRYPTION_KEY` local presente para criptografar tokens dos providers.
+
+### Verificação
+
+- `bun test --timeout 15000`: 55 testes passaram.
+- `bun run lint`: passou.
+- `bun run build`: passou com Next.js 16.2.9 e `.env.local`.
+
+### Próximo Passo
+
+- Confirmar `APP_ENCRYPTION_KEY` também na Vercel e publicar novo deploy.
+- Rotacionar credenciais expostas nas capturas e fazer smoke real de Uazapi e
+  Z-API pelo drawer de `/app/channels`.
+- Com entrada real validada, implementar webhook idempotente e envio pela
+  outbox.
+
 ## 2026-07-16 - Conexões Uazapi E Z-API Iniciadas
 
 ### Feito
@@ -37,7 +101,7 @@ do marco ativo.
 
 ### Pendente
 
-- Aplicar `20260717022103_add_channel_provider_connections.sql` no Supabase.
+- Aplicar `20260717025135_add_channel_provider_connections.sql` no Supabase.
 - Adicionar `SUPABASE_SECRET_KEY` ao ambiente server-side; `APP_ENCRYPTION_KEY`
   já está presente localmente.
 - Regenerar tokens e QR expostos em capturas antes de qualquer teste real.

@@ -3,6 +3,11 @@ import type {
   ChannelProviderCredentials,
   ChannelProviderStatus,
 } from "@/features/channels/channel-provider-schema";
+import type {
+  ChannelInboundMessageEvent,
+  ChannelWebhookConfiguration,
+  ChannelWebhookRequest,
+} from "@/features/channels/webhooks/contracts";
 
 export type ChannelProviderHealth = {
   externalInstanceId: string | null;
@@ -21,10 +26,14 @@ export type PairingInput = {
 };
 
 export interface ChannelProviderAdapter {
+  configureWebhook?(input: ChannelWebhookConfiguration): Promise<void>;
   disconnect(): Promise<void>;
   getHealth(): Promise<ChannelProviderHealth>;
   provider: ChannelProvider;
   requestPairing(input: PairingInput): Promise<ChannelPairing>;
+  verifyAndNormalizeWebhook?(
+    input: ChannelWebhookRequest,
+  ): Promise<ChannelInboundMessageEvent[]> | ChannelInboundMessageEvent[];
 }
 
 export type ChannelProviderAdapterFactory = (

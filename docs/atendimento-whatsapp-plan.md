@@ -61,11 +61,12 @@ Ela ainda nao forma um atendimento funcional:
 2. `channel_connections.config` nao deve receber segredos em JSON comum.
 3. O status da mensagem mistura revisao humana com entrega ao WhatsApp. Um
    rascunho aprovado nao equivale a uma mensagem enviada ou entregue.
-4. Falta processamento real de webhook, envio, retry, outbox e auditoria.
-5. Falta identidade externa do contato. Telefone, `wa_id`, JID e LID nao podem
-   ser tratados como se fossem sempre a mesma chave.
-6. Nao ha leitura por operador, historico de atribuicao nem garantia de uma
-   unica conversa ativa por contato e canal.
+4. A entrada de texto Uazapi já passa por webhook idempotente; envio, retry,
+   outbox e auditoria operacional ainda faltam.
+5. Identidades externas agora separam telefone, `wa_id`, JID e LID por canal;
+   merge e CRUD operacional de contatos ainda faltam.
+6. O banco garante uma conversa ativa por contato e canal. Ainda não há leitura
+   por operador nem histórico de atribuição.
 7. A inbox nao mostra ultima mensagem, horario, nao lidas, responsavel,
    prioridade ou saude do canal.
 8. Contatos existem apenas como tabela de apoio; nao ha tela operacional.
@@ -448,9 +449,9 @@ desativada sem apagar historico.
 
 ### Fase 3 - Entrada, contatos e conversa (5--7 dias)
 
-- registrar webhook idempotente;
-- resolver identidade, upsert de contato e conversa ativa;
-- persistir texto e status de mensagens;
+- [x] registrar webhook idempotente;
+- [x] resolver identidade, upsert de contato e conversa ativa;
+- [x] persistir texto e status de mensagens;
 - publicar atualizacao autenticada por Supabase Realtime;
 - criar `/app/contacts` minimo.
 

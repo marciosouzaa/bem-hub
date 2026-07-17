@@ -1,6 +1,35 @@
 # Handoff Notes
 
-Atualizado em 2026-07-16.
+Atualizado em 2026-07-17.
+
+## Handoff 2026-07-17 - Webhook Global E Entrada Uazapi
+
+- Rota global provider-neutral recebe callbacks; Uazapi é o primeiro adapter de
+  verificação e normalização.
+- Ingestão idempotente cria contato, identidade, conversa ativa e mensagem sem
+  expor tabelas internas a `anon`/`authenticated`.
+- Configuração do webhook é automática pelo drawer de `/app/channels`; o mesmo
+  núcleo aceita Z-API quando seu normalizador for adicionado.
+- Migrations remotas aplicadas e smoke do banco concluído; dados temporários
+  removidos e zero resíduos confirmados.
+- Suite final: 62 testes, lint e build passaram.
+- Pendente operacional: deploy, rotação do token mostrado em screenshot,
+  `Ativar recebimento`, mensagem real para `/app/support`; depois envio/outbox.
+
+## Handoff 2026-07-17 - Backend De Canais Liberado
+
+- Migration de conexões Uazapi/Z-API aplicada no Supabase remoto como
+  `20260717025135_add_channel_provider_connections`.
+- `SUPABASE_SECRET_KEY` configurada localmente, autenticada e validada contra a
+  tabela protegida `channel_credentials`; configuração na Vercel foi reportada
+  pelo usuário.
+- `channel_credentials` permanece sem acesso de `anon`/`authenticated`, com RLS
+  ativo e acesso somente do backend.
+- `APP_ENCRYPTION_KEY` local válida; confirmar a mesma variável na Vercel antes
+  do smoke remoto.
+- Suite com 55 testes, lint e build passaram.
+- Próximo passo: rotacionar credenciais mostradas em capturas e validar
+  instâncias reais Uazapi/Z-API em `/app/channels`.
 
 ## Handoff 2026-07-16 - Conexões Uazapi E Z-API
 
@@ -9,7 +38,7 @@ Atualizado em 2026-07-16.
 - `/app/channels` possui drawer operacional separado do cadastro do número.
 - Tokens nunca retornam para o browser; acesso às credenciais exige
   `SUPABASE_SECRET_KEY` server-side.
-- Migration `20260717022103_add_channel_provider_connections.sql` ainda não foi
+- Migration `20260717025135_add_channel_provider_connections.sql` ainda não foi
   aplicada remotamente.
 - Lint e build passaram; quatro testes novos passaram. QA visual autenticado
   continua pendente porque navegador integrado não estava disponível.

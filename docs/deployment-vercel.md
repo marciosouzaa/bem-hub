@@ -37,12 +37,21 @@ Production and Preview:
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+SUPABASE_SECRET_KEY=
+APP_BASE_URL=https://bem-hub.vercel.app
 OPENAI_API_KEY=
 OPENAI_CHAT_MODEL=gpt-5.5
 APP_ENCRYPTION_KEY=
 ANTHROPIC_API_KEY=
 GOOGLE_GENERATIVE_AI_API_KEY=
 ```
+
+`SUPABASE_SECRET_KEY` fica somente no servidor e é necessária para credenciais
+de canais e processamento de webhooks. Nunca use prefixo `NEXT_PUBLIC_`.
+
+`APP_BASE_URL` deve apontar para a origem HTTPS estável de produção, sem barra
+final. Ela é usada para registrar callbacks nos provedores de canal. Previews
+não devem substituir o webhook de produção.
 
 `APP_ENCRYPTION_KEY` is required when admins save AI provider keys in the
 workspace. Keep this value stable; rotating it without re-encrypting saved
@@ -80,6 +89,10 @@ After the first deployment:
 6. Create, edit, set default, and delete an assistant.
 7. Use the user menu in the header to log out.
 8. Check Vercel deployment logs and Supabase Auth/API logs for runtime errors.
+9. Em `/app/channels`, ative o recebimento de uma conexão Uazapi e envie uma
+   mensagem de outro número.
+10. Confirme que o estado muda para `Entrada confirmada` e que o atendimento
+    aparece uma única vez em `/app/support`.
 
 ## 6. Tenant-Isolation Check
 

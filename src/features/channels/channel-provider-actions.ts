@@ -11,7 +11,15 @@ import {
 import type { ChannelPairing } from "@/features/channels/providers/channel-provider-adapter";
 import { ChannelProviderRequestError } from "@/features/channels/providers/provider-http";
 import { resolveChannelProvider } from "@/features/channels/providers/resolve-channel-provider";
+import {
+  createWebhookEndpointToken,
+  hashWebhookEndpointToken,
+} from "@/features/channels/webhooks/endpoint-token";
 import { getRequiredWorkspace } from "@/features/organizations/queries";
+import {
+  AppBaseUrlConfigError,
+  getAppBaseUrl,
+} from "@/lib/app-url";
 import {
   decryptSecret,
   encryptSecret,
@@ -95,6 +103,89 @@ export async function refreshChannelProviderHealthAction(
       status: health.status,
     };
   } catch (error) {
+    return providerErrorResult(error);
+  }
+}
+
+export async function configureChannelWebhookAction(
+  connectionId: string,
+): Promise<ChannelProviderActionResult> {
+  const loaded = await loadStoredProvider(connectionId);
+  if (!loaded.ok) return loaded.result;
+  if (!loaded.adapter.configureWebhook) {
+    return {
+      ok: false,
+      message: "O recebimento deste provedor ainda não está disponível.",
+    };
+  }
+
+  const endpointToken = createWebhookEndpointToken();
+  let endpointUrl: string;
+  try {
+    endpointUrl = `${getAppBaseUrl()}/api/webhooks/channels/${loaded.credentials.provider}/${endpointToken}`;
+  } catch (error) {
+    return providerErrorResult(error);
+  }
+  const now = new Date().toISOString();
+  const { data: endpoint, error: endpointError } = await loaded.admin
+    .from("channel_webhook_endpoints")
+    .upsert({
+      channel_connection_id: loaded.channel.id,
+      created_by: loaded.workspace.user.id,
+      last_error_at: null,
+      last_error_code: null,
+      organization_id: loaded.workspace.organization.id,
+      provider: loaded.credentials.provider,
+      secret_hash: hashWebhookEndpointToken(endpointToken),
+      status: "provisioning",
+      updated_at: now,
+    }, { onConflict: "channel_connection_id" })
+    .select("id")
+    .single();
+
+  if (endpointError || !endpoint) {
+    return databaseErrorResult(endpointError ?? { message: "endpoint_not_created" });
+  }
+
+  try {
+    await loaded.adapter.configureWebhook({ url: endpointUrl });
+    const [{ error: activationError }, { error: channelError }] = await Promise.all([
+      loaded.admin
+        .from("channel_webhook_endpoints")
+        .update({
+          configured_at: now,
+          last_error_at: null,
+          last_error_code: null,
+          status: "active",
+          updated_at: now,
+        })
+        .eq("id", endpoint.id),
+      loaded.admin
+        .from("channel_connections")
+        .update({ webhook_configured_at: now })
+        .eq("id", loaded.channel.id)
+        .eq("organization_id", loaded.workspace.organization.id),
+    ]);
+    if (activationError || channelError) {
+      return databaseErrorResult(
+        activationError ?? channelError ?? { message: "webhook_not_activated" },
+      );
+    }
+    revalidatePath(channelsPath);
+    return {
+      ok: true,
+      message: "Recebimento ativado. Envie uma mensagem para validar a entrada.",
+    };
+  } catch (error) {
+    await loaded.admin
+      .from("channel_webhook_endpoints")
+      .update({
+        last_error_at: new Date().toISOString(),
+        last_error_code: "provider_configuration_failed",
+        status: "failed",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", endpoint.id);
     return providerErrorResult(error);
   }
 }
@@ -277,6 +368,12 @@ function providerErrorResult(error: unknown): ChannelProviderActionResult {
     return {
       ok: false,
       message: "SUPABASE_SECRET_KEY não configurada para operações de canal.",
+    };
+  }
+  if (error instanceof AppBaseUrlConfigError) {
+    return {
+      ok: false,
+      message: "APP_BASE_URL não configurada para receber webhooks.",
     };
   }
   if (error instanceof z.ZodError || error instanceof SyntaxError) {

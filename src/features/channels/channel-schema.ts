@@ -30,6 +30,8 @@ export const channelConnectionSchema = z.object({
   providerBaseUrl: z.string().nullable().default(null),
   status: channelStatusSchema,
   statusReason: z.string().nullable().default(null),
+  webhookConfiguredAt: z.string().nullable().default(null),
+  webhookVerifiedAt: z.string().nullable().default(null),
 });
 
 export type ChannelConnection = z.infer<typeof channelConnectionSchema>;

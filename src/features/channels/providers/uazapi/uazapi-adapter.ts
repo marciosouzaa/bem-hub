@@ -11,6 +11,7 @@ import {
   onlyDigits,
 } from "@/features/channels/providers/provider-http";
 import { uazapiCredentialsSchema } from "@/features/channels/channel-provider-schema";
+import { verifyAndNormalizeUazapiWebhook } from "@/features/channels/providers/uazapi/uazapi-webhook";
 
 const instanceSchema = z.object({
   id: z.string().nullable().optional(),
@@ -33,6 +34,11 @@ const connectResponseSchema = z.object({
   loggedIn: z.boolean().optional(),
 });
 
+const webhookSchema = z.object({
+  enabled: z.boolean().optional(),
+  url: z.string().url(),
+});
+
 type UazapiCredentials = z.infer<typeof uazapiCredentialsSchema>;
 
 export function createUazapiAdapter(
@@ -47,6 +53,36 @@ export function createUazapiAdapter(
 
   return {
     provider: "uazapi",
+    async configureWebhook(input) {
+      await fetchProviderJson(
+        fetcher,
+        `${credentials.baseUrl}/webhook`,
+        {
+          body: JSON.stringify({
+            addUrlEvents: false,
+            addUrlTypesMessages: false,
+            enabled: true,
+            events: ["messages"],
+            excludeMessages: ["wasSentByApi", "fromMeYes", "isGroupYes"],
+            url: input.url,
+          }),
+          headers,
+          method: "POST",
+        },
+      );
+      const payload = await fetchProviderJson(
+        fetcher,
+        `${credentials.baseUrl}/webhook`,
+        { headers, method: "GET" },
+      );
+      const webhooks = z.array(webhookSchema).parse(payload);
+      const configured = webhooks.some(
+        (webhook) => webhook.url === input.url && webhook.enabled !== false,
+      );
+      if (!configured) {
+        throw new Error("Webhook não confirmado pelo provedor.");
+      }
+    },
     async getHealth() {
       const payload = await fetchProviderJson(
         fetcher,
@@ -80,6 +116,9 @@ export function createUazapiAdapter(
         `${credentials.baseUrl}/instance/disconnect`,
         { headers, method: "POST" },
       );
+    },
+    verifyAndNormalizeWebhook(input) {
+      return verifyAndNormalizeUazapiWebhook(input, credentials.instanceToken);
     },
   };
 }

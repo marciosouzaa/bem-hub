@@ -79,7 +79,8 @@ fluxo interno de atendimento pode avancar sem esse gate.
 - [x] Definir contrato independente de provedor para canal de mensagens.
 - [x] Implementar adapters de conexão Uazapi e Z-API com credenciais
   criptografadas, saúde, QR/código e desconexão.
-- [ ] Implementar webhook seguro, idempotente e observavel.
+- [x] Implementar webhook provider-neutral seguro, idempotente e observável,
+  com entrada Uazapi normalizada.
 - [x] Criar rascunhos, aprovacao, rejeicao e escalada sem envio externo.
 - [x] Permitir edicao somente enquanto o rascunho aguarda revisao.
 - [ ] Adicionar envio via adapter autenticado.

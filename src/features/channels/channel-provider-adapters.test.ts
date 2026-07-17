@@ -17,6 +17,37 @@ const zApiCredentials = {
 };
 
 describe("Uazapi adapter", () => {
+  test("configura somente mensagens recebidas e confirma o endpoint", async () => {
+    const requests: Array<{ init?: RequestInit; url: string }> = [];
+    const callbackUrl = "https://app.example.com/api/webhooks/channels/uazapi/test-token";
+    const fetcher = (async (input: string | URL | Request, init?: RequestInit) => {
+      requests.push({ init, url: input.toString() });
+      if (init?.method === "POST") return jsonResponse({ ok: true });
+      return jsonResponse([{ enabled: true, url: callbackUrl }]);
+    }) as typeof fetch;
+
+    await createUazapiAdapter(uazapiCredentials, fetcher).configureWebhook?.({
+      url: callbackUrl,
+    });
+
+    expect(requests).toHaveLength(2);
+    expect(requests.map((request) => request.url)).toEqual([
+      "https://free.uazapi.com/webhook",
+      "https://free.uazapi.com/webhook",
+    ]);
+    expect(JSON.parse(String(requests[0].init?.body))).toEqual({
+      addUrlEvents: false,
+      addUrlTypesMessages: false,
+      enabled: true,
+      events: ["messages"],
+      excludeMessages: ["wasSentByApi", "fromMeYes", "isGroupYes"],
+      url: callbackUrl,
+    });
+    expect((requests[0].init?.headers as Record<string, string>).token).toBe(
+      uazapiCredentials.instanceToken,
+    );
+  });
+
   test("normaliza conexão ativa e envia token somente no header", async () => {
     let request: { init?: RequestInit; url?: string } = {};
     const fetcher = (async (input: string | URL | Request, init?: RequestInit) => {

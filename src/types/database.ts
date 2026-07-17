@@ -246,6 +246,7 @@ export type Database = {
           provider_base_url: string | null
           status: string
           status_reason: string | null
+          webhook_configured_at: string | null
           webhook_verified_at: string | null
         }
         Insert: {
@@ -265,6 +266,7 @@ export type Database = {
           provider_base_url?: string | null
           status?: string
           status_reason?: string | null
+          webhook_configured_at?: string | null
           webhook_verified_at?: string | null
         }
         Update: {
@@ -284,6 +286,7 @@ export type Database = {
           provider_base_url?: string | null
           status?: string
           status_reason?: string | null
+          webhook_configured_at?: string | null
           webhook_verified_at?: string | null
         }
         Relationships: [
@@ -337,6 +340,189 @@ export type Database = {
           },
           {
             foreignKeyName: "channel_credentials_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      channel_webhook_endpoints: {
+        Row: {
+          channel_connection_id: string
+          configured_at: string | null
+          created_at: string
+          created_by: string
+          id: string
+          last_error_at: string | null
+          last_error_code: string | null
+          last_received_at: string | null
+          organization_id: string
+          provider: string
+          secret_hash: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          channel_connection_id: string
+          configured_at?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          last_error_at?: string | null
+          last_error_code?: string | null
+          last_received_at?: string | null
+          organization_id: string
+          provider: string
+          secret_hash: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          channel_connection_id?: string
+          configured_at?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          last_error_at?: string | null
+          last_error_code?: string | null
+          last_received_at?: string | null
+          organization_id?: string
+          provider?: string
+          secret_hash?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "channel_webhook_endpoints_channel_connection_id_fkey"
+            columns: ["channel_connection_id"]
+            isOneToOne: true
+            referencedRelation: "channel_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "channel_webhook_endpoints_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      channel_webhook_events: {
+        Row: {
+          attempt_count: number
+          channel_connection_id: string
+          error_code: string | null
+          error_message: string | null
+          event_type: string
+          id: string
+          last_attempt_at: string
+          organization_id: string
+          payload_sha256: string
+          processed_at: string | null
+          provider: string
+          provider_event_id: string
+          provider_occurred_at: string | null
+          received_at: string
+          status: string
+          webhook_endpoint_id: string
+        }
+        Insert: {
+          attempt_count?: number
+          channel_connection_id: string
+          error_code?: string | null
+          error_message?: string | null
+          event_type: string
+          id?: string
+          last_attempt_at?: string
+          organization_id: string
+          payload_sha256: string
+          processed_at?: string | null
+          provider: string
+          provider_event_id: string
+          provider_occurred_at?: string | null
+          received_at?: string
+          status?: string
+          webhook_endpoint_id: string
+        }
+        Update: {
+          attempt_count?: number
+          channel_connection_id?: string
+          error_code?: string | null
+          error_message?: string | null
+          event_type?: string
+          id?: string
+          last_attempt_at?: string
+          organization_id?: string
+          payload_sha256?: string
+          processed_at?: string | null
+          provider?: string
+          provider_event_id?: string
+          provider_occurred_at?: string | null
+          received_at?: string
+          status?: string
+          webhook_endpoint_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "channel_webhook_events_channel_connection_id_fkey"
+            columns: ["channel_connection_id"]
+            isOneToOne: false
+            referencedRelation: "channel_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "channel_webhook_events_webhook_endpoint_id_fkey"
+            columns: ["webhook_endpoint_id"]
+            isOneToOne: false
+            referencedRelation: "channel_webhook_endpoints"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contact_identities: {
+        Row: {
+          channel_connection_id: string
+          contact_id: string
+          created_at: string
+          id: string
+          identity_type: string
+          identity_value_normalized: string
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          channel_connection_id: string
+          contact_id: string
+          created_at?: string
+          id?: string
+          identity_type: string
+          identity_value_normalized: string
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          channel_connection_id?: string
+          contact_id?: string
+          created_at?: string
+          id?: string
+          identity_type?: string
+          identity_value_normalized?: string
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_identities_channel_connection_id_fkey"
+            columns: ["channel_connection_id"]
+            isOneToOne: false
+            referencedRelation: "channel_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_identities_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -893,6 +1079,21 @@ export type Database = {
         Returns: Json
       }
       get_support_conversation: { Args: { target_conversation_id: string; target_organization_id: string }; Returns: Json }
+      ingest_channel_inbound_message: {
+        Args: {
+          event_type: string
+          message_text: string
+          payload_sha256: string
+          provider_event_id: string
+          provider_occurred_at: string | null
+          sender_identity_type: string
+          sender_identity_value: string
+          sender_name: string | null
+          sender_phone: string | null
+          target_webhook_endpoint_id: string
+        }
+        Returns: Json
+      }
       create_support_draft: { Args: { draft_content: string; target_conversation_id: string; target_organization_id: string }; Returns: string }
       review_support_draft: { Args: { review_decision: string; target_message_id: string; target_organization_id: string }; Returns: undefined }
       update_support_draft: { Args: { draft_content: string; target_message_id: string; target_organization_id: string }; Returns: undefined }
