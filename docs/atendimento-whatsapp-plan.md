@@ -9,9 +9,9 @@ do MVP nem incorpora canais e recursos fora do escopo definido.
 
 - Manter um unico dominio interno de atendimento, independente do fornecedor.
 - Usar a **Meta WhatsApp Cloud API diretamente** para o canal oficial.
-- Validar a **Z-API como primeira opcao do piloto nao oficial**, por reduzir a
-  operacao de infraestrutura. Se autenticacao de webhook, contrato comercial ou
-  estabilidade nao passarem no spike, usar Wuzapi self-hosted como fallback.
+- Validar **Uazapi como primeiro adapter do piloto nao oficial** e **Z-API como
+  segundo adapter** no mesmo contrato interno. A escolha usa testes reais do
+  responsavel pelo produto e reduz risco de depender de um unico fornecedor.
 - Nao usar Evolution API ou WAHA no primeiro corte. Continuam substituiveis por
   adapter, sem contaminar o dominio.
 - Entregar primeiro texto de ponta a ponta: conectar numero, receber mensagem,
@@ -143,11 +143,12 @@ Fontes oficiais:
 - [Mensagens e status por webhook](https://www.postman.com/meta/whatsapp-business-platform/folder/o48mro7/messages)
 - [Exemplos oficiais com validacao de assinatura](https://github.com/fbsamples/whatsapp-api-examples)
 
-### WhatsApp nao oficial: Z-API no primeiro piloto
+### WhatsApp nao oficial: Uazapi e Z-API no primeiro piloto
 
-Hipotese principal por ser gerenciada, brasileira, oferecer criacao de instancia
-para parceiros, QR/codigo, webhook, fila e eventos de conexao. Isso evita colocar
-um novo servico stateful no primeiro deploy do BEM HUB.
+Uazapi abre a primeira fatia por ja ter sido testada diretamente. Z-API entra em
+seguida no mesmo marco para provar que dominio, inbox e mensagens nao dependem
+do payload de um fornecedor. Ambas evitam operar um novo servico stateful no
+primeiro deploy do BEM HUB.
 
 Ela so sera aprovada depois de um spike provar:
 
@@ -418,7 +419,8 @@ Estimativas sao dias ideais de engenharia, nao prazo comercial.
 - testar Meta com numero de teste;
 - testar parceiro Z-API, QR/codigo, callbacks, envio e desconexao;
 - provar autenticacao, retry e idempotencia dos callbacks;
-- registrar decisao Z-API ou Wuzapi.
+- registrar diferencas operacionais entre Uazapi e Z-API sem leva-las ao
+  dominio interno.
 
 Aceite: um script/teste normaliza texto recebido, entrega, falha e desconexao dos
 dois provedores para o mesmo contrato interno, sem persistir segredo em log.
@@ -492,7 +494,7 @@ falha; midia nao atravessa tenant nem fica publica.
 O proximo item nao deve ser a geracao de rascunho por IA. A ordem local correta
 para este modulo passa a ser:
 
-1. executar a Fase 0 e fechar fornecedor nao oficial;
+1. executar a Fase 0 e fechar Uazapi e Z-API no contrato não oficial;
 2. corrigir modelo/seguranca da Fase 1;
 3. entregar uma fatia vertical de texto com o adapter nao oficial;
 4. repetir a mesma fatia com Meta Cloud;

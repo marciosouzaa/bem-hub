@@ -4,6 +4,46 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-16 - Conexões Uazapi E Z-API Iniciadas
+
+### Feito
+
+- Escolha operacional mudou para dois adapters não oficiais: Uazapi primeiro e
+  Z-API no mesmo contrato provider-neutral.
+- Migration local adiciona credenciais de canal criptografadas em tabela sem
+  acesso de `anon`/`authenticated`, estados reais de conexão, saúde e instância
+  externa.
+- Operações privilegiadas usam chave Supabase somente no servidor; tokens de
+  provider nunca retornam para a interface.
+- Adapters validam saúde, pedem QR/código e desconectam usando contratos atuais
+  de Uazapi e Z-API.
+- `/app/channels` ganhou drawer operacional para escolher provider, validar e
+  substituir credenciais, gerar pareamento, atualizar saúde e desconectar.
+- Quatro testes novos cobrem headers, URL segura, normalização de telefone,
+  saúde e QR/código.
+- pgTAP passou a 100 assertions preparadas, incluindo ACL de credenciais e
+  estado inicial do canal.
+
+### Verificação
+
+- `bun run lint` passou.
+- `bun run build` passou com Next.js 16.2.9.
+- Suite passou 54 testes; um teste DOCX excedeu 5 segundos nessa execução e
+  passou isoladamente em 79 ms, indicando flake de tempo sem relação com canais.
+- QA visual autenticado não executado porque navegador integrado não estava
+  disponível.
+- `supabase db lint --local` não executou porque Postgres/Supabase local não
+  está disponível.
+
+### Pendente
+
+- Aplicar `20260717022103_add_channel_provider_connections.sql` no Supabase.
+- Adicionar `SUPABASE_SECRET_KEY` ao ambiente server-side; `APP_ENCRYPTION_KEY`
+  já está presente localmente.
+- Regenerar tokens e QR expostos em capturas antes de qualquer teste real.
+- Validar uma instância real por provider; depois implementar webhook
+  idempotente, entrada de texto e envio pela outbox.
+
 ## 2026-07-13 - Fundacao Frontend Aplicada
 
 ### Feito

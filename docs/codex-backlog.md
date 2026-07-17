@@ -76,7 +76,9 @@ primeira pergunta util sem ajuda do engenheiro.
 Adapters de conexao e envio continuam bloqueados pelo gate de fornecedor; o
 fluxo interno de atendimento pode avancar sem esse gate.
 
-- [ ] Definir contrato independente de provedor para canal de mensagens.
+- [x] Definir contrato independente de provedor para canal de mensagens.
+- [x] Implementar adapters de conexão Uazapi e Z-API com credenciais
+  criptografadas, saúde, QR/código e desconexão.
 - [ ] Implementar webhook seguro, idempotente e observavel.
 - [x] Criar rascunhos, aprovacao, rejeicao e escalada sem envio externo.
 - [x] Permitir edicao somente enquanto o rascunho aguarda revisao.
@@ -135,6 +137,9 @@ Bloqueado pela auditoria da plataforma e disponibilidade dos dados.
 - Advisor sinaliza `add_organization_member_by_email` como `SECURITY DEFINER`
   executavel por authenticated; e intencional para consultar `auth.users`, com
   admin/tenant/papel/limite/owner validados dentro da RPC e anon revogado.
+- Uazapi e Z-API foram escolhidas para o primeiro piloto não oficial. A
+  fundação local está pronta, mas migration, chave Supabase server-side e smoke
+  real ainda bloqueiam declarar conexão operacional.
 
 ## Concluido
 

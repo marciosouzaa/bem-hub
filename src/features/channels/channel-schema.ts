@@ -1,8 +1,12 @@
 import { z } from "zod";
 
+import { channelProviderStatusSchema } from "@/features/channels/channel-provider-schema";
+
 export const channelKindSchema = z.enum(["official", "unofficial"]);
 export const channelAuthMethodSchema = z.enum(["qr", "pin"]);
-export const channelStatusSchema = z.enum(["pending", "active", "disabled", "failed"]);
+export const channelStatusSchema = z
+  .union([channelProviderStatusSchema, z.enum(["active", "pending"])])
+  .transform((status) => status === "active" ? "connected" : status === "pending" ? "draft" : status);
 
 export const channelFormSchema = z.object({
   authMethod: channelAuthMethodSchema,
@@ -13,12 +17,19 @@ export const channelFormSchema = z.object({
 
 export const channelConnectionSchema = z.object({
   authMethod: channelAuthMethodSchema,
+  credentialUpdatedAt: z.string().nullable().default(null),
+  externalInstanceId: z.string().nullable().default(null),
+  hasCredentials: z.boolean().default(false),
   id: z.string().uuid(),
   kind: channelKindSchema,
+  lastConnectedAt: z.string().nullable().default(null),
+  lastHealthAt: z.string().nullable().default(null),
   name: z.string(),
   phoneNumber: z.string(),
   provider: z.string(),
+  providerBaseUrl: z.string().nullable().default(null),
   status: channelStatusSchema,
+  statusReason: z.string().nullable().default(null),
 });
 
 export type ChannelConnection = z.infer<typeof channelConnectionSchema>;

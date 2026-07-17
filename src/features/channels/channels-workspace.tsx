@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Cable, Pencil, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
@@ -12,6 +12,7 @@ import { DataTableControlBar } from "@/components/ui/data-table/data-table-contr
 import { deleteChannelAction } from "@/features/channels/channel-actions";
 import { channelColumns } from "@/features/channels/channel-columns";
 import { ChannelEditorDrawer } from "@/features/channels/channel-editor-drawer";
+import { ChannelProviderDrawer } from "@/features/channels/channel-provider-drawer";
 import type { ChannelConnection } from "@/features/channels/channel-schema";
 
 type ChannelsWorkspaceProps = {
@@ -24,6 +25,7 @@ export function ChannelsWorkspace({ canManage, channels }: ChannelsWorkspaceProp
   const [search, setSearch] = useState("");
   const [editorOpen, setEditorOpen] = useState(false);
   const [selectedChannel, setSelectedChannel] = useState<ChannelConnection | null>(null);
+  const [providerChannel, setProviderChannel] = useState<ChannelConnection | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ChannelConnection | null>(null);
   const [operationError, setOperationError] = useState<string | null>(null);
 
@@ -48,6 +50,11 @@ export function ChannelsWorkspace({ canManage, channels }: ChannelsWorkspaceProp
     setOperationError(null);
     setSelectedChannel(channel);
     setEditorOpen(true);
+  }
+
+  function openProvider(channel: ChannelConnection) {
+    setOperationError(null);
+    setProviderChannel(channel);
   }
 
   async function deleteChannel() {
@@ -93,10 +100,11 @@ export function ChannelsWorkspace({ canManage, channels }: ChannelsWorkspaceProp
         emptyDescription={search ? "Ajuste a busca para encontrar outro canal." : "Cadastre o primeiro número para preparar a operação de atendimento."}
         emptyTitle={search ? "Nenhum canal corresponde à busca" : "Nenhum canal cadastrado"}
         getRowId={(channel) => channel.id}
-        getRowSignal={(channel) => channel.status === "active" ? "success" : channel.status === "failed" ? "danger" : channel.status === "pending" ? "warning" : "neutral"}
-        onRowClick={canManage ? openChannel : undefined}
-        rowActions={canManage ? () => [
-          { icon: Pencil, label: "Editar", onSelect: openChannel },
+        getRowSignal={(channel) => channel.status === "connected" ? "success" : channel.status === "failed" ? "danger" : channel.status === "draft" || channel.status === "awaiting_pairing" ? "warning" : "neutral"}
+        onRowClick={canManage ? (channel) => channel.kind === "unofficial" ? openProvider(channel) : openChannel(channel) : undefined}
+        rowActions={canManage ? (channel) => [
+          ...(channel.kind === "unofficial" ? [{ icon: Cable, label: "Conectar", onSelect: openProvider }] : []),
+          { icon: Pencil, label: "Editar cadastro", onSelect: openChannel },
           { danger: true, icon: Trash2, label: "Excluir", onSelect: setDeleteTarget, separatorBefore: true },
         ] : undefined}
       />
@@ -106,6 +114,12 @@ export function ChannelsWorkspace({ canManage, channels }: ChannelsWorkspaceProp
         onClose={() => setEditorOpen(false)}
         onSaved={() => router.refresh()}
         open={editorOpen}
+      />
+      <ChannelProviderDrawer
+        channel={providerChannel}
+        onClose={() => setProviderChannel(null)}
+        onSaved={() => router.refresh()}
+        open={providerChannel !== null}
       />
       <ConfirmDialog
         confirmLabel="Excluir canal"

@@ -5,10 +5,15 @@ import type { DataTableColumn } from "@/components/ui/data-table/data-table";
 import type { ChannelConnection } from "@/features/channels/channel-schema";
 
 const statusLabels: Record<ChannelConnection["status"], string> = {
-  active: "Ativo",
+  awaiting_pairing: "Aguardando pareamento",
+  connected: "Conectado",
+  connecting: "Conectando",
+  degraded: "Instável",
   disabled: "Desativado",
+  disconnected: "Desconectado",
+  draft: "Não configurado",
   failed: "Com falha",
-  pending: "Configuração pendente",
+  provisioning: "Configurando",
 };
 
 export const channelColumns: DataTableColumn<ChannelConnection>[] = [
@@ -49,7 +54,7 @@ export const channelColumns: DataTableColumn<ChannelConnection>[] = [
       return (
         <span className="inline-flex items-center gap-2 text-muted-strong">
           <Icon aria-hidden="true" className="size-4 text-muted" />
-          {method === "qr" ? "QR Code" : "PIN Code"}
+          {method === "qr" ? "QR Code" : "Código"}
         </span>
       );
     },
@@ -71,7 +76,7 @@ export const channelColumns: DataTableColumn<ChannelConnection>[] = [
     cell: ({ getValue }) => {
       const status = getValue<ChannelConnection["status"]>();
       return (
-        <span className={status === "failed" ? "text-danger" : status === "active" ? "text-success" : "text-muted"}>
+        <span className={status === "failed" ? "text-danger" : status === "connected" ? "text-success" : "text-muted"}>
           {statusLabels[status]}
         </span>
       );

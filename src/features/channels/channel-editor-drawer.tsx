@@ -21,7 +21,7 @@ const formId = "channel-editor-form";
 function getDefaultValues(channel: ChannelConnection | null): ChannelFormValues {
   return {
     authMethod: channel?.authMethod ?? "qr",
-    kind: channel?.kind ?? "official",
+    kind: channel?.kind ?? "unofficial",
     name: channel?.name ?? "",
     phone: channel?.phoneNumber ?? "",
   };
@@ -77,7 +77,7 @@ export function ChannelEditorDrawer({ channel, onClose, onSaved, open }: Channel
 
   return (
     <EntityDrawer
-      description={isEditing ? "Atualize a identificação e o método de autenticação deste número." : "Cadastre um número agora; a conexão com o provedor será configurada em uma etapa posterior."}
+      description={isEditing ? "Atualize a identificação e o método de pareamento deste número." : "Cadastre o número; depois valide Uazapi ou Z-API na ação Conectar."}
       formId={formId}
       isDirty={isDirty}
       isSubmitting={isSubmitting}
@@ -136,13 +136,13 @@ export function ChannelEditorDrawer({ channel, onClose, onSaved, open }: Channel
             )}
           </FormField>
           <FormField
-            description="O método disponível será confirmado quando o provedor for selecionado."
+            description="QR Code ou código de pareamento gerado pelo provedor."
             htmlFor="channel-auth-method"
             label="Autenticação preferida"
           >
             <Select id="channel-auth-method" {...register("authMethod")}>
               <option value="qr">QR Code</option>
-              <option value="pin">PIN Code</option>
+              <option value="pin">Código de pareamento</option>
             </Select>
           </FormField>
         </FormSection>

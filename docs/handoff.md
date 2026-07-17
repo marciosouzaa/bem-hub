@@ -1,6 +1,20 @@
 # Handoff Notes
 
-Atualizado em 2026-07-13.
+Atualizado em 2026-07-16.
+
+## Handoff 2026-07-16 - Conexões Uazapi E Z-API
+
+- Fundação local criada para credenciais criptografadas, estado, saúde,
+  QR/código e desconexão de Uazapi e Z-API.
+- `/app/channels` possui drawer operacional separado do cadastro do número.
+- Tokens nunca retornam para o browser; acesso às credenciais exige
+  `SUPABASE_SECRET_KEY` server-side.
+- Migration `20260717022103_add_channel_provider_connections.sql` ainda não foi
+  aplicada remotamente.
+- Lint e build passaram; quatro testes novos passaram. QA visual autenticado
+  continua pendente porque navegador integrado não estava disponível.
+- Próximo passo: aplicar migration, configurar secret key, rotacionar tokens
+  expostos e fazer smoke real Uazapi/Z-API antes de construir webhooks e envio.
 
 ## Handoff 2026-07-13 - Fundacao Frontend E CRUDs
 

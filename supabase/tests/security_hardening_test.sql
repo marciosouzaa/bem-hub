@@ -1,5 +1,5 @@
 begin;
-select plan(95);
+select plan(100);
 
 select ok(
   not has_function_privilege('anon', 'public.bootstrap_owned_organization(uuid)', 'execute'),
@@ -165,6 +165,30 @@ select ok(
     'execute'
   ),
   'authenticated can execute vector search'
+);
+select ok(
+  not has_table_privilege('anon', 'public.channel_credentials', 'select'),
+  'anon cannot read encrypted channel credentials'
+);
+select ok(
+  not has_table_privilege('authenticated', 'public.channel_credentials', 'select'),
+  'authenticated cannot read encrypted channel credentials'
+);
+select ok(
+  not has_function_privilege(
+    'authenticated',
+    'public.save_channel_provider_configuration(uuid,uuid,text,text,text,text,uuid,text,text)',
+    'execute'
+  ),
+  'authenticated cannot call privileged channel credential storage'
+);
+select ok(
+  has_function_privilege(
+    'service_role',
+    'public.save_channel_provider_configuration(uuid,uuid,text,text,text,text,uuid,text,text)',
+    'execute'
+  ),
+  'service role can store channel credentials from the server'
 );
 
 select is(
@@ -438,6 +462,11 @@ insert into public.channel_connections (id, organization_id, kind, provider, dis
 values
   ('ca000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', 'official', 'pending-provider', 'Canal A', '+551100000001'),
   ('cb000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000002', 'unofficial', 'pending-provider', 'Canal B', '+551100000002');
+select is(
+  (select status from public.channel_connections where id = 'ca000000-0000-0000-0000-000000000001'),
+  'draft',
+  'new channel connections start as draft'
+);
 insert into public.contacts (id, organization_id, name, phone)
 values
   ('c1000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', 'Contato A', '+551199999001'),

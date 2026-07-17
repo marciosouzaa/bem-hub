@@ -228,6 +228,122 @@ export type Database = {
           },
         ]
       }
+      channel_connections: {
+        Row: {
+          auth_method: string
+          config: Json
+          created_at: string
+          credential_updated_at: string | null
+          display_name: string
+          external_instance_id: string | null
+          id: string
+          kind: string
+          last_connected_at: string | null
+          last_health_at: string | null
+          organization_id: string
+          phone_number: string
+          provider: string
+          provider_base_url: string | null
+          status: string
+          status_reason: string | null
+          webhook_verified_at: string | null
+        }
+        Insert: {
+          auth_method?: string
+          config?: Json
+          created_at?: string
+          credential_updated_at?: string | null
+          display_name: string
+          external_instance_id?: string | null
+          id?: string
+          kind: string
+          last_connected_at?: string | null
+          last_health_at?: string | null
+          organization_id: string
+          phone_number: string
+          provider: string
+          provider_base_url?: string | null
+          status?: string
+          status_reason?: string | null
+          webhook_verified_at?: string | null
+        }
+        Update: {
+          auth_method?: string
+          config?: Json
+          created_at?: string
+          credential_updated_at?: string | null
+          display_name?: string
+          external_instance_id?: string | null
+          id?: string
+          kind?: string
+          last_connected_at?: string | null
+          last_health_at?: string | null
+          organization_id?: string
+          phone_number?: string
+          provider?: string
+          provider_base_url?: string | null
+          status?: string
+          status_reason?: string | null
+          webhook_verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "channel_connections_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      channel_credentials: {
+        Row: {
+          channel_connection_id: string
+          created_at: string
+          created_by: string
+          encrypted_credentials: string
+          id: string
+          organization_id: string
+          provider: string
+          updated_at: string
+        }
+        Insert: {
+          channel_connection_id: string
+          created_at?: string
+          created_by: string
+          encrypted_credentials: string
+          id?: string
+          organization_id: string
+          provider: string
+          updated_at?: string
+        }
+        Update: {
+          channel_connection_id?: string
+          created_at?: string
+          created_by?: string
+          encrypted_credentials?: string
+          id?: string
+          organization_id?: string
+          provider?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "channel_credentials_channel_connection_id_fkey"
+            columns: ["channel_connection_id"]
+            isOneToOne: true
+            referencedRelation: "channel_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "channel_credentials_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversations: {
         Row: {
           assistant_id: string | null
@@ -781,6 +897,30 @@ export type Database = {
       review_support_draft: { Args: { review_decision: string; target_message_id: string; target_organization_id: string }; Returns: undefined }
       update_support_draft: { Args: { draft_content: string; target_message_id: string; target_organization_id: string }; Returns: undefined }
       list_channel_connections: { Args: { target_organization_id: string }; Returns: Json }
+      save_channel_provider_configuration: {
+        Args: {
+          actor_user_id: string
+          configured_base_url: string
+          configured_external_instance_id: string
+          configured_provider: string
+          encrypted_provider_credentials: string
+          provider_status: string
+          provider_status_reason: string
+          target_connection_id: string
+          target_organization_id: string
+        }
+        Returns: undefined
+      }
+      update_channel_provider_health: {
+        Args: {
+          configured_external_instance_id: string
+          provider_status: string
+          provider_status_reason: string
+          target_connection_id: string
+          target_organization_id: string
+        }
+        Returns: undefined
+      }
       register_channel_connection: { Args: { connection_auth_method: string; connection_kind: string; connection_name: string; connection_phone: string; target_organization_id: string }; Returns: string }
       update_channel_connection: { Args: { connection_auth_method: string; connection_name: string; connection_phone: string; target_connection_id: string; target_organization_id: string }; Returns: undefined }
       delete_channel_connection: { Args: { target_connection_id: string; target_organization_id: string }; Returns: undefined }
