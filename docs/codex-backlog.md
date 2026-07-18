@@ -81,8 +81,17 @@ fluxo interno de atendimento pode avancar sem esse gate.
   criptografadas, saúde, QR/código e desconexão.
 - [x] Implementar webhook provider-neutral seguro, idempotente e observável,
   com entrada Uazapi normalizada.
-- [ ] Validar callback real Uazapi: uma mensagem de outro número deve preencher
+- [x] Validar callback real Uazapi: uma mensagem de outro número deve preencher
   `last_received_at`, criar um evento e aparecer uma única vez na inbox.
+- [x] Implementar Broadcast privado provider-neutral para invalidar a inbox por
+  organização sem transmitir conteúdo ou payload do fornecedor.
+- [ ] Solicitar ao Supabase um mecanismo suportado para provisionar a policy
+  SELECT privada em `realtime.messages`; a tabela pertence a
+  `supabase_realtime_admin` e migrations executadas como `postgres` recebem
+  `ERROR 42501`.
+- [ ] Depois da liberação, aplicar a migration de Broadcast, rodar advisors e
+  validar que nova mensagem aparece com `/app/support` aberto, sem recarga
+  manual.
 - [x] Criar rascunhos, aprovacao, rejeicao e escalada sem envio externo.
 - [x] Permitir edicao somente enquanto o rascunho aguarda revisao.
 - [ ] Adicionar envio via adapter autenticado.
@@ -141,8 +150,12 @@ Bloqueado pela auditoria da plataforma e disponibilidade dos dados.
   executavel por authenticated; e intencional para consultar `auth.users`, com
   admin/tenant/papel/limite/owner validados dentro da RPC e anon revogado.
 - Uazapi e Z-API foram escolhidas para o primeiro piloto não oficial. Uazapi já
-  conecta e registra callback em produção; ainda não houve entrega observada.
-  Z-API continua somente com conexão/saúde, sem normalizador de webhook.
+  conecta, entrega callback e cria atendimento em produção. Broadcast privado
+  está pronto localmente, mas a policy de `realtime.messages` depende de ação
+  do Supabase porque o objeto gerenciado pertence a
+  `supabase_realtime_admin`. A migration falhou atomicamente e não foi
+  registrada. Z-API continua somente com conexão/saúde, sem normalizador de
+  webhook.
 
 ## Concluido
 

@@ -1,5 +1,5 @@
 begin;
-select plan(113);
+select plan(122);
 
 select ok(
   not has_function_privilege('anon', 'public.bootstrap_owned_organization(uuid)', 'execute'),
@@ -243,6 +243,68 @@ select ok(
   ),
   'internal webhook tables enforce RLS'
 );
+select ok(
+  exists (
+    select 1
+    from pg_policies
+    where schemaname = 'realtime'
+      and tablename = 'messages'
+      and policyname = 'support_members_receive_org_broadcasts'
+      and cmd = 'SELECT'
+      and roles = array['authenticated']::name[]
+  ),
+  'support broadcast has an authenticated read policy'
+);
+select ok(
+  not exists (
+    select 1
+    from pg_policies
+    where schemaname = 'realtime'
+      and tablename = 'messages'
+      and policyname = 'support_members_receive_org_broadcasts'
+      and cmd <> 'SELECT'
+  ),
+  'support clients cannot publish through the broadcast policy'
+);
+select is(
+  (
+    select prosecdef
+    from pg_proc
+    where oid = 'private.broadcast_support_change()'::regprocedure
+  ),
+  true,
+  'support broadcast trigger function is security definer'
+);
+select ok(
+  not has_function_privilege(
+    'authenticated',
+    'private.broadcast_support_change()',
+    'execute'
+  ),
+  'authenticated users cannot execute the support broadcast trigger function'
+);
+select ok(
+  (
+    select 'search_path=""' = any(coalesce(proconfig, array[]::text[]))
+    from pg_proc
+    where oid = 'private.broadcast_support_change()'::regprocedure
+  ),
+  'support broadcast trigger function has an empty search path'
+);
+select is(
+  (
+    select count(*)
+    from pg_trigger
+    where not tgisinternal
+      and tgname in (
+        'support_conversations_broadcast_lifecycle',
+        'support_conversations_broadcast_state',
+        'support_messages_broadcast_change'
+      )
+  ),
+  3::bigint,
+  'support tables emit provider-neutral broadcast changes'
+);
 select has_column(
   'public',
   'channel_connections',
@@ -371,6 +433,56 @@ values
     'member',
     'active'
   );
+
+insert into realtime.messages (
+  payload,
+  event,
+  topic,
+  private,
+  extension
+)
+values
+  (
+    '{"conversationId":"a7000000-0000-0000-0000-000000000001"}',
+    'support.inbox.changed',
+    'org:a0000000-0000-0000-0000-000000000001:support',
+    true,
+    'broadcast'
+  ),
+  (
+    '{"conversationId":"b7000000-0000-0000-0000-000000000002"}',
+    'support.inbox.changed',
+    'org:b0000000-0000-0000-0000-000000000002:support',
+    true,
+    'broadcast'
+  );
+
+set local role authenticated;
+set local request.jwt.claims =
+  '{"sub":"10000000-0000-0000-0000-000000000001","role":"authenticated"}';
+set local realtime.topic =
+  'org:a0000000-0000-0000-0000-000000000001:support';
+select is(
+  (
+    select count(*)
+    from realtime.messages
+    where event = 'support.inbox.changed'
+  ),
+  1::bigint,
+  'tenant A receives its private support broadcast'
+);
+set local realtime.topic =
+  'org:b0000000-0000-0000-0000-000000000002:support';
+select is(
+  (
+    select count(*)
+    from realtime.messages
+    where event = 'support.inbox.changed'
+  ),
+  0::bigint,
+  'tenant A cannot receive tenant B support broadcasts'
+);
+reset role;
 
 insert into public.automation_runs (
   id,
@@ -556,6 +668,17 @@ insert into public.support_conversations (organization_id, contact_id, channel_c
 values
   ('a0000000-0000-0000-0000-000000000001', 'c1000000-0000-0000-0000-000000000001', 'ca000000-0000-0000-0000-000000000001'),
   ('b0000000-0000-0000-0000-000000000002', 'c2000000-0000-0000-0000-000000000002', 'cb000000-0000-0000-0000-000000000002');
+select ok(
+  exists (
+    select 1
+    from realtime.messages
+    where event = 'support.inbox.changed'
+      and topic = 'org:a0000000-0000-0000-0000-000000000001:support'
+      and payload ->> 'entity' = 'support_conversations'
+      and payload ->> 'operation' = 'insert'
+  ),
+  'support conversation trigger publishes a private invalidation'
+);
 
 create temporary table tenant_a_results (
   member_own boolean,

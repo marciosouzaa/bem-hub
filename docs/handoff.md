@@ -1,6 +1,43 @@
 # Handoff Notes
 
-Atualizado em 2026-07-17.
+Atualizado em 2026-07-18.
+
+## Handoff 2026-07-18 - Broadcast Bloqueado Por Ownership Do Supabase
+
+- OAuth do MCP Supabase foi renovado e o acesso remoto voltou a funcionar.
+- Preflight confirmou `realtime.messages` com RLS ativo, tabelas de suporte
+  presentes e migration de Broadcast ainda ausente no histórico remoto.
+- A tentativa de aplicar `20260718024146_support_realtime_broadcast.sql` falhou
+  na primeira instrução com `ERROR 42501: must be owner of relation messages`.
+- `realtime.messages` pertence a `supabase_realtime_admin`; o papel `postgres`
+  usado pelo MCP/migrations não é membro desse papel e não pode criar ou remover
+  policies na tabela gerenciada.
+- A operação foi revertida atomicamente: nenhum trigger, função ou policy foi
+  aplicado e a migration continua fora do histórico remoto.
+- Não substituir por canal público: isso enfraqueceria isolamento multi-tenant e
+  permitiria abuso do Realtime com a chave pública.
+- Próxima pendência: abrir chamado no Supabase para provisionar a policy SELECT
+  privada por organização em `realtime.messages`, ou fornecer um mecanismo
+  suportado para administrá-la por migration.
+- Depois da liberação: ajustar a migration para o mecanismo indicado, aplicar,
+  rodar advisors e testar mensagem real com `/app/support` aberto. A conversa
+  deve aparecer sem recarga manual.
+
+## Handoff 2026-07-17 - Broadcast Privado De Atendimento
+
+- Callback real Uazapi foi validado: contato, conversa e mensagem persistem e a
+  inbox mostra o atendimento após recarga.
+- Broadcast privado multi-tenant está implementado localmente no tópico
+  `org:<organization_id>:support`, com evento provider-neutral de invalidação.
+- Triggers publicam somente IDs/metadados mínimos; conteúdo e payload de
+  fornecedor não entram no Realtime.
+- RLS de `realtime.messages` restringe leitura a membros ativos da organização e
+  não permite publicação pelo cliente.
+- Layout de `/app/support` reconcilia a fonte canônica após evento, assinatura,
+  reconexão, foco ou retorno de visibilidade, com debounce.
+- 64 testes, lint e build passaram. pgTAP agora planeja 122 assertions.
+- O OAuth foi renovado em 2026-07-18; a aplicação revelou o bloqueio de
+  ownership descrito no handoff mais recente.
 
 ## Handoff 2026-07-17 - Callback Uazapi Não Chegou
 

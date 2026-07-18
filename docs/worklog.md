@@ -4,6 +4,85 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-18 - Migration Broadcast Bloqueada Pelo Schema Gerenciado
+
+### Confirmado No Remoto
+
+- OAuth do MCP Supabase foi renovado e `list_tables`, `list_migrations`,
+  `execute_sql` e advisors voltaram a responder.
+- `realtime.messages` possui RLS ativo, mas nenhuma policy configurada.
+- A tabela pertence a `supabase_realtime_admin`; `postgres`, papel usado pelo
+  executor de migrations, não pode assumir esse papel.
+
+### Tentativa De Aplicação
+
+- `apply_migration` foi chamado com o conteúdo exato de
+  `20260718024146_support_realtime_broadcast.sql`.
+- O PostgreSQL recusou a primeira instrução com
+  `ERROR 42501: must be owner of relation messages`.
+- A transação foi revertida integralmente. A migration não entrou no histórico
+  e nenhum trigger, função ou policy foi criado remotamente.
+- Advisors anteriores à tentativa não apontaram bloqueio relacionado ao
+  Broadcast; os avisos existentes continuam sendo os já conhecidos.
+
+### Decisão De Segurança
+
+- Não usar canal público como contorno. Mesmo sem conteúdo no payload, ele
+  removeria a autorização server-side por organização e ampliaria risco de
+  vazamento ou abuso de quota.
+- Manter o código local e os testes de Broadcast privado como estado desejado.
+
+### Próxima Pendência
+
+1. Abrir chamado no Supabase para provisionar a policy SELECT em
+   `realtime.messages` como `supabase_realtime_admin`, ou liberar um mecanismo
+   suportado para gerenciá-la por migration.
+2. Após a resposta, alinhar a migration ao procedimento indicado sem transferir
+   ownership de objetos gerenciados.
+3. Aplicar a migration, rodar advisors de segurança/performance e verificar
+   policy, função e três triggers.
+4. Fazer smoke real com `/app/support` aberto; uma nova mensagem deve aparecer
+   sem recarga manual.
+
+## 2026-07-17 - Callback Validado E Broadcast Privado Preparado
+
+### Confirmado Em Produção
+
+- Callback real Uazapi chegou, foi normalizado e persistiu contato, conversa e
+  mensagem uma única vez.
+- A conversa apareceu depois de recarregar `/app/support`, confirmando que
+  webhook, idempotência e RPC canônica estavam corretos.
+- A lacuna observada era somente atualização ao vivo da interface.
+
+### Feito Localmente
+
+- Criado Broadcast privado por organização no tópico
+  `org:<organization_id>:support`.
+- RLS em `realtime.messages` permite leitura apenas a membros ativos do tenant;
+  o cliente não recebe permissão de publicação.
+- Triggers de `support_conversations` e `support_messages` publicam somente o
+  evento provider-neutral `support.inbox.changed`, sem conteúdo, telefone ou
+  payload bruto.
+- `/app/support` mantém um listener no layout do segmento. Evento, reconexão,
+  foco e retorno de visibilidade causam reconciliação com as RPCs existentes,
+  com debounce para agrupar eventos da mesma transação.
+- O padrão preserva API/banco como fonte da verdade, tolera evento duplicado ou
+  perdido e não depende de Uazapi, Z-API ou fornecedor futuro.
+
+### Verificação
+
+- 64 testes passaram.
+- `bun run lint` passou.
+- `bun run build` passou com Next.js 16.2.9.
+- pgTAP foi ampliado para 122 assertions, incluindo política privada, função
+  protegida, triggers e isolamento entre dois tenants.
+
+### Bloqueio E Próximo Passo
+
+- A autorização OAuth foi resolvida em 2026-07-18, mas a aplicação revelou o
+  bloqueio de ownership detalhado no checkpoint mais recente.
+- Depois fechar envio de texto por outbox/adapter.
+
 ## 2026-07-17 - Uazapi Conectada, Callback Ainda Ausente
 
 ### Confirmado Em Produção

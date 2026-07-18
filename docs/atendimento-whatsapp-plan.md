@@ -205,6 +205,20 @@ operador -> aprova/envia -> outbox -> dispatcher do adapter -> fornecedor
                               +------ status/retry ----------+
 ```
 
+O Realtime usa Broadcast privado como sinal de invalidação, não como banco
+paralelo. Triggers publicam `support.inbox.changed` no tópico
+`org:<organization_id>:support` somente depois da persistência transacional. O
+cliente agrupa eventos próximos e consulta novamente as RPCs canônicas.
+
+Regras operacionais:
+
+- uma conexão por sessão/segmento pode alimentar múltiplos consumidores;
+- reconexão e retorno de foco sempre reconciliam o estado canônico;
+- eventos duplicados ou fora de ordem não podem duplicar mensagens;
+- busca/filtro server-side nunca é reconstruído apenas com payload de evento;
+- conteúdo, telefone, credenciais e payload bruto não trafegam no Broadcast;
+- o cliente recebe somente leitura do tópico privado do próprio tenant.
+
 ### Limites de codigo
 
 Criar dominios separados dentro de `src/features`:
@@ -452,9 +466,9 @@ desativada sem apagar historico.
 - [x] registrar webhook idempotente;
 - [x] resolver identidade, upsert de contato e conversa ativa;
 - [x] persistir texto e status de mensagens;
-- [ ] validar callback real Uazapi; configuração está ativa no provedor, mas
-  nenhum evento chegou ao endpoint até o checkpoint de 2026-07-17;
-- publicar atualizacao autenticada por Supabase Realtime;
+- [x] validar callback real Uazapi com persistência idempotente na inbox;
+- [x] implementar atualização autenticada por Broadcast privado;
+- [ ] aplicar a migration de Broadcast e validar atualização sem recarga;
 - criar `/app/contacts` minimo.
 
 Aceite: mensagem real aparece uma vez na fila correta, cria contato quando

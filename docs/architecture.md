@@ -122,3 +122,28 @@ Normalized commerce contracts live in `src/features/commerce`. Money uses
 integer cents, stock uses non-negative integers, external IDs stay strings and
 orders use ISO timestamps. Spreadsheet import maps provider columns into these
 contracts before any future connector persists data.
+
+## Support Realtime Consistency
+
+Webhook processing and realtime delivery are separate responsibilities. The
+provider callback is verified, normalized and persisted before any interface
+notification exists. PostgreSQL remains the source of truth.
+
+Support changes publish a private Supabase Broadcast event after commit:
+
+- topic: `org:<organization_id>:support`;
+- event: `support.inbox.changed`;
+- payload: organization, conversation, entity and operation IDs only;
+- authorization: active organization membership through RLS on
+  `realtime.messages`;
+- consumers: the `/app/support` route segment, never provider-specific UI.
+
+The event is an invalidation signal, not a copy of the conversation. Clients
+debounce nearby events and reconcile through the existing tenant-scoped support
+RPCs. A successful subscription, reconnection, browser focus or visibility
+recovery also triggers reconciliation, closing gaps where an event could have
+arrived while the client was offline.
+
+No message content, phone number, credential or raw provider payload is sent
+through Broadcast. Clients have read permission only; database triggers are the
+sole publishers. Duplicate and out-of-order notifications must remain harmless.

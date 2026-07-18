@@ -65,15 +65,21 @@ tecnico recorrente.
 
 ## M2 - Atendimento Assistido No WhatsApp
 
-Status: fundacao e primeiro adapter em validação operacional. Canal Uazapi real
-conecta e registra webhook, mas o primeiro callback ainda não chegou ao BEM HUB.
+Status: fundação e primeiro adapter em validação operacional. Canal Uazapi real
+conecta, entrega callback e cria atendimento; atualização ao vivo por Broadcast
+privado está pronta localmente. A aplicação remota está bloqueada porque
+`realtime.messages` pertence a `supabase_realtime_admin` e o executor de
+migrations não pode criar a policy; aguarda procedimento suportado pelo
+Supabase antes da migration e do smoke.
 
 Gate de produto: escolher Evolution API, Z-API ou outro BSP, definir custos,
 termos e credenciais. A integracao deve ficar atras de um adapter de canal para
 evitar acoplamento do dominio ao fornecedor.
 
-- [ ] Validar em produção o recebimento real por webhook; implementação segura
-  e idempotente já existe, mas o callback Uazapi ainda não foi observado.
+- [x] Validar em produção o recebimento real por webhook, com persistência
+  idempotente e uma única conversa na inbox.
+- [ ] Aplicar e validar Broadcast privado multi-tenant para atualizar a inbox
+  sem recarga manual.
 - [x] Modelar contatos e conversas externas com isolamento por organizacao.
 - [ ] Gerar rascunho usando catalogo, preco, disponibilidade e tom da marca.
 - [ ] Criar modo assistido: aprovar, editar ou escalar antes de enviar.
