@@ -4,6 +4,37 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-22 - Inbox Operacional De Atendimento
+
+### Feito
+
+- `/app/support` agora usa canvas master-detail: fila filtravel na lateral,
+  conversa selecionada no centro e contexto do contato em painel complementar.
+- Busca cobre contato, telefone, e-mail, canal e tags; visualizacoes separam
+  abertos, pendentes, escalados e resolvidos sem transformar a inbox em tabela.
+- Itens da fila usam signal edge somente para prioridade alta/urgente e mantem
+  status, canal e atividade recente visiveis.
+- Conversa preserva historico, edicao/aprovacao/rejeicao/escalada de rascunhos e
+  composer sem envio externo; nenhuma acao de transferencia ou finalizacao foi
+  inventada antes dos contratos server-side.
+- Layout responsivo mostra fila ou conversa no mobile e ambas no desktop.
+- Configuracao publica do Supabase passou a usar acesso estatico compativel com
+  bundle do Next.js; falha opcional do Realtime nao derruba mais Atendimento.
+
+### Verificacao
+
+- 66 testes passaram, incluindo busca normalizada e filtro por status.
+- `bun run lint` passou.
+- `bun run build` passou com Next.js 16.2.9.
+- QA visual autenticado nao foi executado porque o navegador integrado nao estava
+  disponivel; revisar desktop e mobile a partir da sessao real.
+
+### Proximo Passo
+
+- Fazer QA visual autenticado e ajustar densidade/overflow com dados reais.
+- Manter Broadcast privado bloqueado ate procedimento suportado pelo Supabase;
+  depois aplicar migration e validar atualizacao da fila sem recarga.
+
 ## 2026-07-18 - Migration Broadcast Bloqueada Pelo Schema Gerenciado
 
 ### Confirmado No Remoto

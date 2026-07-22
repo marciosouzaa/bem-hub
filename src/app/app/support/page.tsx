@@ -1,10 +1,5 @@
-import { MessageSquareText, Phone, UserRound } from "lucide-react";
-import Link from "next/link";
-import { PageHeader, PageLayout } from "@/components/app";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { MotionPage, MotionSurface } from "@/components/ui/motion";
-import { getRequiredWorkspace } from "@/features/organizations/queries";
-import { listSupportInbox } from "@/features/support/queries";
+import { SupportEmptySelection } from "@/features/support/support-empty-selection";
 
-export default async function SupportPage(){const workspace=await getRequiredWorkspace();const conversations=await listSupportInbox(workspace.organization.id);return <MotionPage><PageLayout size="wide" className="space-y-7"><PageHeader eyebrow="Atendimento" title="Conversas" description="Acompanhe a fila e abra cada atendimento. Configuracao de numeros fica no modulo Canais."/><section className="space-y-3">{conversations.length?conversations.map((item)=><MotionSurface key={item.id}><Link href={`/app/support/${item.id}`}><Card className="transition hover:border-primary/50"><CardContent className="grid gap-4 p-4 md:grid-cols-[1fr_auto] md:items-center md:pt-4"><div className="flex min-w-0 gap-3"><span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-sidebar-active text-primary"><UserRound className="size-5"/></span><div className="min-w-0"><p className="truncate font-medium">{item.contact.name??item.contact.phone??"Contato sem nome"}</p><p className="mt-1 flex gap-3 text-xs text-muted"><span className="flex items-center gap-1"><Phone className="size-3"/>{item.channel.phoneNumber}</span><span>{item.channel.name}</span></p></div></div><div className="flex items-center gap-2"><Badge>{item.channel.kind==="official"?"Oficial":"Nao oficial"}</Badge><span className="text-xs text-muted">{item.status}</span></div></CardContent></Card></Link></MotionSurface>):<Card><CardContent className="py-14 text-center"><MessageSquareText className="mx-auto size-7 text-muted"/><p className="mt-4 font-medium">Nenhuma conversa</p><p className="mt-2 text-sm text-muted-strong">Conversas recebidas pelos canais aparecerao aqui.</p></CardContent></Card>}</section></PageLayout></MotionPage>}
+export default function SupportPage() {
+  return <SupportEmptySelection />;
+}

@@ -1,6 +1,21 @@
 # Handoff Notes
 
-Atualizado em 2026-07-18.
+Atualizado em 2026-07-22.
+
+## Handoff 2026-07-22 - Atendimento Master-Detail
+
+- Atendimento foi reorganizado como inbox operacional BEM HUB: fila com busca e
+  filtros de status, conversa ativa, composer de rascunho e contexto do contato.
+- Desktop usa master-detail; mobile alterna entre fila e atendimento selecionado.
+- Fluxos existentes de revisao humana continuam intactos e envio externo nao foi
+  liberado pela interface.
+- Erro client-side de `NEXT_PUBLIC_SUPABASE_URL` foi corrigido com acesso estatico;
+  indisponibilidade do Realtime agora degrada sem derrubar a rota.
+- 66 testes, lint e build passaram.
+- QA visual autenticado desktop/mobile permanece pendente porque o navegador
+  integrado nao estava disponivel.
+- Broadcast privado remoto continua bloqueado pelo ownership de
+  `realtime.messages`; proximo passo remoto permanece o chamado ao Supabase.
 
 ## Handoff 2026-07-18 - Broadcast Bloqueado Por Ownership Do Supabase
 

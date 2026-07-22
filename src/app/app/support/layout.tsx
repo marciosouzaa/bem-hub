@@ -1,4 +1,6 @@
 import { getRequiredWorkspace } from "@/features/organizations/queries";
+import { listSupportInbox } from "@/features/support/queries";
+import { SupportInboxShell } from "@/features/support/support-inbox-shell";
 import { SupportRealtimeListener } from "@/features/support/support-realtime-listener";
 
 export default async function SupportLayout({
@@ -7,11 +9,14 @@ export default async function SupportLayout({
   children: React.ReactNode;
 }) {
   const workspace = await getRequiredWorkspace();
+  const conversations = await listSupportInbox(workspace.organization.id);
 
   return (
     <>
       <SupportRealtimeListener organizationId={workspace.organization.id} />
-      {children}
+      <SupportInboxShell conversations={conversations}>
+        {children}
+      </SupportInboxShell>
     </>
   );
 }

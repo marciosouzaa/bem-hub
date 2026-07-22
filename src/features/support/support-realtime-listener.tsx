@@ -19,7 +19,16 @@ export function SupportRealtimeListener({
   const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    const supabase = createSupabaseBrowserClient();
+    let supabase: ReturnType<typeof createSupabaseBrowserClient>;
+
+    try {
+      supabase = createSupabaseBrowserClient();
+    } catch {
+      // Realtime melhora a atualizacao da inbox, mas nao pode impedir o acesso
+      // ao atendimento quando a configuracao publica estiver indisponivel.
+      return;
+    }
+
     let active = true;
     let channel: ReturnType<typeof supabase.channel> | null = null;
 

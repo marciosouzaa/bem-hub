@@ -94,6 +94,9 @@ fluxo interno de atendimento pode avancar sem esse gate.
   manual.
 - [x] Criar rascunhos, aprovacao, rejeicao e escalada sem envio externo.
 - [x] Permitir edicao somente enquanto o rascunho aguarda revisao.
+- [x] Reorganizar Atendimento como inbox master-detail com busca, filtros de
+  status, conversa ativa e contexto do contato.
+- [ ] Fazer QA visual autenticado da inbox em desktop/mobile com dados reais.
 - [ ] Adicionar envio via adapter autenticado.
 - [ ] Registrar auditoria e metricas de resolucao.
 - [ ] Validar duas semanas em modo assistido antes de automatizar.
