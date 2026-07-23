@@ -2,6 +2,28 @@
 
 Atualizado em 2026-07-22.
 
+## Handoff 2026-07-22 - Broadcast Privado Aplicado
+
+- O bloqueio `ERROR 42501: must be owner of relation messages` foi isolado nas
+  instrucoes `DROP POLICY` e `COMMENT ON POLICY`, nao em `CREATE POLICY`.
+- A migration foi ajustada para usar somente operacoes permitidas na tabela
+  gerenciada e aplicada remotamente como
+  `20260723002745_support_realtime_broadcast`.
+- Policy privada, funcao protegida e tres triggers foram confirmados no remoto.
+- Probes transacionais confirmaram acesso ao topico da propria organizacao,
+  negacao de topico externo e emissao do evento `support.inbox.changed`.
+- Advisors nao apresentaram novo alerta relacionado ao Broadcast.
+- Smoke WebSocket autenticado em `/app/support` permanece pendente porque o
+  navegador integrado nao estava disponivel nesta sessao.
+
+### Retomada Exata
+
+1. Abrir `/app/support` com sessao autenticada.
+2. Manter a rota aberta e provocar nova mensagem real pelo canal conectado.
+3. Confirmar que a conversa atualiza sem recarga e que logs Realtime nao mostram
+   `Unauthorized` para o topico da organizacao.
+4. Fazer junto o QA visual desktop/mobile ja pendente.
+
 ## Handoff 2026-07-22 - Atendimento Master-Detail
 
 - Atendimento foi reorganizado como inbox operacional BEM HUB: fila com busca e
@@ -14,8 +36,39 @@ Atualizado em 2026-07-22.
 - 66 testes, lint e build passaram.
 - QA visual autenticado desktop/mobile permanece pendente porque o navegador
   integrado nao estava disponivel.
-- Broadcast privado remoto continua bloqueado pelo ownership de
-  `realtime.messages`; proximo passo remoto permanece o chamado ao Supabase.
+- Broadcast privado remoto foi aplicado no checkpoint seguinte; falta somente o
+  smoke WebSocket autenticado com mensagem real.
+
+### Arquivos Centrais
+
+- `src/features/support/support-inbox-shell.tsx`: canvas, busca, filtros e
+  alternancia responsiva entre fila e conversa.
+- `src/features/support/support-inbox-item.tsx`: identidade, status, canal,
+  atividade e signal edge de prioridade.
+- `src/features/support/support-conversation-view.tsx`: composicao do atendimento
+  selecionado.
+- `src/features/support/support-message-thread.tsx`: historico e revisao de
+  rascunhos.
+- `src/features/support/support-draft-composer.tsx`: criacao de rascunho sem
+  envio externo.
+- `src/features/support/support-contact-panel.tsx`: contexto operacional do
+  contato.
+- `src/features/support/support-inbox-filters.ts`: busca normalizada e filtros
+  cobertos por teste.
+
+### Retomada Exata
+
+1. Layout e tratamento da configuracao Realtime estao no commit `e00e46b`; o
+   working tree possui somente este complemento de handoff.
+2. Abrir `/app/support` com sessao autenticada e dados reais.
+3. Verificar desktop em 1024/1440px e mobile em aproximadamente 390px: scroll da
+   fila, troca de filtro, busca, selecao, retorno para fila e composer.
+4. Ajustar somente densidade, truncamento e overflow encontrados no QA; nao
+   adicionar envio, transferencia ou finalizacao sem contratos server-side.
+5. Reexecutar `bun test --timeout 15000`, `bun run lint` e `bun run build`.
+6. Depois do QA aprovado, registrar eventuais ajustes visuais em commit pequeno.
+7. Validar Broadcast privado com mensagem real; nao usar canal publico como
+   contorno.
 
 ## Handoff 2026-07-18 - Broadcast Bloqueado Por Ownership Do Supabase
 

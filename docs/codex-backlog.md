@@ -85,12 +85,12 @@ fluxo interno de atendimento pode avancar sem esse gate.
   `last_received_at`, criar um evento e aparecer uma única vez na inbox.
 - [x] Implementar Broadcast privado provider-neutral para invalidar a inbox por
   organização sem transmitir conteúdo ou payload do fornecedor.
-- [ ] Solicitar ao Supabase um mecanismo suportado para provisionar a policy
-  SELECT privada em `realtime.messages`; a tabela pertence a
-  `supabase_realtime_admin` e migrations executadas como `postgres` recebem
-  `ERROR 42501`.
-- [ ] Depois da liberação, aplicar a migration de Broadcast, rodar advisors e
-  validar que nova mensagem aparece com `/app/support` aberto, sem recarga
+- [x] Ajustar a migration ao conjunto suportado de operações em
+  `realtime.messages`: `CREATE POLICY` funciona; `DROP POLICY` e
+  `COMMENT ON POLICY` recebem `ERROR 42501` por ownership.
+- [x] Aplicar a migration de Broadcast, rodar advisors e validar policy,
+  função, triggers e isolamento por tópico no banco.
+- [ ] Validar que nova mensagem aparece com `/app/support` aberto, sem recarga
   manual.
 - [x] Criar rascunhos, aprovacao, rejeicao e escalada sem envio externo.
 - [x] Permitir edicao somente enquanto o rascunho aguarda revisao.
@@ -154,11 +154,10 @@ Bloqueado pela auditoria da plataforma e disponibilidade dos dados.
   admin/tenant/papel/limite/owner validados dentro da RPC e anon revogado.
 - Uazapi e Z-API foram escolhidas para o primeiro piloto não oficial. Uazapi já
   conecta, entrega callback e cria atendimento em produção. Broadcast privado
-  está pronto localmente, mas a policy de `realtime.messages` depende de ação
-  do Supabase porque o objeto gerenciado pertence a
-  `supabase_realtime_admin`. A migration falhou atomicamente e não foi
-  registrada. Z-API continua somente com conexão/saúde, sem normalizador de
-  webhook.
+  foi aplicado remotamente após remover `DROP POLICY` e `COMMENT ON POLICY`,
+  operações bloqueadas pelo ownership da tabela gerenciada. Falta o smoke
+  WebSocket autenticado. Z-API continua somente com conexão/saúde, sem
+  normalizador de webhook.
 
 ## Concluido
 

@@ -468,7 +468,8 @@ desativada sem apagar historico.
 - [x] persistir texto e status de mensagens;
 - [x] validar callback real Uazapi com persistência idempotente na inbox;
 - [x] implementar atualização autenticada por Broadcast privado;
-- [ ] aplicar a migration de Broadcast e validar atualização sem recarga;
+- [x] aplicar a migration de Broadcast e validar policy/triggers no banco;
+- [ ] validar atualização WebSocket sem recarga com mensagem real;
 - criar `/app/contacts` minimo.
 
 Aceite: mensagem real aparece uma vez na fila correta, cria contato quando

@@ -4,6 +4,34 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-22 - Broadcast Privado Remoto Aplicado
+
+### Feito
+
+- Refeito o fluxo desde o preflight conforme documentacao atual do Supabase.
+- Isolado que `CREATE POLICY` e permitido em `realtime.messages`, enquanto
+  `DROP POLICY` e `COMMENT ON POLICY` recebem `ERROR 42501` por ownership.
+- Removidas somente essas duas operacoes opcionais da migration.
+- Aplicada remotamente
+  `20260723002745_support_realtime_broadcast`.
+
+### Verificacao
+
+- Policy SELECT privada existe somente para `authenticated` e valida membro
+  ativo contra `org:<organization_id>:support`.
+- Funcao `private.broadcast_support_change()` usa `SECURITY DEFINER`,
+  `search_path` vazio e nao pode ser executada por papeis da API.
+- Tres triggers estao ativos nas tabelas de atendimento.
+- Probes transacionais passaram: topico proprio permitido, topico externo
+  negado e trigger emitindo `support.inbox.changed` sem persistir dados de teste.
+- 66 testes, lint e build passaram.
+- Advisors mantiveram somente alertas anteriores, sem novo alerta do Broadcast.
+
+### Falta
+
+- Fazer smoke WebSocket autenticado com `/app/support` aberto e mensagem real;
+  navegador integrado estava indisponivel nesta sessao.
+
 ## 2026-07-22 - Inbox Operacional De Atendimento
 
 ### Feito

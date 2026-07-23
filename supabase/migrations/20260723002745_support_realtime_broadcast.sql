@@ -1,6 +1,5 @@
-drop policy if exists "support_members_receive_org_broadcasts"
-  on realtime.messages;
-
+-- Hosted Supabase permits CREATE POLICY on realtime.messages, but ownership
+-- restrictions reject DROP POLICY and COMMENT ON POLICY for this managed table.
 create policy "support_members_receive_org_broadcasts"
   on realtime.messages
   for select
@@ -87,10 +86,6 @@ after insert or update or delete
 on public.support_messages
 for each row
 execute function private.broadcast_support_change();
-
-comment on policy "support_members_receive_org_broadcasts"
-  on realtime.messages is
-  'Allows active organization members to receive only their private support topic.';
 
 comment on function private.broadcast_support_change() is
   'Emits provider-neutral support invalidation events without message content or provider payloads.';
