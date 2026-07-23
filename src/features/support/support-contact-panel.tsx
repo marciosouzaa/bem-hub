@@ -1,4 +1,4 @@
-import { AtSign, Bot, CircleDot, Phone, Radio, ShieldCheck } from "lucide-react";
+import { AtSign, CircleDot, Phone, Radio } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import type { SupportConversation } from "@/features/support/queries";
@@ -49,19 +49,6 @@ export function SupportContactPanel({
         </div>
       </section>
 
-      <section className="ai-premium-surface mt-6 rounded-[16px] border border-ai-purple/20 p-4">
-        <div className="flex items-center gap-2 text-xs font-semibold text-ai-purple">
-          <Bot className="size-4" />
-          Revisão humana ativa
-        </div>
-        <p className="mt-3 text-xs leading-5 text-muted-strong">
-          Toda resposta criada aqui permanece como rascunho até aprovação da equipe.
-        </p>
-        <div className="mt-4 flex items-center gap-2 border-t border-ai-purple/15 pt-3 text-[11px] text-muted">
-          <ShieldCheck className="size-3.5 text-primary" />
-          Nenhum envio automático
-        </div>
-      </section>
     </aside>
   );
 }

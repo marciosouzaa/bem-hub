@@ -4,6 +4,44 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-22 - Encerramento Da Sessao WhatsApp
+
+### Estado Confirmado
+
+- Broadcast privado autenticado funciona e atualiza Atendimento em tempo real.
+- Mensagem digitada no app usa endpoint HTTP, chega ao WhatsApp e fica salva
+  como `sent`; WebSocket nao transporta envio.
+- Composer humano nao possui rascunho nem aprovacao.
+- Webhook Uazapi recebe mensagens do contato e mensagens manuais `fromMe`; eco
+  `wasSentByApi` e grupos permanecem excluidos.
+- Regressao de ingestao causada por nome truncado de constraint foi corrigida
+  pela migration remota `20260723013202_restore_channel_webhook_constraint_name`.
+- Box e copias obsoletas de `Revisao humana` foram removidos do Atendimento.
+
+### Protecoes Adicionadas
+
+- Idempotencia do envio humano por `client_request_id`.
+- Persistencia anterior ao fornecedor com estados `sending`, `sent` e `failed`.
+- pgTAP verifica constraint real e referencia usada pela funcao de ingestao.
+- Principios de migrations agora registram limite de 63 bytes, catalogo como
+  fonte da verdade, migrations imutaveis e risco de redefinir funcao antiga.
+
+### Verificacao Final
+
+- 60 testes unitarios passaram.
+- `bun run lint` passou.
+- `bun run build` passou com Next.js 16.2.9.
+- Probes remotos inbound e outbound processaram e sofreram rollback completo.
+- Advisors nao apontaram novo problema causado por este recorte.
+
+### Retomada
+
+1. Fazer smoke real novo: contato -> WhatsApp -> app e aparelho -> WhatsApp ->
+   app; cada mensagem deve aparecer uma vez na mesma thread.
+2. Recuperar pelo historico Uazapi apenas o intervalo de callbacks que recebeu
+   erro antes da migration corretiva, caso o fornecedor nao o repita.
+3. Implementar retry explicito e estados posteriores de entrega/leitura.
+
 ## 2026-07-22 - Ingestao WhatsApp Corrigida
 
 ### Causa

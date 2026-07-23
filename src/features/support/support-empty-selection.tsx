@@ -1,4 +1,4 @@
-import { Inbox, Radio, ShieldCheck } from "lucide-react";
+import { Inbox, MessageSquareText, Radio } from "lucide-react";
 
 export function SupportEmptySelection() {
   return (
@@ -14,7 +14,7 @@ export function SupportEmptySelection() {
           Selecione uma conversa da fila
         </h2>
         <p className="mt-3 text-sm leading-6 text-muted-strong">
-          Histórico, rascunhos e contexto do contato aparecem aqui sem tirar você da operação.
+          Histórico, mensagens e contexto do contato aparecem aqui sem tirar você da operação.
         </p>
         <div className="mt-6 flex items-center justify-center gap-4 text-[11px] text-muted">
           <span className="flex items-center gap-1.5">
@@ -22,8 +22,8 @@ export function SupportEmptySelection() {
             Fila ativa
           </span>
           <span className="flex items-center gap-1.5">
-            <ShieldCheck className="size-3.5 text-primary" />
-            Revisão humana
+            <MessageSquareText className="size-3.5 text-primary" />
+            Envio direto
           </span>
         </div>
       </div>
