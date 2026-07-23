@@ -4,7 +4,7 @@ import type {
   ChannelProviderStatus,
 } from "@/features/channels/channel-provider-schema";
 import type {
-  ChannelInboundMessageEvent,
+  ChannelMessageEvent,
   ChannelWebhookConfiguration,
   ChannelWebhookRequest,
 } from "@/features/channels/webhooks/contracts";
@@ -25,15 +25,28 @@ export type PairingInput = {
   phoneNumber: string;
 };
 
+export type ChannelTextMessageInput = {
+  recipient: string;
+  text: string;
+  trackingId: string;
+};
+
+export type ChannelTextMessageResult = {
+  externalMessageId: string;
+};
+
 export interface ChannelProviderAdapter {
   configureWebhook?(input: ChannelWebhookConfiguration): Promise<void>;
   disconnect(): Promise<void>;
   getHealth(): Promise<ChannelProviderHealth>;
   provider: ChannelProvider;
   requestPairing(input: PairingInput): Promise<ChannelPairing>;
+  sendTextMessage?(
+    input: ChannelTextMessageInput,
+  ): Promise<ChannelTextMessageResult>;
   verifyAndNormalizeWebhook?(
     input: ChannelWebhookRequest,
-  ): Promise<ChannelInboundMessageEvent[]> | ChannelInboundMessageEvent[];
+  ): Promise<ChannelMessageEvent[]> | ChannelMessageEvent[];
 }
 
 export type ChannelProviderAdapterFactory = (

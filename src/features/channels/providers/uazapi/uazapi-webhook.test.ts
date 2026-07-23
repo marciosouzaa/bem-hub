@@ -65,7 +65,7 @@ describe("Uazapi webhook", () => {
     });
   });
 
-  test("ignora saída, grupo e mensagem enviada pela API", () => {
+  test("normaliza saída manual e ignora grupo e mensagem enviada pela API", () => {
     const baseMessage = {
       chatid: "5511999999999@s.whatsapp.net",
       messageid: "message-001",
@@ -85,7 +85,16 @@ describe("Uazapi webhook", () => {
       rawBody: "{}",
     }, instanceToken);
 
-    expect(events).toEqual([]);
+    expect(events).toEqual([{
+      occurredAt: expect.any(String),
+      providerMessageId: "message-001",
+      senderIdentityType: "phone",
+      senderIdentityValue: "5511999999999",
+      senderName: null,
+      senderPhone: "5511999999999",
+      text: "Ignorar",
+      type: "message.sent_by_phone",
+    }]);
   });
 
   test("rejeita token ou instância divergentes", () => {

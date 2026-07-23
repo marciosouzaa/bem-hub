@@ -39,6 +39,10 @@ const webhookSchema = z.object({
   url: z.string().url(),
 });
 
+const sentMessageSchema = z.object({
+  messageid: z.string().trim().min(1),
+});
+
 type UazapiCredentials = z.infer<typeof uazapiCredentialsSchema>;
 
 export function createUazapiAdapter(
@@ -63,7 +67,7 @@ export function createUazapiAdapter(
             addUrlTypesMessages: false,
             enabled: true,
             events: ["messages"],
-            excludeMessages: ["wasSentByApi", "fromMeYes", "isGroupYes"],
+            excludeMessages: ["wasSentByApi", "isGroupYes"],
             url: input.url,
           }),
           headers,
@@ -116,6 +120,24 @@ export function createUazapiAdapter(
         `${credentials.baseUrl}/instance/disconnect`,
         { headers, method: "POST" },
       );
+    },
+    async sendTextMessage(input) {
+      const payload = await fetchProviderJson(
+        fetcher,
+        `${credentials.baseUrl}/send/text`,
+        {
+          body: JSON.stringify({
+            number: input.recipient,
+            text: input.text,
+            track_id: input.trackingId,
+            track_source: "bem-hub-support",
+          }),
+          headers,
+          method: "POST",
+        },
+      );
+      const message = sentMessageSchema.parse(payload);
+      return { externalMessageId: message.messageid };
     },
     verifyAndNormalizeWebhook(input) {
       return verifyAndNormalizeUazapiWebhook(input, credentials.instanceToken);

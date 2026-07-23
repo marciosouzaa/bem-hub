@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SupportContactPanel } from "@/features/support/support-contact-panel";
-import { SupportDraftComposer } from "@/features/support/support-draft-composer";
+import { SupportMessageComposer } from "@/features/support/support-message-composer";
 import { SupportMessageThread } from "@/features/support/support-message-thread";
 import type { SupportConversation } from "@/features/support/queries";
 import {
@@ -65,10 +65,9 @@ export function SupportConversationView({
       <div className="grid min-h-0 flex-1 xl:grid-cols-[minmax(0,1fr)_280px]">
         <main className="flex min-h-0 min-w-0 flex-col">
           <SupportMessageThread
-            conversationId={conversation.id}
             messages={conversation.messages}
           />
-          <SupportDraftComposer
+          <SupportMessageComposer
             conversationId={conversation.id}
             status={conversation.status}
           />

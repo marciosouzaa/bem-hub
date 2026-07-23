@@ -1,9 +1,9 @@
 import { timingSafeEqual } from "crypto";
 
 import {
-  channelInboundMessageEventSchema,
+  channelMessageEventSchema,
   ChannelWebhookVerificationError,
-  type ChannelInboundMessageEvent,
+  type ChannelMessageEvent,
   type ChannelWebhookRequest,
 } from "@/features/channels/webhooks/contracts";
 
@@ -12,7 +12,7 @@ type UnknownRecord = Record<string, unknown>;
 export function verifyAndNormalizeUazapiWebhook(
   input: ChannelWebhookRequest,
   instanceToken: string,
-): ChannelInboundMessageEvent[] {
+): ChannelMessageEvent[] {
   if (!isRecord(input.payload)) return [];
 
   const callbackToken = readString(input.payload, "token");
@@ -38,10 +38,10 @@ export function verifyAndNormalizeUazapiWebhook(
 
   return collectMessageCandidates(input.payload)
     .map(normalizeMessage)
-    .filter((event): event is ChannelInboundMessageEvent => event !== null);
+    .filter((event): event is ChannelMessageEvent => event !== null);
 }
 
-function normalizeMessage(message: UnknownRecord): ChannelInboundMessageEvent | null {
+function normalizeMessage(message: UnknownRecord): ChannelMessageEvent | null {
   const chatId = firstString(message, ["chatid", "chatId", "key.remoteJid"]);
   const fromMe = firstBoolean(message, ["fromMe", "key.fromMe"]) ?? false;
   const isGroup = (
@@ -50,7 +50,7 @@ function normalizeMessage(message: UnknownRecord): ChannelInboundMessageEvent | 
     ?? false
   );
   const wasSentByApi = firstBoolean(message, ["wasSentByApi"]) ?? false;
-  if (fromMe || isGroup || wasSentByApi) return null;
+  if (isGroup || wasSentByApi) return null;
 
   const providerMessageId = firstString(message, [
     "messageid",
@@ -64,23 +64,27 @@ function normalizeMessage(message: UnknownRecord): ChannelInboundMessageEvent | 
   const senderPn = firstString(message, ["sender_pn"]);
   const senderLid = firstString(message, ["sender_lid"]);
   const sender = firstString(message, ["sender", "key.participant"]);
-  const identitySource = senderPn ?? senderLid ?? sender ?? chatId;
+  const identitySource = fromMe
+    ? chatId
+    : senderPn ?? senderLid ?? sender ?? chatId;
   if (!identitySource) return null;
 
   const identity = normalizeIdentity(identitySource);
-  const phone = normalizePhone(senderPn ?? sender ?? chatId);
+  const phone = normalizePhone(fromMe ? chatId : senderPn ?? sender ?? chatId);
 
-  return channelInboundMessageEventSchema.parse({
+  return channelMessageEventSchema.parse({
     occurredAt: normalizeTimestamp(
       firstValue(message, ["messageTimestamp", "timestamp"]),
     ),
     providerMessageId,
     senderIdentityType: identity.type,
     senderIdentityValue: identity.value,
-    senderName: firstString(message, ["senderName", "pushName"]),
+    senderName: fromMe
+      ? null
+      : firstString(message, ["senderName", "pushName"]),
     senderPhone: phone,
     text,
-    type: "message.received",
+    type: fromMe ? "message.sent_by_phone" : "message.received",
   });
 }
 
@@ -210,4 +214,3 @@ function safeEqual(left: string, right: string) {
     && timingSafeEqual(leftBuffer, rightBuffer)
   );
 }
-

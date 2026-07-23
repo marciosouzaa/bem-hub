@@ -17,7 +17,7 @@ const zApiCredentials = {
 };
 
 describe("Uazapi adapter", () => {
-  test("configura somente mensagens recebidas e confirma o endpoint", async () => {
+  test("configura mensagens recebidas e saídas manuais", async () => {
     const requests: Array<{ init?: RequestInit; url: string }> = [];
     const callbackUrl = "https://app.example.com/api/webhooks/channels/uazapi/test-token";
     const fetcher = (async (input: string | URL | Request, init?: RequestInit) => {
@@ -40,7 +40,7 @@ describe("Uazapi adapter", () => {
       addUrlTypesMessages: false,
       enabled: true,
       events: ["messages"],
-      excludeMessages: ["wasSentByApi", "fromMeYes", "isGroupYes"],
+      excludeMessages: ["wasSentByApi", "isGroupYes"],
       url: callbackUrl,
     });
     expect((requests[0].init?.headers as Record<string, string>).token).toBe(
@@ -89,6 +89,33 @@ describe("Uazapi adapter", () => {
 
     expect(pairing).toEqual({ kind: "code", value: "ABCD-1234" });
     expect(JSON.parse(body)).toEqual({ phone: "5511999999999" });
+  });
+
+  test("envia texto pelo endpoint HTTP do provedor", async () => {
+    let request: { init?: RequestInit; url?: string } = {};
+    const fetcher = (async (input: string | URL | Request, init?: RequestInit) => {
+      request = { init, url: input.toString() };
+      return jsonResponse({ messageid: "provider-message-001" });
+    }) as typeof fetch;
+
+    const result = await createUazapiAdapter(
+      uazapiCredentials,
+      fetcher,
+    ).sendTextMessage?.({
+      recipient: "5511999999999",
+      text: "Mensagem direta",
+      trackingId: "support-message-001",
+    });
+
+    expect(request.url).toBe("https://free.uazapi.com/send/text");
+    expect(request.init?.method).toBe("POST");
+    expect(JSON.parse(String(request.init?.body))).toEqual({
+      number: "5511999999999",
+      text: "Mensagem direta",
+      track_id: "support-message-001",
+      track_source: "bem-hub-support",
+    });
+    expect(result).toEqual({ externalMessageId: "provider-message-001" });
   });
 });
 

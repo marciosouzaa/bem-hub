@@ -1,5 +1,5 @@
 begin;
-select plan(122);
+select plan(127);
 
 select ok(
   not has_function_privilege('anon', 'public.bootstrap_owned_organization(uuid)', 'execute'),
@@ -149,6 +149,81 @@ select is(
   (select prosecdef from pg_proc where oid = 'public.get_support_inbox(uuid)'::regprocedure),
   false,
   'support inbox RPC is security invoker'
+);
+select ok(
+  not has_function_privilege(
+    'anon',
+    'public.begin_support_message_send(uuid,uuid,text,uuid)',
+    'execute'
+  ),
+  'anon cannot begin a support message send'
+);
+select ok(
+  has_function_privilege(
+    'authenticated',
+    'public.begin_support_message_send(uuid,uuid,text,uuid)',
+    'execute'
+  ),
+  'authenticated can begin a support message send'
+);
+select is(
+  (
+    select prosecdef
+    from pg_proc
+    where oid = 'public.begin_support_message_send(uuid,uuid,text,uuid)'::regprocedure
+  ),
+  false,
+  'support message begin RPC is security invoker'
+);
+select ok(
+  not has_function_privilege(
+    'authenticated',
+    'public.get_support_message_delivery(uuid,uuid)',
+    'execute'
+  ),
+  'authenticated cannot read support delivery credentials'
+);
+select ok(
+  has_function_privilege(
+    'service_role',
+    'public.get_support_message_delivery(uuid,uuid)',
+    'execute'
+  ),
+  'service role can load support delivery data'
+);
+select is(
+  (
+    select prosecdef
+    from pg_proc
+    where oid = 'public.get_support_message_delivery(uuid,uuid)'::regprocedure
+  ),
+  false,
+  'support delivery RPC is security invoker'
+);
+select ok(
+  not has_function_privilege(
+    'authenticated',
+    'public.finalize_support_message_send(uuid,uuid,text,text,jsonb)',
+    'execute'
+  ),
+  'authenticated cannot finalize support delivery'
+);
+select ok(
+  has_function_privilege(
+    'service_role',
+    'public.finalize_support_message_send(uuid,uuid,text,text,jsonb)',
+    'execute'
+  ),
+  'service role can finalize support delivery'
+);
+select is(
+  (
+    select prosecdef
+    from pg_proc
+    where oid = 'public.finalize_support_message_send(uuid,uuid,text,text,jsonb)'::regprocedure
+  ),
+  false,
+  'support delivery finalization is security invoker'
 );
 select ok(
   has_function_privilege('authenticated', 'public.is_org_member(uuid)', 'execute'),
@@ -1055,34 +1130,50 @@ select throws_ok(
   'duplicate request id is rejected before another completion'
 );
 
-reset role;
+select lives_ok(
+  $$select public.begin_support_message_send(
+    'a0000000-0000-0000-0000-000000000001',
+    (select id from public.support_conversations where organization_id = 'a0000000-0000-0000-0000-000000000001' limit 1),
+    'Resposta direta',
+    'd1000000-0000-4000-8000-000000000001'
+  )$$,
+  'tenant A begins a direct support send'
+);
+select is(
+  (
+    select count(*)
+    from public.support_messages
+    where organization_id = 'a0000000-0000-0000-0000-000000000001'
+      and status = 'sending'
+  ),
+  1::bigint,
+  'direct support message is persisted before provider delivery'
+);
+select is(
+  (
+    public.begin_support_message_send(
+      'a0000000-0000-0000-0000-000000000001',
+      (select id from public.support_conversations where organization_id = 'a0000000-0000-0000-0000-000000000001' limit 1),
+      'Resposta direta',
+      'd1000000-0000-4000-8000-000000000001'
+    ) ->> 'created'
+  )::boolean,
+  false,
+  'same client request does not create a second support message'
+);
+select throws_ok(
+  $$select public.begin_support_message_send(
+    'b0000000-0000-0000-0000-000000000002',
+    (select id from public.support_conversations where organization_id = 'a0000000-0000-0000-0000-000000000001' limit 1),
+    'Tentativa cruzada',
+    'd2000000-0000-4000-8000-000000000002'
+  )$$,
+  '42501',
+  'organization_member_required',
+  'tenant A cannot send through tenant B'
+);
 
-select lives_ok(
-  $$select public.create_support_draft('a0000000-0000-0000-0000-000000000001',(select id from public.support_conversations where organization_id='a0000000-0000-0000-0000-000000000001' limit 1),'Resposta em revisao')$$,
-  'tenant A creates a draft in its attendance'
-);
-select is((select count(*) from public.support_messages where organization_id='a0000000-0000-0000-0000-000000000001' and status='draft'),1::bigint,'draft is persisted without sending');
-select lives_ok(
-  $$select public.update_support_draft('a0000000-0000-0000-0000-000000000001',(select id from public.support_messages where organization_id='a0000000-0000-0000-0000-000000000001' and status='draft' limit 1),'Resposta editada')$$,
-  'tenant A edits its pending draft'
-);
-select lives_ok(
-  $$select public.review_support_draft('a0000000-0000-0000-0000-000000000001',(select id from public.support_messages where organization_id='a0000000-0000-0000-0000-000000000001' and status='draft' limit 1),'approved')$$,
-  'tenant A approves its draft'
-);
-select is((select count(*) from public.support_messages where organization_id='a0000000-0000-0000-0000-000000000001' and status='approved'),1::bigint,'approval does not mark message as sent');
-select throws_ok(
-  $$select public.update_support_draft('a0000000-0000-0000-0000-000000000001',(select id from public.support_messages where organization_id='a0000000-0000-0000-0000-000000000001' and status='approved' limit 1),'Alteracao tardia')$$,
-  'P0002','draft_not_found_or_already_reviewed','approved draft is immutable'
-);
-select throws_ok(
-  $$select public.create_support_draft('b0000000-0000-0000-0000-000000000002',(select id from public.support_conversations where organization_id='a0000000-0000-0000-0000-000000000001' limit 1),'Tentativa cruzada')$$,
-  '42501','organization_member_required','tenant A cannot draft for tenant B'
-);
-select throws_ok(
-  $$select public.review_support_draft('b0000000-0000-0000-0000-000000000002',(select id from public.support_messages where organization_id='a0000000-0000-0000-0000-000000000001' limit 1),'approved')$$,
-  '42501','organization_member_required','tenant A cannot review tenant B drafts'
-);
+reset role;
 
 select is(jsonb_array_length(public.get_support_inbox('a0000000-0000-0000-0000-000000000001')), 1, 'tenant A inbox returns its attendance');
 select is(jsonb_array_length(public.get_support_inbox('b0000000-0000-0000-0000-000000000002')), 0, 'tenant A inbox cannot read tenant B attendance');

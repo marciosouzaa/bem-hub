@@ -18,9 +18,16 @@ export const channelInboundMessageEventSchema = z.object({
   type: z.literal("message.received"),
 });
 
-export type ChannelInboundMessageEvent = z.infer<
-  typeof channelInboundMessageEventSchema
->;
+export const channelPhoneMessageEventSchema = channelInboundMessageEventSchema.extend({
+  type: z.literal("message.sent_by_phone"),
+});
+
+export const channelMessageEventSchema = z.discriminatedUnion("type", [
+  channelInboundMessageEventSchema,
+  channelPhoneMessageEventSchema,
+]);
+
+export type ChannelMessageEvent = z.infer<typeof channelMessageEventSchema>;
 
 export type ChannelWebhookRequest = {
   expectedInstanceId: string | null;
@@ -39,4 +46,3 @@ export class ChannelWebhookVerificationError extends Error {
     this.name = "ChannelWebhookVerificationError";
   }
 }
-

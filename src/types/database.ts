@@ -1079,6 +1079,32 @@ export type Database = {
         Returns: Json
       }
       get_support_conversation: { Args: { target_conversation_id: string; target_organization_id: string }; Returns: Json }
+      begin_support_message_send: {
+        Args: {
+          message_content: string
+          request_id: string
+          target_conversation_id: string
+          target_organization_id: string
+        }
+        Returns: Json
+      }
+      get_support_message_delivery: {
+        Args: {
+          target_message_id: string
+          target_organization_id: string
+        }
+        Returns: Json
+      }
+      finalize_support_message_send: {
+        Args: {
+          delivery_metadata: Json
+          delivery_status: string
+          provider_message_id: string
+          target_message_id: string
+          target_organization_id: string
+        }
+        Returns: Json
+      }
       ingest_channel_inbound_message: {
         Args: {
           event_type: string

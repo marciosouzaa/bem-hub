@@ -1,8 +1,8 @@
-import { Bot, Check, PencilLine, ShieldAlert, UserRound } from "lucide-react";
+"use client";
 
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { reviewDraftAction, updateDraftAction } from "@/features/support/actions";
+import { Headset, UserRound } from "lucide-react";
+import { useEffect, useRef } from "react";
+
 import type { SupportConversation } from "@/features/support/queries";
 import {
   formatSupportTime,
@@ -11,14 +11,27 @@ import {
 import { cn } from "@/lib/utils";
 
 export function SupportMessageThread({
-  conversationId,
   messages,
 }: {
-  conversationId: string;
   messages: SupportConversation["messages"];
 }) {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    container.scrollTo({
+      behavior: reduceMotion ? "auto" : "smooth",
+      top: container.scrollHeight,
+    });
+  }, [messages]);
+
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-6 sm:px-6 lg:px-8">
+    <div
+      className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-6 sm:px-6 lg:px-8"
+      ref={scrollContainerRef}
+    >
       <div className="mx-auto flex min-h-full max-w-3xl flex-col justify-end">
         <div className="mb-7 flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
           <span className="h-px flex-1 bg-panel-border" />
@@ -48,7 +61,7 @@ export function SupportMessageThread({
                     )}
                   >
                     {outbound ? (
-                      <Bot className="size-3.5" />
+                      <Headset className="size-3.5" />
                     ) : (
                       <UserRound className="size-3.5" />
                     )}
@@ -60,21 +73,12 @@ export function SupportMessageThread({
                       outbound
                         ? "rounded-br-[6px] border-primary/20 bg-sidebar-active/65"
                         : "rounded-bl-[6px] border-panel-border bg-panel",
-                      message.status === "draft" &&
-                        "w-full max-w-[min(88%,720px)] border-ai-purple/25 bg-ai-purple/5",
+                      message.status === "failed" && "border-danger/35",
                     )}
                   >
-                    {message.status === "draft" ? (
-                      <DraftReviewCard
-                        conversationId={conversationId}
-                        content={message.content}
-                        messageId={message.id}
-                      />
-                    ) : (
-                      <p className="whitespace-pre-wrap text-sm leading-6 text-foreground">
-                        {message.content}
-                      </p>
-                    )}
+                    <p className="whitespace-pre-wrap text-sm leading-6 text-foreground">
+                      {message.content}
+                    </p>
 
                     <div
                       className={cn(
@@ -103,61 +107,6 @@ export function SupportMessageThread({
             </p>
           </div>
         )}
-      </div>
-    </div>
-  );
-}
-
-function DraftReviewCard({
-  content,
-  conversationId,
-  messageId,
-}: {
-  content: string;
-  conversationId: string;
-  messageId: string;
-}) {
-  return (
-    <div>
-      <div className="mb-3 flex items-center gap-2 text-xs font-semibold text-ai-purple">
-        <PencilLine className="size-3.5" />
-        Rascunho em revisão
-      </div>
-      <form
-        action={updateDraftAction.bind(null, conversationId, messageId)}
-        className="space-y-3"
-      >
-        <Textarea
-          aria-label="Conteúdo do rascunho"
-          className="min-h-24 border-ai-purple/20 bg-background/45"
-          defaultValue={content}
-          maxLength={10_000}
-          name="content"
-          required
-        />
-        <Button size="sm" type="submit" variant="outline">
-          Salvar edição
-        </Button>
-      </form>
-
-      <div className="mt-4 flex flex-wrap gap-2 border-t border-ai-purple/15 pt-3">
-        <form action={reviewDraftAction.bind(null, conversationId, messageId, "approved")}>
-          <Button size="sm" type="submit">
-            <Check className="size-3.5" />
-            Aprovar
-          </Button>
-        </form>
-        <form action={reviewDraftAction.bind(null, conversationId, messageId, "rejected")}>
-          <Button size="sm" type="submit" variant="outline">
-            Rejeitar
-          </Button>
-        </form>
-        <form action={reviewDraftAction.bind(null, conversationId, messageId, "escalated")}>
-          <Button size="sm" type="submit" variant="ghost">
-            <ShieldAlert className="size-3.5" />
-            Escalar
-          </Button>
-        </form>
       </div>
     </div>
   );

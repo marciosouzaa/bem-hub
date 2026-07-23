@@ -33,6 +33,7 @@ const supportMessageSchema = z.object({
     "draft",
     "approved",
     "rejected",
+    "sending",
     "sent",
     "failed",
   ]),

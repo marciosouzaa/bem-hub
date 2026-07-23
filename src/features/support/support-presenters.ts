@@ -32,6 +32,7 @@ export const supportMessageStatusLabels: Record<
   draft: "Rascunho",
   approved: "Aprovada",
   rejected: "Rejeitada",
+  sending: "Enviando",
   sent: "Enviada",
   failed: "Falhou",
 };
