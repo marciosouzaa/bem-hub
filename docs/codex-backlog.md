@@ -90,14 +90,19 @@ fluxo interno de atendimento pode avancar sem esse gate.
   `COMMENT ON POLICY` recebem `ERROR 42501` por ownership.
 - [x] Aplicar a migration de Broadcast, rodar advisors e validar policy,
   função, triggers e isolamento por tópico no banco.
-- [ ] Validar que nova mensagem aparece com `/app/support` aberto, sem recarga
+- [x] Validar que nova mensagem aparece com `/app/support` aberto, sem recarga
   manual.
-- [x] Criar rascunhos, aprovacao, rejeicao e escalada sem envio externo.
-- [x] Permitir edicao somente enquanto o rascunho aguarda revisao.
+- [x] Remover rascunho/aprovacao do envio humano; mensagem digitada pelo
+  operador segue diretamente para o endpoint HTTP.
 - [x] Reorganizar Atendimento como inbox master-detail com busca, filtros de
   status, conversa ativa e contexto do contato.
 - [ ] Fazer QA visual autenticado da inbox em desktop/mobile com dados reais.
-- [ ] Adicionar envio via adapter autenticado.
+- [x] Adicionar envio de texto via adapter autenticado, persistencia anterior ao
+  fornecedor e idempotencia por requisicao.
+- [x] Normalizar mensagem manual `fromMe` como `message.sent_by_phone`, sem
+  duplicar eco `wasSentByApi`.
+- [x] Reconfigurar webhook Uazapi sem o filtro `fromMeYes`.
+- [ ] Validar envio pelo app e pelo aparelho na mesma thread.
 - [ ] Registrar auditoria e metricas de resolucao.
 - [ ] Validar duas semanas em modo assistido antes de automatizar.
 - [x] Implementar fundacao reutilizavel de DataTable, EntityDrawer, formularios

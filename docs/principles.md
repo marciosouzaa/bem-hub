@@ -37,6 +37,22 @@
 - Fazer commits pequenos, coerentes e limitados aos arquivos da sessao.
 - Atualizar roadmap, backlog e worklog quando o estado do produto mudar.
 
+## Banco E Migrations
+
+- Tratar migrations aplicadas como imutaveis. Corrigir sempre com uma nova
+  migration incremental, preservando o historico remoto.
+- Nomear constraints e indices explicitamente com no maximo 63 bytes. Quando o
+  objeto ja existir, usar `pg_constraint`, `pg_class` ou `pg_indexes` como fonte
+  da verdade; nunca reconstruir o nome apenas pela convencao do PostgreSQL.
+- Antes de usar `CREATE OR REPLACE FUNCTION`, consultar a definicao vigente com
+  `pg_get_functiondef` e incorporar todas as migrations corretivas posteriores.
+  Copiar um corpo antigo pode ressuscitar bugs ja corrigidos.
+- Para funcoes que referenciam constraints, adicionar pgTAP verificando tanto a
+  existencia do objeto no catalogo quanto a referencia presente na funcao.
+- Quando uma migration substituir funcao extensa, preferir alteracao cirurgica
+  validada ou consolidar a definicao canonica; falhar explicitamente se o trecho
+  esperado ou a dependencia real nao existir.
+
 ## Decisoes
 
 O engenheiro pode decidir autonomamente quando a mudanca:

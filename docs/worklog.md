@@ -4,6 +4,76 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-22 - Ingestao WhatsApp Corrigida
+
+### Causa
+
+- `20260723011509_support_direct_messages` redefiniu
+  `ingest_channel_inbound_message` a partir de um corpo anterior e restaurou o
+  nome longo de uma constraint que o PostgreSQL havia truncado para 63 bytes.
+- O webhook continuava chegando, mas cada RPC retornava HTTP 400 antes de criar
+  o evento ou a mensagem. O envio pelo app nao era afetado porque usa outro RPC.
+
+### Correcao
+
+- Aplicada remotamente a migration
+  `20260723013202_restore_channel_webhook_constraint_name`.
+- A migration consulta `pg_constraint`, exige que o objeto real exista e troca
+  cirurgicamente a referencia na funcao via `pg_get_functiondef`.
+- pgTAP agora verifica a constraint real e a referencia usada pela funcao.
+- `docs/principles.md` registra limite de 63 bytes, migrations imutaveis e a
+  proibicao de substituir funcoes usando corpos antigos sem incorporar patches.
+
+### Verificacao
+
+- Probe transacional processou `message.received` e
+  `message.sent_by_phone` na conversa esperada.
+- Rollback confirmado: zero evento e zero mensagem de teste permaneceram.
+- A definicao remota referencia
+  `channel_webhook_events_channel_connection_id_provider_event_key`.
+
+### Falta
+
+- Fazer novo smoke real nos dois sentidos.
+- Verificar se a Uazapi repetira os callbacks que receberam erro durante a
+  regressao; se nao repetir, recuperar o intervalo pelo historico do fornecedor.
+
+## 2026-07-22 - Envio Direto De Atendimento
+
+### Feito
+
+- O composer de `/app/support` agora envia texto diretamente, sem rascunho,
+  aprovacao ou revisao intermediaria.
+- O navegador usa `POST /api/support/messages`; WebSocket continua restrito a
+  invalidacao e atualizacao da interface.
+- Cada tentativa e persistida como `sending` antes da chamada Uazapi e finaliza
+  como `sent` ou `failed`.
+- `client_request_id` e indice unico impedem que o mesmo POST envie duas vezes.
+- O adapter Uazapi usa `POST /send/text`, header `token` e registra o
+  `messageid` retornado pelo fornecedor.
+- Webhook Uazapi aceita `fromMe` manual como `message.sent_by_phone`; ecos
+  `wasSentByApi` e grupos continuam ignorados.
+- Timeline perdeu controles de rascunho/aprovacao e ganhou rolagem automatica.
+- Aplicada remotamente a migration
+  `20260723011509_support_direct_messages`.
+- Deploy `0bcc647` confirmado por `405 Method Not Allowed` na nova rota GET e
+  webhook Uazapi reconfigurado para excluir apenas `wasSentByApi` e grupos.
+
+### Verificacao
+
+- Migration, funcoes, permissoes e indice de idempotencia confirmados no remoto.
+- Probe transacional confirmou primeira persistencia e retry com `created=false`,
+  sem manter a mensagem de teste.
+- Contexto real possui destinatario e credencial criptografada resolviveis.
+- Testes, lint e build passaram; nenhum novo advisor de seguranca foi criado.
+- Nenhuma mensagem real foi enviada durante a verificacao automatica.
+
+### Falta
+
+- Fazer dois smokes: enviar pelo composer e enviar manualmente pelo WhatsApp;
+  ambos devem aparecer uma vez na mesma thread.
+- Implementar retry explicito e estados posteriores de entrega/leitura.
+
 ## 2026-07-22 - Broadcast Privado Remoto Aplicado
 
 ### Feito

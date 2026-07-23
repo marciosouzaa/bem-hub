@@ -1,5 +1,5 @@
 begin;
-select plan(127);
+select plan(129);
 
 select ok(
   not has_function_privilege('anon', 'public.bootstrap_owned_organization(uuid)', 'execute'),
@@ -305,6 +305,24 @@ select is(
   ),
   false,
   'inbound webhook ingestion is security invoker'
+);
+select ok(
+  exists (
+    select 1
+    from pg_constraint
+    where conrelid = 'public.channel_webhook_events'::regclass
+      and conname = 'channel_webhook_events_channel_connection_id_provider_event_key'
+  ),
+  'webhook idempotency uses the actual PostgreSQL constraint name'
+);
+select ok(
+  pg_catalog.strpos(
+    pg_catalog.pg_get_functiondef(
+      'public.ingest_channel_inbound_message(uuid,text,text,text,text,text,text,text,timestamptz,text)'::regprocedure
+    ),
+    'on conflict on constraint channel_webhook_events_channel_connection_id_provider_event_key'
+  ) > 0,
+  'webhook ingestion references the real idempotency constraint'
 );
 select ok(
   (

@@ -16,6 +16,8 @@ do MVP nem incorpora canais e recursos fora do escopo definido.
   adapter, sem contaminar o dominio.
 - Entregar primeiro texto de ponta a ponta: conectar numero, receber mensagem,
   criar contato/conversa, assumir, responder e acompanhar entrega.
+- Mensagem escrita pelo operador no composer e enviada diretamente por endpoint
+  HTTP. Nao passa por rascunho ou aprovacao e nao usa WebSocket para transporte.
 - Geracao por IA continua como rascunho com revisao humana. Ela vem depois do
   transporte real e nunca envia sozinha.
 - Reformular `/app/support` como console operacional de tres areas e criar um
@@ -200,7 +202,7 @@ webhook publico -> verificacao -> registro idempotente -> normalizador do adapte
                                                         v
                                                 Supabase Realtime
 
-operador -> aprova/envia -> outbox -> dispatcher do adapter -> fornecedor
+operador -> endpoint HTTP -> persistencia/idempotencia -> adapter -> fornecedor
                               ^                              |
                               +------ status/retry ----------+
 ```
@@ -469,7 +471,11 @@ desativada sem apagar historico.
 - [x] validar callback real Uazapi com persistência idempotente na inbox;
 - [x] implementar atualização autenticada por Broadcast privado;
 - [x] aplicar a migration de Broadcast e validar policy/triggers no banco;
-- [ ] validar atualização WebSocket sem recarga com mensagem real;
+- [x] validar atualização WebSocket sem recarga com mensagem real;
+- [x] persistir tentativa e enviar texto humano por endpoint HTTP/adapter;
+- [x] ingerir mensagem manual enviada pelo aparelho como outbound;
+- [x] reconfigurar webhook sem `fromMeYes`;
+- [ ] fazer smoke dos dois caminhos de saida;
 - criar `/app/contacts` minimo.
 
 Aceite: mensagem real aparece uma vez na fila correta, cria contato quando
@@ -480,7 +486,9 @@ necessario e atualiza ultima mensagem/nao lida para cada operador.
 - layout de tres areas;
 - busca, fila/meus/resolvidos, filtros e paginacao;
 - assumir, transferir simples, ler, resolver e reabrir;
-- composer de texto, outbox, retry e entrega/leitura;
+- [x] composer de texto direto, persistencia anterior ao fornecedor e
+  idempotencia;
+- [ ] retry explicito e entrega/leitura;
 - bloqueio e explicacao quando o canal nao permite resposta livre.
 
 Aceite: dois operadores conseguem atender sem sobrescrever atribuicao; envio
