@@ -2,6 +2,7 @@
 
 import {
   Bot,
+  ContactRound,
   Database,
   LayoutDashboard,
   MessageSquareText,
@@ -27,6 +28,7 @@ const navItems: NavItem[] = [
   { icon: Bot, label: "Assistentes", href: "/app/assistants" },
   { icon: MessageSquareText, label: "Conversas", href: "/app/chat" },
   { icon: Headphones, label: "Atendimento", href: "/app/support" },
+  { icon: ContactRound, label: "Contatos", href: "/app/contacts" },
   { icon: RadioTower, label: "Canais", href: "/app/channels" },
   { icon: Zap, label: "Automacoes", href: "/app/automations" },
   { icon: Database, label: "Base de conhecimento", href: "/app/knowledge" },

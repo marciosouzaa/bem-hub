@@ -34,7 +34,7 @@ describe("Uazapi webhook", () => {
       senderIdentityType: "phone",
       senderIdentityValue: "5511999999999",
       senderName: "Ana",
-      senderPhone: "5511999999999",
+      senderPhone: "+5511999999999",
       text: "Olá, preciso de ajuda.",
       type: "message.received",
     }]);
@@ -60,8 +60,32 @@ describe("Uazapi webhook", () => {
     expect(events[0]).toMatchObject({
       providerMessageId: "message-legacy-001",
       senderName: "Bruno",
-      senderPhone: "5511888888888",
+      senderPhone: "+5511888888888",
       text: "Quero falar com atendimento.",
+    });
+  });
+
+  test("preserva outro DDI sem interromper a normalização", () => {
+    const events = verifyAndNormalizeUazapiWebhook({
+      expectedInstanceId: null,
+      headers: new Headers(),
+      payload: {
+        event: "messages",
+        message: {
+          chatid: "14155552671@s.whatsapp.net",
+          messageid: "message-international-001",
+          pushName: "International contact",
+          text: "Hello",
+        },
+      },
+      rawBody: "{}",
+    }, instanceToken);
+
+    expect(events[0]).toMatchObject({
+      senderIdentityType: "phone",
+      senderIdentityValue: "14155552671",
+      senderPhone: "+14155552671",
+      type: "message.received",
     });
   });
 
@@ -91,7 +115,7 @@ describe("Uazapi webhook", () => {
       senderIdentityType: "phone",
       senderIdentityValue: "5511999999999",
       senderName: null,
-      senderPhone: "5511999999999",
+      senderPhone: "+5511999999999",
       text: "Ignorar",
       type: "message.sent_by_phone",
     }]);

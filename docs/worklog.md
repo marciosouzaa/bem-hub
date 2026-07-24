@@ -4,6 +4,53 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-23 - CRUD De Contatos Preparado Localmente
+
+### Feito
+
+- Criada rota `/app/contacts` com DataTable, busca por identidade, filtro por
+  estagio e EntityDrawer para criar ou editar.
+- Contatos podem nascer manualmente ou continuar sendo criados pelo webhook;
+  ambos passam pelo mesmo contrato de identidade telefonica no banco.
+- Cadastro possui estagios `new`, `lead`, `customer` e `discarded`, etiquetas,
+  origem por canal, ultima atividade e acesso ao atendimento mais recente.
+- Exclusao fisica nao foi exposta. Arquivamento preserva conversas e mensagens;
+  novo callback reativa o contato.
+- Painel do Atendimento mostra telefone formatado e alerta operacional para DDI
+  ainda nao suportado.
+
+### Identidade Telefonica
+
+- Brasil possui chave canonica por organizacao.
+- Celular antigo com oito digitos e versao atual com nono digito resolvem para
+  a mesma chave; telefone fixo nao recebe nono digito.
+- Outro DDI e persistido com chave exata e estado `unsupported_country`.
+- Numero invalido nao derruba o parser; cadastro manual recebe erro claro e
+  webhook ainda conserva a identidade fornecida pelo provedor.
+- Migration falha antes de criar o indice unico caso encontre duplicatas
+  historicas equivalentes, evitando mesclagem destrutiva automatica.
+
+### Verificacao
+
+- 67 testes unitarios passaram.
+- `bun run lint` passou.
+- `bun run build` passou com Next.js 16.2.9 e rota `/app/contacts`.
+- pgTAP foi ampliado de 129 para 148 assertions, mas nao executou porque Docker
+  e Postgres local nao estao disponiveis.
+- Preflight remoto nao executou porque Supabase CLI nao esta vinculado nesta
+  sessao; nenhuma migration remota foi aplicada.
+- QA visual autenticado nao executou porque navegador integrado nao esta
+  disponivel.
+
+### Retomada
+
+1. Consultar duplicatas canonicas no remoto sem alterar dados.
+2. Aplicar `20260724015915_contacts_crud_phone_identity.sql`.
+3. Rodar pgTAP/advisors e regenerar tipos Supabase.
+4. Fazer smoke: cadastro manual, callback com versao 8/9 do mesmo celular,
+   arquivamento/reativacao e DDI estrangeiro.
+5. Fazer QA visual desktop/mobile em `/app/contacts` e no painel do Atendimento.
+
 ## 2026-07-22 - Encerramento Da Sessao WhatsApp
 
 ### Estado Confirmado

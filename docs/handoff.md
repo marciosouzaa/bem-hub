@@ -1,6 +1,33 @@
 # Handoff Notes
 
-Atualizado em 2026-07-22.
+Atualizado em 2026-07-23.
+
+## Handoff 2026-07-23 - Modulo De Contatos Local
+
+- `/app/contacts` foi implementado com DataTable, EntityDrawer, busca, filtro de
+  estagio, cadastro manual, edicao e arquivamento sem apagar historico.
+- Webhook e cadastro manual passam a compartilhar chave telefonica canonica no
+  banco; celulares brasileiros com oito ou nove digitos nao devem duplicar.
+- Outro DDI e preservado por identidade exata com diagnostico
+  `unsupported_country`; interface explica a limitacao sem derrubar Atendimento.
+- Migration `20260724015915_contacts_crud_phone_identity.sql` existe somente
+  localmente. Ela consulta e altera cirurgicamente a definicao vigente da RPC de
+  ingestao, falhando se o trecho esperado ou duplicatas historicas impedirem a
+  mudanca segura.
+- 67 testes, lint e build passaram. pgTAP agora planeja 148 assertions.
+- Docker/Postgres local, Supabase CLI vinculado e navegador integrado nao
+  estavam disponiveis; migration remota, pgTAP, advisors e QA visual permanecem
+  pendentes.
+
+### Retomada Exata
+
+1. Fazer preflight remoto somente leitura para duplicatas equivalentes de
+   telefone e confirmar os alvos de patch com `pg_get_functiondef`.
+2. Aplicar a migration de contatos e rodar pgTAP/advisors.
+3. Regenerar `src/types/database.ts`.
+4. Fazer smoke com cadastro manual, callback do mesmo celular nas convencoes de
+   oito/nove digitos, contato arquivado e numero com outro DDI.
+5. Validar `/app/contacts` e painel de Atendimento em desktop/mobile.
 
 ## Handoff 2026-07-22 - Broadcast Privado Aplicado
 

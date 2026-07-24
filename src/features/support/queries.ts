@@ -1,5 +1,9 @@
 import { z } from "zod";
 
+import {
+  contactPhoneReasonSchema,
+  contactPhoneStatusSchema,
+} from "@/features/contacts/contact-schema";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const supportInboxItemSchema = z.object({
@@ -14,6 +18,8 @@ const supportInboxItemSchema = z.object({
     phone: z.string().nullable(),
     email: z.string().nullable(),
     tags: z.array(z.string()),
+    phoneStatus: contactPhoneStatusSchema.default("invalid"),
+    phoneReason: contactPhoneReasonSchema.nullable().default(null),
   }),
   channel: z.object({
     id: z.string().uuid(),
@@ -49,6 +55,8 @@ const supportConversationSchema = z.object({
     name: z.string().nullable(),
     phone: z.string().nullable(),
     email: z.string().nullable(),
+    phoneStatus: contactPhoneStatusSchema.default("invalid"),
+    phoneReason: contactPhoneReasonSchema.nullable().default(null),
   }),
   channel: z.object({
     id: z.string().uuid(),

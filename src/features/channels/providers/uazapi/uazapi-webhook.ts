@@ -149,7 +149,7 @@ function normalizeIdentity(value: string): {
 function normalizePhone(value: string | null) {
   if (!value || value.toLowerCase().endsWith("@lid")) return null;
   const digits = value.replace(/\D/g, "");
-  return digits.length >= 10 && digits.length <= 15 ? digits : null;
+  return digits.length >= 8 && digits.length <= 15 ? `+${digits}` : null;
 }
 
 function normalizeTimestamp(value: unknown) {

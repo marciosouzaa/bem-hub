@@ -110,8 +110,15 @@ fluxo interno de atendimento pode avancar sem esse gate.
 - [x] Migrar Canais, Assistentes e Conexoes de IA para os novos contratos de
   cadastro sem alterar identidade visual ou regras server-side.
 - [ ] Fazer QA visual autenticado dos novos drawers e tabelas em desktop/mobile.
-- [ ] Migrar equipe/convites e o futuro CRUD de contatos; manter composer,
-  upload e acoes operacionais fora do padrao de cadastro.
+- [x] Implementar localmente o CRUD de contatos com DataTable, EntityDrawer,
+  criacao manual, arquivamento e vinculo ao Atendimento.
+- [x] Normalizar telefones brasileiros com equivalencia entre celulares de oito
+  e nove digitos; preservar outro DDI com diagnostico sem quebrar a ingestao.
+- [ ] Aplicar remotamente a migration de contatos apos preflight de duplicatas
+  canonicas e validar recebimento em contato existente.
+- [ ] Fazer QA visual autenticado do modulo de contatos em desktop/mobile.
+- [ ] Migrar equipe/convites; manter composer, upload e acoes operacionais fora
+  do padrao de cadastro.
 
 ## FUTURO - M3 Inteligencia De Negocio
 

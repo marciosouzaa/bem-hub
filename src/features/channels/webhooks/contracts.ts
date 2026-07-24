@@ -13,7 +13,7 @@ export const channelInboundMessageEventSchema = z.object({
   senderIdentityType: channelSenderIdentityTypeSchema,
   senderIdentityValue: z.string().trim().min(3).max(300),
   senderName: z.string().trim().min(1).max(200).nullable(),
-  senderPhone: z.string().regex(/^\d{10,15}$/).nullable(),
+  senderPhone: z.string().regex(/^\+\d{8,15}$/).nullable(),
   text: z.string().trim().min(1).max(10_000),
   type: z.literal("message.received"),
 });

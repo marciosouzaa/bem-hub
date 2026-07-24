@@ -3,6 +3,7 @@ import type {
   SupportInboxItem,
   SupportMessage,
 } from "@/features/support/queries";
+import { formatContactPhone } from "@/features/contacts/phone-normalization";
 
 export const supportStatusLabels: Record<
   SupportConversation["status"],
@@ -38,9 +39,11 @@ export const supportMessageStatusLabels: Record<
 };
 
 export function getSupportContactName(
-  contact: Pick<SupportInboxItem["contact"], "name" | "phone">,
+  contact: Pick<SupportInboxItem["contact"], "name" | "phone" | "phoneStatus">,
 ) {
-  return contact.name?.trim() || contact.phone || "Contato sem nome";
+  if (contact.name?.trim()) return contact.name.trim();
+  if (contact.phone) return formatContactPhone(contact.phone, contact.phoneStatus);
+  return "Contato sem nome";
 }
 
 export function getContactInitials(name: string) {

@@ -1,6 +1,7 @@
-import { AtSign, CircleDot, Phone, Radio } from "lucide-react";
+import { AlertTriangle, AtSign, CircleDot, Phone, Radio } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import { formatContactPhone } from "@/features/contacts/phone-normalization";
 import type { SupportConversation } from "@/features/support/queries";
 import {
   getContactInitials,
@@ -15,6 +16,10 @@ export function SupportContactPanel({
   conversation: SupportConversation;
 }) {
   const name = getSupportContactName(conversation.contact);
+  const phone = formatContactPhone(
+    conversation.contact.phone,
+    conversation.contact.phoneStatus,
+  );
 
   return (
     <aside className="hidden min-h-0 overflow-y-auto border-l border-panel-border bg-panel-subtle p-5 xl:block">
@@ -29,10 +34,26 @@ export function SupportContactPanel({
       </div>
 
       <dl className="mt-6 space-y-4 border-y border-panel-border py-5">
-        <Detail icon={Phone} label="Telefone" value={conversation.contact.phone ?? "Não informado"} />
+        <Detail icon={Phone} label="Telefone" value={phone} />
         <Detail icon={AtSign} label="E-mail" value={conversation.contact.email ?? "Não informado"} />
         <Detail icon={Radio} label="Canal" value={conversation.channel.name} />
       </dl>
+
+      {conversation.contact.phoneStatus === "unsupported_country" ? (
+        <div className="mt-5 flex gap-2 rounded-[var(--radius-control)] border border-warning/25 bg-warning/5 px-3 py-2.5 text-xs leading-5 text-muted-strong">
+          <AlertTriangle aria-hidden="true" className="mt-0.5 size-3.5 shrink-0 text-warning" />
+          <p>
+            DDI ainda não suportado. Contato identificado; resposta pode depender da identidade aceita pelo provedor.
+          </p>
+        </div>
+      ) : conversation.contact.phoneStatus === "invalid" ? (
+        <div className="mt-5 flex gap-2 rounded-[var(--radius-control)] border border-warning/25 bg-warning/5 px-3 py-2.5 text-xs leading-5 text-muted-strong">
+          <AlertTriangle aria-hidden="true" className="mt-0.5 size-3.5 shrink-0 text-warning" />
+          <p>
+            Telefone não validado. Atendimento foi preservado, mas a resposta depende de uma identidade roteável do provedor.
+          </p>
+        </div>
+      ) : null}
 
       <section className="mt-6">
         <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">

@@ -1038,6 +1038,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      archive_contact: {
+        Args: {
+          target_contact_id: string
+          target_organization_id: string
+        }
+        Returns: undefined
+      }
       activate_catalog_version: {
         Args: { target_document_id: string; target_organization_id: string }
         Returns: number
@@ -1124,6 +1131,22 @@ export type Database = {
       review_support_draft: { Args: { review_decision: string; target_message_id: string; target_organization_id: string }; Returns: undefined }
       update_support_draft: { Args: { draft_content: string; target_message_id: string; target_organization_id: string }; Returns: undefined }
       list_channel_connections: { Args: { target_organization_id: string }; Returns: Json }
+      list_contacts: {
+        Args: { target_organization_id: string }
+        Returns: Json
+      }
+      save_contact: {
+        Args: {
+          contact_email: string
+          contact_lifecycle_stage: string
+          contact_name: string
+          contact_phone: string
+          contact_tags: string[]
+          target_contact_id: string | null
+          target_organization_id: string
+        }
+        Returns: Json
+      }
       save_channel_provider_configuration: {
         Args: {
           actor_user_id: string

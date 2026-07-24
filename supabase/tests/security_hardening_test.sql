@@ -1,5 +1,103 @@
 begin;
-select plan(129);
+select plan(148);
+
+select ok(
+  not has_function_privilege('anon', 'public.list_contacts(uuid)', 'execute'),
+  'anon cannot list contacts'
+);
+select ok(
+  has_function_privilege('authenticated', 'public.list_contacts(uuid)', 'execute'),
+  'authenticated can list organization contacts'
+);
+select ok(
+  not has_function_privilege(
+    'anon',
+    'public.save_contact(uuid,uuid,text,text,text,text[],text)',
+    'execute'
+  ),
+  'anon cannot save contacts'
+);
+select ok(
+  has_function_privilege(
+    'authenticated',
+    'public.save_contact(uuid,uuid,text,text,text,text[],text)',
+    'execute'
+  ),
+  'authenticated can save organization contacts'
+);
+select ok(
+  not has_function_privilege('anon', 'public.archive_contact(uuid,uuid)', 'execute'),
+  'anon cannot archive contacts'
+);
+select ok(
+  has_function_privilege('authenticated', 'public.archive_contact(uuid,uuid)', 'execute'),
+  'authenticated can archive organization contacts'
+);
+select is(
+  (select prosecdef from pg_proc where oid = 'public.list_contacts(uuid)'::regprocedure),
+  false,
+  'contact listing is security invoker'
+);
+select is(
+  (
+    select prosecdef
+    from pg_proc
+    where oid = 'public.save_contact(uuid,uuid,text,text,text,text[],text)'::regprocedure
+  ),
+  false,
+  'contact mutation is security invoker'
+);
+select is(
+  (select prosecdef from pg_proc where oid = 'public.archive_contact(uuid,uuid)'::regprocedure),
+  false,
+  'contact archival is security invoker'
+);
+select is(
+  (
+    select canonical_phone
+    from private.normalize_contact_phone('+55 21 99676-3611')
+  ),
+  '5521996763611',
+  'Brazilian mobile keeps its canonical ninth digit'
+);
+select is(
+  (
+    select match_key
+    from private.normalize_contact_phone('21 9676-3611')
+  ),
+  'br:5521996763611',
+  'legacy Brazilian mobile resolves to the same canonical key'
+);
+select is(
+  (
+    select normalization_status
+    from private.normalize_contact_phone('+1 415 555 2671')
+  ),
+  'unsupported_country',
+  'international phone is preserved with an explicit unsupported status'
+);
+select is(
+  (
+    select match_key
+    from private.normalize_contact_phone('+1 415 555 2671')
+  ),
+  'intl:14155552671',
+  'international phone receives an exact identity key'
+);
+select ok(
+  not has_table_privilege('authenticated', 'public.contacts', 'delete'),
+  'authenticated users cannot hard-delete contacts'
+);
+select ok(
+  exists (
+    select 1
+    from pg_indexes
+    where schemaname = 'public'
+      and tablename = 'contacts'
+      and indexname = 'contacts_organization_phone_match_idx'
+  ),
+  'contacts enforce one canonical phone identity per organization'
+);
 
 select ok(
   not has_function_privilege('anon', 'public.bootstrap_owned_organization(uuid)', 'execute'),
@@ -1218,6 +1316,52 @@ select throws_ok(
   '42501',
   'organization_not_owned',
   'bootstrap rejects an organization owned by another user'
+);
+select lives_ok(
+  $$select public.save_contact(
+    'a0000000-0000-0000-0000-000000000001',
+    null::uuid,
+    'Lead novo',
+    '+55 11 98765-4321',
+    'lead@example.com',
+    array['piloto'],
+    'lead'
+  )$$,
+  'tenant A can create its own contact'
+);
+select is(
+  (
+    select count(*)
+    from jsonb_array_elements(
+      public.list_contacts('a0000000-0000-0000-0000-000000000001')
+    ) contact
+    where contact ->> 'email' = 'lead@example.com'
+  ),
+  1::bigint,
+  'tenant A contact appears in its organization list'
+);
+select throws_ok(
+  $$select public.save_contact(
+    'b0000000-0000-0000-0000-000000000002',
+    null::uuid,
+    'Tentativa cruzada',
+    '+55 11 97654-3210',
+    '',
+    '{}'::text[],
+    'new'
+  )$$,
+  '42501',
+  'organization_member_required',
+  'tenant A cannot create a contact in tenant B'
+);
+select throws_ok(
+  $$select public.archive_contact(
+    'b0000000-0000-0000-0000-000000000002',
+    'c2000000-0000-0000-0000-000000000002'
+  )$$,
+  '42501',
+  'organization_member_required',
+  'tenant A cannot archive tenant B contact'
 );
 
 set local request.jwt.claims =
