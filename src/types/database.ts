@@ -1135,17 +1135,38 @@ export type Database = {
         Args: { target_organization_id: string }
         Returns: Json
       }
+      list_tags: {
+        Args: { target_organization_id: string }
+        Returns: Json
+      }
       save_contact: {
         Args: {
           contact_email: string
           contact_lifecycle_stage: string
           contact_name: string
           contact_phone: string
-          contact_tags: string[]
+          contact_tag_ids: string[]
           target_contact_id: string | null
           target_organization_id: string
         }
         Returns: Json
+      }
+      save_tag: {
+        Args: {
+          tag_description: string
+          tag_hex_color: string
+          tag_name: string
+          target_organization_id: string
+          target_tag_id: string | null
+        }
+        Returns: Json
+      }
+      archive_tag: {
+        Args: {
+          target_organization_id: string
+          target_tag_id: string
+        }
+        Returns: undefined
       }
       save_channel_provider_configuration: {
         Args: {

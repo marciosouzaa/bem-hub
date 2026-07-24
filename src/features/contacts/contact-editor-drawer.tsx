@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 
 import { EntityDrawer } from "@/components/ui/entity-drawer";
 import { FormField } from "@/components/ui/form-field";
@@ -19,7 +19,9 @@ import {
   type Contact,
   type ContactFormValues,
 } from "@/features/contacts/contact-schema";
+import { ContactTagSelector } from "@/features/contacts/contact-tag-selector";
 import { normalizeContactPhone } from "@/features/contacts/phone-normalization";
+import type { Tag } from "@/features/tags/tag-schema";
 
 const formId = "contact-editor-form";
 
@@ -29,11 +31,12 @@ function getDefaultValues(contact: Contact | null): ContactFormValues {
     lifecycleStage: contact?.lifecycleStage ?? "new",
     name: contact?.name ?? "",
     phone: contact?.phone ?? "",
-    tags: contact?.tags.join(", ") ?? "",
+    tagIds: contact?.tags.map((tag) => tag.id) ?? [],
   };
 }
 
 type ContactEditorDrawerProps = {
+  availableTags: Tag[];
   contact: Contact | null;
   onClose: () => void;
   onSaved: (message: string) => void;
@@ -41,6 +44,7 @@ type ContactEditorDrawerProps = {
 };
 
 export function ContactEditorDrawer({
+  availableTags,
   contact,
   onClose,
   onSaved,
@@ -174,18 +178,22 @@ export function ContactEditorDrawer({
             </Select>
           </FormField>
           <FormField
-            description="Separe etiquetas por vírgula. Máximo de 12."
-            error={errors.tags?.message}
-            htmlFor="contact-tags"
+            description="Selecione até 12 classificações padronizadas."
+            error={errors.tagIds?.message}
             label="Etiquetas"
             optional
           >
-            <Input
-              aria-invalid={Boolean(errors.tags)}
-              id="contact-tags"
-              maxLength={360}
-              placeholder="varejo, orçamento, recorrente"
-              {...register("tags")}
+            <Controller
+              control={control}
+              name="tagIds"
+              render={({ field }) => (
+                <ContactTagSelector
+                  availableTags={availableTags}
+                  disabled={isSubmitting}
+                  onChange={field.onChange}
+                  value={field.value}
+                />
+              )}
             />
           </FormField>
         </FormSection>

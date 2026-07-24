@@ -70,7 +70,7 @@ async function saveContact(
     contact_lifecycle_stage: parsed.data.lifecycleStage,
     contact_name: parsed.data.name,
     contact_phone: parsed.data.phone,
-    contact_tags: parseTags(parsed.data.tags),
+    contact_tag_ids: parsed.data.tagIds,
     target_contact_id: contactId,
     target_organization_id: workspace.organization.id,
   });
@@ -91,14 +91,6 @@ async function saveContact(
     ok: true,
     message: contactId ? "Contato atualizado." : "Contato cadastrado.",
   };
-}
-
-function parseTags(value: string) {
-  return value
-    .split(",")
-    .map((tag) => tag.trim())
-    .filter(Boolean)
-    .slice(0, 12);
 }
 
 function revalidateContacts() {

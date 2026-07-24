@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { normalizeContactPhone } from "@/features/contacts/phone-normalization";
+import { tagReferenceSchema } from "@/features/tags/tag-schema";
 
 export const contactLifecycleStageSchema = z.enum([
   "new",
@@ -34,7 +35,9 @@ export const contactFormSchema = z.object({
   lifecycleStage: contactLifecycleStageSchema,
   name: z.string().trim().max(200, "Use no máximo 200 caracteres."),
   phone: z.string().trim().max(30, "Use no máximo 30 caracteres."),
-  tags: z.string().trim().max(360, "Reduza a quantidade de etiquetas."),
+  tagIds: z
+    .array(z.string().uuid())
+    .max(12, "Selecione no máximo 12 etiquetas."),
 }).superRefine((values, context) => {
   if (!values.name && !values.phone && !values.email) {
     context.addIssue({
@@ -66,7 +69,7 @@ export const contactSchema = z.object({
   phoneCountryCode: z.string().nullable(),
   phoneReason: contactPhoneReasonSchema.nullable(),
   phoneStatus: contactPhoneStatusSchema,
-  tags: z.array(z.string()),
+  tags: z.array(tagReferenceSchema),
   updatedAt: z.string(),
 });
 

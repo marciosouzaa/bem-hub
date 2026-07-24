@@ -1,5 +1,5 @@
 begin;
-select plan(148);
+select plan(171);
 
 select ok(
   not has_function_privilege('anon', 'public.list_contacts(uuid)', 'execute'),
@@ -12,7 +12,7 @@ select ok(
 select ok(
   not has_function_privilege(
     'anon',
-    'public.save_contact(uuid,uuid,text,text,text,text[],text)',
+    'public.save_contact(uuid,uuid,text,text,text,uuid[],text)',
     'execute'
   ),
   'anon cannot save contacts'
@@ -20,7 +20,7 @@ select ok(
 select ok(
   has_function_privilege(
     'authenticated',
-    'public.save_contact(uuid,uuid,text,text,text,text[],text)',
+    'public.save_contact(uuid,uuid,text,text,text,uuid[],text)',
     'execute'
   ),
   'authenticated can save organization contacts'
@@ -42,7 +42,7 @@ select is(
   (
     select prosecdef
     from pg_proc
-    where oid = 'public.save_contact(uuid,uuid,text,text,text,text[],text)'::regprocedure
+    where oid = 'public.save_contact(uuid,uuid,text,text,text,uuid[],text)'::regprocedure
   ),
   false,
   'contact mutation is security invoker'
@@ -97,6 +97,95 @@ select ok(
       and indexname = 'contacts_organization_phone_match_idx'
   ),
   'contacts enforce one canonical phone identity per organization'
+);
+select ok(
+  not has_function_privilege('anon', 'public.list_tags(uuid)', 'execute'),
+  'anon cannot list tags'
+);
+select ok(
+  has_function_privilege('authenticated', 'public.list_tags(uuid)', 'execute'),
+  'authenticated can list organization tags'
+);
+select ok(
+  not has_function_privilege(
+    'anon',
+    'public.save_tag(uuid,uuid,text,text,text)',
+    'execute'
+  ),
+  'anon cannot save tags'
+);
+select ok(
+  has_function_privilege(
+    'authenticated',
+    'public.save_tag(uuid,uuid,text,text,text)',
+    'execute'
+  ),
+  'authenticated can save organization tags'
+);
+select ok(
+  not has_function_privilege('anon', 'public.archive_tag(uuid,uuid)', 'execute'),
+  'anon cannot archive tags'
+);
+select ok(
+  has_function_privilege('authenticated', 'public.archive_tag(uuid,uuid)', 'execute'),
+  'authenticated can archive organization tags'
+);
+select is(
+  (select prosecdef from pg_proc where oid = 'public.list_tags(uuid)'::regprocedure),
+  false,
+  'tag listing is security invoker'
+);
+select is(
+  (
+    select prosecdef
+    from pg_proc
+    where oid = 'public.save_tag(uuid,uuid,text,text,text)'::regprocedure
+  ),
+  false,
+  'tag mutation is security invoker'
+);
+select is(
+  (select prosecdef from pg_proc where oid = 'public.archive_tag(uuid,uuid)'::regprocedure),
+  false,
+  'tag archival is security invoker'
+);
+select is(
+  (select relrowsecurity from pg_class where oid = 'public.tags'::regclass),
+  true,
+  'tags have row level security enabled'
+);
+select is(
+  (
+    select relrowsecurity
+    from pg_class
+    where oid = 'public.contact_tag_assignments'::regclass
+  ),
+  true,
+  'contact tag assignments have row level security enabled'
+);
+select ok(
+  not has_table_privilege('authenticated', 'public.tags', 'delete'),
+  'authenticated users cannot hard-delete tags'
+);
+select ok(
+  exists (
+    select 1
+    from pg_indexes
+    where schemaname = 'public'
+      and tablename = 'tags'
+      and indexname = 'tags_organization_normalized_name_idx'
+  ),
+  'tag names are unique per organization without case sensitivity'
+);
+select ok(
+  exists (
+    select 1
+    from pg_indexes
+    where schemaname = 'public'
+      and tablename = 'contact_tag_assignments'
+      and indexname = 'contact_tag_assignments_org_tag_idx'
+  ),
+  'tag assignment lookups are indexed by organization and tag'
 );
 
 select ok(
@@ -1318,13 +1407,49 @@ select throws_ok(
   'bootstrap rejects an organization owned by another user'
 );
 select lives_ok(
+  $$select public.save_tag(
+    'a0000000-0000-0000-0000-000000000001',
+    null::uuid,
+    'Piloto',
+    '#4EE3A3',
+    'Contato do piloto'
+  )$$,
+  'tenant A can create its own tag'
+);
+select is(
+  jsonb_array_length(
+    public.list_tags('a0000000-0000-0000-0000-000000000001')
+  ),
+  1,
+  'tenant A tag appears in its organization list'
+);
+select throws_ok(
+  $$select public.save_tag(
+    'a0000000-0000-0000-0000-000000000001',
+    null::uuid,
+    'PILOTO',
+    '#61A8FF',
+    ''
+  )$$,
+  '23505',
+  'tag_name_exists',
+  'tag names cannot be duplicated with different casing'
+);
+select lives_ok(
   $$select public.save_contact(
     'a0000000-0000-0000-0000-000000000001',
     null::uuid,
     'Lead novo',
     '+55 11 98765-4321',
     'lead@example.com',
-    array['piloto'],
+    array[
+      (
+        select id
+        from public.tags
+        where organization_id = 'a0000000-0000-0000-0000-000000000001'
+          and lower(name) = 'piloto'
+      )
+    ]::uuid[],
     'lead'
   )$$,
   'tenant A can create its own contact'
@@ -1340,6 +1465,81 @@ select is(
   1::bigint,
   'tenant A contact appears in its organization list'
 );
+select is(
+  (
+    select count(*)
+    from jsonb_array_elements(
+      public.list_contacts('a0000000-0000-0000-0000-000000000001')
+    ) contact
+    cross join lateral jsonb_array_elements(contact -> 'tags') tag
+    where contact ->> 'email' = 'lead@example.com'
+      and tag ->> 'name' = 'Piloto'
+  ),
+  1::bigint,
+  'contact listing returns its referenced tag'
+);
+select throws_ok(
+  $$select public.archive_tag(
+    'a0000000-0000-0000-0000-000000000001',
+    (
+      select id
+      from public.tags
+      where organization_id = 'a0000000-0000-0000-0000-000000000001'
+        and lower(name) = 'piloto'
+    )
+  )$$,
+  '23503',
+  'tag_in_use',
+  'tag in use cannot be archived'
+);
+select lives_ok(
+  $$select public.save_contact(
+    'a0000000-0000-0000-0000-000000000001',
+    (
+      select id
+      from public.contacts
+      where organization_id = 'a0000000-0000-0000-0000-000000000001'
+        and email = 'lead@example.com'
+    ),
+    'Lead novo',
+    '+55 11 98765-4321',
+    'lead@example.com',
+    '{}'::uuid[],
+    'lead'
+  )$$,
+  'tenant A can remove all tags from its contact'
+);
+select lives_ok(
+  $$select public.archive_tag(
+    'a0000000-0000-0000-0000-000000000001',
+    (
+      select id
+      from public.tags
+      where organization_id = 'a0000000-0000-0000-0000-000000000001'
+        and lower(name) = 'piloto'
+    )
+  )$$,
+  'unused tag can be archived'
+);
+select is(
+  jsonb_array_length(
+    public.list_tags('a0000000-0000-0000-0000-000000000001')
+  ),
+  0,
+  'archived tag leaves the active tag list'
+);
+select throws_ok(
+  $$select public.save_tag(
+    'b0000000-0000-0000-0000-000000000002',
+    null::uuid,
+    'Tentativa cruzada',
+    '#FF6B6B',
+    ''
+  )$$,
+  '42501',
+  'organization_member_required',
+  'tenant A cannot create a tag in tenant B'
+);
 select throws_ok(
   $$select public.save_contact(
     'b0000000-0000-0000-0000-000000000002',
@@ -1347,7 +1547,7 @@ select throws_ok(
     'Tentativa cruzada',
     '+55 11 97654-3210',
     '',
-    '{}'::text[],
+    '{}'::uuid[],
     'new'
   )$$,
   '42501',

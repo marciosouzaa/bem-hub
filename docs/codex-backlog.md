@@ -117,6 +117,10 @@ fluxo interno de atendimento pode avancar sem esse gate.
 - [x] Aplicar remotamente a migration de contatos apos preflight de duplicatas
   canonicas; probes transacionais validaram CRUD, equivalencia 8/9,
   arquivamento/reativacao e isolamento entre organizacoes.
+- [x] Implementar localmente o modulo de etiquetas com nome, cor hexadecimal,
+  descricao e vinculo de contatos por ID.
+- [x] Aplicar remotamente a migration normalizada de etiquetas e validar
+  backfill, CRUD, RLS e vinculos entre contatos e etiquetas.
 - [ ] Fazer QA visual autenticado do modulo de contatos em desktop/mobile.
 - [ ] Migrar equipe/convites; manter composer, upload e acoes operacionais fora
   do padrao de cadastro.

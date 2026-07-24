@@ -56,6 +56,33 @@ export const contactColumns: DataTableColumn<Contact>[] = [
     meta: { priority: "secondary" },
   },
   {
+    accessorKey: "tags",
+    header: "Etiquetas",
+    cell: ({ row }) => row.original.tags.length > 0 ? (
+      <div className="flex max-w-52 items-center gap-1.5 overflow-hidden">
+        {row.original.tags.slice(0, 2).map((tag) => (
+          <span
+            className="inline-flex min-w-0 items-center gap-1.5 rounded-lg border border-panel-border bg-panel-elevated px-2 py-1 text-xs text-muted-strong"
+            key={tag.id}
+          >
+            <span
+              aria-hidden="true"
+              className="size-2 shrink-0 rounded-full"
+              style={{ backgroundColor: tag.hexColor }}
+            />
+            <span className="truncate">{tag.name}</span>
+          </span>
+        ))}
+        {row.original.tags.length > 2 ? (
+          <span className="text-xs text-muted">+{row.original.tags.length - 2}</span>
+        ) : null}
+      </div>
+    ) : (
+      <span className="text-muted">Sem etiquetas</span>
+    ),
+    meta: { priority: "optional" },
+  },
+  {
     accessorKey: "channelNames",
     header: "Origem",
     cell: ({ row }) => (

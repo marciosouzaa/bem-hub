@@ -21,10 +21,16 @@ import type {
   ContactLifecycleStage,
 } from "@/features/contacts/contact-schema";
 import { formatContactPhone } from "@/features/contacts/phone-normalization";
+import type { Tag } from "@/features/tags/tag-schema";
 
 type StageFilter = "all" | ContactLifecycleStage;
 
-export function ContactsWorkspace({ contacts }: { contacts: Contact[] }) {
+type ContactsWorkspaceProps = {
+  contacts: Contact[];
+  tags: Tag[];
+};
+
+export function ContactsWorkspace({ contacts, tags }: ContactsWorkspaceProps) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [stage, setStage] = useState<StageFilter>("all");
@@ -43,7 +49,7 @@ export function ContactsWorkspace({ contacts }: { contacts: Contact[] }) {
         contact.name,
         contact.phone,
         contact.email,
-        contact.tags.join(" "),
+        contact.tags.map((tag) => tag.name).join(" "),
         contact.channelNames.join(" "),
         contactStageLabels[contact.lifecycleStage],
       ]
@@ -165,6 +171,7 @@ export function ContactsWorkspace({ contacts }: { contacts: Contact[] }) {
       />
 
       <ContactEditorDrawer
+        availableTags={tags}
         contact={selectedContact}
         onClose={() => setEditorOpen(false)}
         onSaved={(message) => {

@@ -1,6 +1,37 @@
 # Handoff Notes
 
-Atualizado em 2026-07-23.
+Atualizado em 2026-07-24.
+
+## Handoff 2026-07-24 - Etiquetas Normalizadas Aplicadas
+
+- `/app/tags` possui CRUD com nome, cor hexadecimal e descricao no padrao
+  DataTable + EntityDrawer.
+- Contatos agora referenciam etiquetas por UUID em relacao muitos-para-muitos;
+  a UI seleciona registros cadastrados e mostra seus nomes/cores.
+- Migration `20260724030940_contact_tags_registry.sql` cria tabelas, RLS, ACL,
+  RPCs, indices e FKs compostas, migra os arrays textuais e remove a coluna
+  antiga somente depois de validar o backfill.
+- Nomes sao unicos por organizacao sem diferenciar caixa. Etiquetas em uso nao
+  podem ser arquivadas.
+- Preflight remoto confirmou que nao ha etiquetas textuais nos 5 contatos atuais
+  e que todos os alvos dependentes estao contemplados.
+- 71 testes, lint e build passaram; pgTAP planeja 171 assertions.
+- Migration aplicada no remoto como
+  `20260724034601_contact_tags_registry`.
+- Catalogo, RLS, ACL, indices, FKs e assinaturas foram confirmados. Probe
+  transacional passou para CRUD, vinculo por ID, contrato do Atendimento,
+  protecao de etiqueta em uso e isolamento cross-tenant, com rollback completo.
+- Advisors nao ganharam alerta de seguranca. Postgres/Docker local e navegador
+  integrado nao estavam disponiveis; pgTAP e QA visual permanecem pendentes.
+- Nenhum commit foi criado nesta sessao; implementacao e documentacao permanecem
+  no worktree para revisao e commit no proximo checkpoint.
+
+### Retomada Exata
+
+1. Revisar o diff e criar um commit coerente do modulo de contatos/etiquetas.
+2. Validar `/app/tags` e o seletor de etiquetas de contatos em desktop/mobile.
+3. Cadastrar etiquetas reais e testar criacao/edicao de contato pela UI.
+4. Rodar pgTAP quando Docker/Postgres local estiver disponivel.
 
 ## Handoff 2026-07-23 - Modulo De Contatos Aplicado
 

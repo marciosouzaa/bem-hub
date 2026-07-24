@@ -4,6 +4,60 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-24 - Modulo De Etiquetas Aplicado No Remoto
+
+### Feito
+
+- Criada rota `/app/tags` com DataTable, busca, EntityDrawer, criacao, edicao e
+  arquivamento seguro.
+- Etiquetas possuem nome unico por organizacao sem diferenciar caixa, cor
+  hexadecimal, descricao, contagem de contatos e estado arquivado.
+- Contatos deixaram de editar texto livre e agora selecionam ate 12 etiquetas
+  cadastradas por ID, com cor e nome exibidos na tabela.
+- Migration `20260724030940_contact_tags_registry.sql` cria `tags` e
+  `contact_tag_assignments`, migra arrays textuais existentes, valida o backfill
+  e remove `contacts.tags`.
+- FKs compostas impedem vincular contato e etiqueta de organizacoes diferentes.
+  RLS e RPCs `SECURITY INVOKER` preservam isolamento multi-tenant.
+- Etiqueta em uso nao pode ser arquivada; primeiro precisa ser removida dos
+  contatos, evitando classificacao quebrada.
+- Atendimento continua recebendo nomes de etiquetas pelo contrato existente,
+  enquanto o modulo de contatos recebe IDs, nomes e cores.
+
+### Verificacao
+
+- Preflight remoto somente leitura confirmou 5 contatos, nenhum texto de
+  etiqueta existente e apenas `list_contacts`/`get_support_inbox` dependentes da
+  coluna antiga, ambos cobertos pela migration.
+- 71 testes unitarios passaram.
+- pgTAP foi ampliado de 148 para 171 assertions.
+- `bun run lint` passou.
+- `bun run build` passou com Next.js 16.2.9 e rota `/app/tags`.
+- `supabase db lint --local` e `supabase test db --local` nao executaram porque
+  o Postgres/Docker local continua indisponivel.
+- Navegador integrado nao estava disponivel; QA visual autenticado permanece
+  pendente.
+- Migration aplicada no remoto como
+  `20260724034601_contact_tags_registry`.
+- Catalogo remoto confirmou RLS, FKs compostas, indices, grants explicitos,
+  RPCs `SECURITY INVOKER`, remocao da coluna textual e nova assinatura por
+  `uuid[]`.
+- Probe SQL transacional confirmou CRUD, nome unico sem diferenciar caixa,
+  vinculo por ID, contrato do Atendimento, protecao de etiqueta em uso,
+  arquivamento e isolamento de leitura/escrita entre organizacoes; todas as
+  fixtures sofreram rollback.
+- Advisors nao apontaram novo alerta de seguranca. Dois indices novos aparecem
+  como ainda nao utilizados, resultado esperado antes de trafego real.
+- Nenhum commit foi criado nesta sessao; implementacao e documentacao permanecem
+  no worktree para revisao e commit no proximo checkpoint.
+
+### Retomada
+
+1. Revisar o diff e criar um commit coerente do modulo de contatos/etiquetas.
+2. Fazer QA visual de `/app/tags` e do seletor em `/app/contacts`.
+3. Cadastrar as primeiras etiquetas reais e validar o fluxo completo pela UI.
+4. Rodar pgTAP quando Docker/Postgres local estiver disponivel.
+
 ## 2026-07-23 - CRUD De Contatos Aplicado No Remoto
 
 ### Feito

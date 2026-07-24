@@ -9,6 +9,7 @@ import {
   Settings,
   Headphones,
   RadioTower,
+  Tags,
   Zap,
   type LucideIcon,
 } from "lucide-react";
@@ -29,6 +30,7 @@ const navItems: NavItem[] = [
   { icon: MessageSquareText, label: "Conversas", href: "/app/chat" },
   { icon: Headphones, label: "Atendimento", href: "/app/support" },
   { icon: ContactRound, label: "Contatos", href: "/app/contacts" },
+  { icon: Tags, label: "Etiquetas", href: "/app/tags" },
   { icon: RadioTower, label: "Canais", href: "/app/channels" },
   { icon: Zap, label: "Automacoes", href: "/app/automations" },
   { icon: Database, label: "Base de conhecimento", href: "/app/knowledge" },
