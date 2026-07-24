@@ -4,7 +4,7 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
-## 2026-07-23 - CRUD De Contatos Preparado Localmente
+## 2026-07-23 - CRUD De Contatos Aplicado No Remoto
 
 ### Feito
 
@@ -37,19 +37,28 @@ do marco ativo.
 - `bun run build` passou com Next.js 16.2.9 e rota `/app/contacts`.
 - pgTAP foi ampliado de 129 para 148 assertions, mas nao executou porque Docker
   e Postgres local nao estao disponiveis.
-- Preflight remoto nao executou porque Supabase CLI nao esta vinculado nesta
-  sessao; nenhuma migration remota foi aplicada.
+- Preflight remoto confirmou 5 contatos, zero colisoes canonicas e todos os
+  alvos esperados nas funcoes de ingestao e Atendimento.
+- Migration foi aplicada no remoto como
+  `20260724024011_contacts_crud_phone_identity`.
+- Catalogo remoto confirmou RLS, trigger, indices, RPCs `SECURITY INVOKER`, ACL
+  sem acesso anonimo e sem `DELETE` para `authenticated`.
+- Probe SQL transacional confirmou criacao/listagem, bloqueio de duplicata entre
+  oito e nove digitos, arquivamento, reativacao do mesmo ID e isolamento de
+  leitura/escrita entre duas organizacoes; todas as fixtures sofreram rollback.
+- Advisors nao apontaram regressao desta migration. Permanecem os warnings
+  conhecidos de duas RPCs `SECURITY DEFINER` intencionais e protecao contra
+  senha vazada desativada, alem de indices ainda sem uso em base pequena.
 - QA visual autenticado nao executou porque navegador integrado nao esta
   disponivel.
 
 ### Retomada
 
-1. Consultar duplicatas canonicas no remoto sem alterar dados.
-2. Aplicar `20260724015915_contacts_crud_phone_identity.sql`.
-3. Rodar pgTAP/advisors e regenerar tipos Supabase.
-4. Fazer smoke: cadastro manual, callback com versao 8/9 do mesmo celular,
+1. Fazer smoke real: cadastro manual, callback com versao 8/9 do mesmo celular,
    arquivamento/reativacao e DDI estrangeiro.
-5. Fazer QA visual desktop/mobile em `/app/contacts` e no painel do Atendimento.
+2. Fazer QA visual desktop/mobile em `/app/contacts` e no painel do Atendimento.
+3. Rodar pgTAP quando Docker/Postgres local estiver disponivel e regenerar os
+   tipos oficiais do Supabase.
 
 ## 2026-07-22 - Encerramento Da Sessao WhatsApp
 

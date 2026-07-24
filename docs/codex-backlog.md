@@ -114,8 +114,9 @@ fluxo interno de atendimento pode avancar sem esse gate.
   criacao manual, arquivamento e vinculo ao Atendimento.
 - [x] Normalizar telefones brasileiros com equivalencia entre celulares de oito
   e nove digitos; preservar outro DDI com diagnostico sem quebrar a ingestao.
-- [ ] Aplicar remotamente a migration de contatos apos preflight de duplicatas
-  canonicas e validar recebimento em contato existente.
+- [x] Aplicar remotamente a migration de contatos apos preflight de duplicatas
+  canonicas; probes transacionais validaram CRUD, equivalencia 8/9,
+  arquivamento/reativacao e isolamento entre organizacoes.
 - [ ] Fazer QA visual autenticado do modulo de contatos em desktop/mobile.
 - [ ] Migrar equipe/convites; manter composer, upload e acoes operacionais fora
   do padrao de cadastro.
