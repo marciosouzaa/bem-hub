@@ -121,6 +121,73 @@ describe("Uazapi webhook", () => {
     }]);
   });
 
+  test("normaliza confirmações de entrega e leitura", () => {
+    const events = verifyAndNormalizeUazapiWebhook({
+      expectedInstanceId: "instance-test",
+      headers: new Headers(),
+      payload: {
+        event: "messages_update",
+        instance: { id: "instance-test" },
+        messages: [
+          {
+            messageTimestamp: 1_750_000_000,
+            messageid: "provider-message-001",
+            status: "Delivered",
+            wasSentByApi: true,
+          },
+          {
+            messageTimestamp: 1_750_000_100,
+            messageid: "provider-message-002",
+            status: "Read",
+            wasSentByApi: true,
+          },
+        ],
+      },
+      rawBody: "{}",
+    }, instanceToken);
+
+    expect(events).toEqual([
+      {
+        deliveryStatus: "delivered",
+        eventId: "provider-message-001:delivered",
+        occurredAt: "2025-06-15T15:06:40.000Z",
+        providerMessageId: "provider-message-001",
+        type: "message.delivery_updated",
+      },
+      {
+        deliveryStatus: "read",
+        eventId: "provider-message-002:read",
+        occurredAt: "2025-06-15T15:08:20.000Z",
+        providerMessageId: "provider-message-002",
+        type: "message.delivery_updated",
+      },
+    ]);
+  });
+
+  test("aceita status textual aninhado sem recriar a mensagem", () => {
+    const events = verifyAndNormalizeUazapiWebhook({
+      expectedInstanceId: null,
+      headers: new Headers(),
+      payload: {
+        data: {
+          key: { id: "provider-message-003" },
+          update: { status: "Sent" },
+        },
+        event: "messages_update",
+        timestamp: 1_750_000_000_000,
+      },
+      rawBody: "{}",
+    }, instanceToken);
+
+    expect(events).toEqual([{
+      deliveryStatus: "sent",
+      eventId: "provider-message-003:sent",
+      occurredAt: "2025-06-15T15:06:40.000Z",
+      providerMessageId: "provider-message-003",
+      type: "message.delivery_updated",
+    }]);
+  });
+
   test("rejeita token ou instância divergentes", () => {
     expect(() => verifyAndNormalizeUazapiWebhook({
       expectedInstanceId: null,

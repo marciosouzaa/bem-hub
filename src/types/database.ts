@@ -1130,6 +1130,13 @@ export type Database = {
         }
         Returns: Json
       }
+      get_support_message_delivery_states: {
+        Args: {
+          target_conversation_id: string
+          target_organization_id: string
+        }
+        Returns: Json
+      }
       finalize_support_message_send_attempt: {
         Args: {
           delivery_metadata: Json
@@ -1191,6 +1198,17 @@ export type Database = {
           sender_identity_value: string
           sender_name: string | null
           sender_phone: string | null
+          target_webhook_endpoint_id: string
+        }
+        Returns: Json
+      }
+      ingest_support_message_delivery_update: {
+        Args: {
+          target_delivery_status: string
+          target_payload_sha256: string
+          target_provider_event_id: string
+          target_provider_message_id: string
+          target_provider_occurred_at: string | null
           target_webhook_endpoint_id: string
         }
         Returns: Json

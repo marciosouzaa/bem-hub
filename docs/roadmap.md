@@ -68,8 +68,10 @@ tecnico recorrente.
 Status: fundação e primeiro adapter em validação operacional. Canal Uazapi real
 conecta, entrega callback e cria atendimento. Broadcast privado foi aplicado no
 remoto. O ciclo de atribuicao, estados, leitura por operador, auditoria e
-metricas, junto do retry explicito com tentativas auditaveis, foi aplicado e
-validado no remoto. pgTAP local e QA autenticado ainda estao pendentes.
+metricas, junto do retry explicito com tentativas auditaveis e o eixo separado
+de entrega/leitura, foi aplicado e validado no remoto. Publicacao da aplicacao,
+reconfiguracao dos webhooks existentes, pgTAP local e QA autenticado ainda
+estao pendentes.
 
 Gate de produto: escolher Evolution API, Z-API ou outro BSP, definir custos,
 termos e credenciais. A integracao deve ficar atras de um adapter de canal para
@@ -90,8 +92,10 @@ evitar acoplamento do dominio ao fornecedor.
 - [x] Implementar localmente painel simples de resolvidas, pendentes, escaladas,
   nao atribuidas e tempo medio de resolucao.
 - [x] Implementar localmente retry explicito sem duplicar a mensagem.
-- [ ] Capturar callback real e persistir entrega/leitura do provedor em eixo
-  separado da revisao.
+- [x] Persistir entrega/leitura do provedor em eixo separado da revisao, com
+  aceite HTTP, recibos idempotentes e protecao contra regressao.
+- [ ] Capturar callback real `messages_update` e validar a fixture textual
+  adotada contra o canal em producao.
 - [x] Aplicar e validar no ambiente remoto o ciclo operacional e suas metricas.
 - [ ] Liberar modo automatico somente depois do periodo de validacao.
 

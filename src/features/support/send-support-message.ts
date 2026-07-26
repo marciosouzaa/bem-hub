@@ -190,7 +190,7 @@ async function deliverSupportMessageAttempt(
       "finalize_support_message_send_attempt",
       {
         delivery_metadata: {
-          deliveredAt: new Date().toISOString(),
+          acceptedAt: new Date().toISOString(),
           provider: delivery.provider,
         },
         delivery_status: "sent",

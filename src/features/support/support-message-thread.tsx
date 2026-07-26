@@ -6,9 +6,9 @@ import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import type { SupportConversation } from "@/features/support/queries";
+import { SupportMessageDeliveryStatus } from "@/features/support/support-message-delivery-status";
 import {
   formatSupportTime,
-  supportMessageStatusLabels,
 } from "@/features/support/support-presenters";
 import { cn } from "@/lib/utils";
 
@@ -141,7 +141,7 @@ export function SupportMessageThread({
                         {formatSupportTime(message.createdAt)}
                       </time>
                       <span aria-hidden="true">·</span>
-                      <span>{supportMessageStatusLabels[message.status]}</span>
+                      <SupportMessageDeliveryStatus message={message} />
                     </div>
 
                     {outbound

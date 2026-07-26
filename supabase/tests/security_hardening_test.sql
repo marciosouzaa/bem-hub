@@ -1,5 +1,5 @@
 begin;
-select plan(237);
+select plan(261);
 
 select ok(
   to_regclass('public.support_events') is not null,
@@ -640,6 +640,87 @@ select ok(
   'service role can finalize one delivery attempt'
 );
 select ok(
+  exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'support_messages'
+      and column_name = 'delivery_status'
+  ),
+  'support messages expose a delivery lifecycle'
+);
+select ok(
+  exists (
+    select 1
+    from pg_constraint
+    where conrelid = 'public.support_messages'::regclass
+      and conname = 'support_messages_delivery_status_check'
+  ),
+  'support delivery lifecycle rejects unknown states'
+);
+select ok(
+  not has_function_privilege(
+    'anon',
+    'public.get_support_message_delivery_states(uuid,uuid)',
+    'execute'
+  ),
+  'anon cannot read support delivery states'
+);
+select ok(
+  has_function_privilege(
+    'authenticated',
+    'public.get_support_message_delivery_states(uuid,uuid)',
+    'execute'
+  ),
+  'authenticated members can read tenant-scoped delivery states'
+);
+select is(
+  (
+    select prosecdef
+    from pg_proc
+    where oid =
+      'public.get_support_message_delivery_states(uuid,uuid)'::regprocedure
+  ),
+  false,
+  'delivery state query is security invoker'
+);
+select ok(
+  not has_function_privilege(
+    'authenticated',
+    'public.ingest_support_message_delivery_update(uuid,text,text,text,text,timestamptz)',
+    'execute'
+  ),
+  'authenticated users cannot forge delivery receipts'
+);
+select ok(
+  has_function_privilege(
+    'service_role',
+    'public.ingest_support_message_delivery_update(uuid,text,text,text,text,timestamptz)',
+    'execute'
+  ),
+  'service role can ingest provider delivery receipts'
+);
+select is(
+  (
+    select prosecdef
+    from pg_proc
+    where oid =
+      'public.ingest_support_message_delivery_update(uuid,text,text,text,text,timestamptz)'::regprocedure
+  ),
+  false,
+  'public delivery receipt ingestion is security invoker'
+);
+select is(
+  (
+    select prosecdef
+    from pg_proc
+    where oid =
+      'private.ingest_support_message_delivery_update(uuid,text,text,text,text,timestamptz)'::regprocedure
+  ),
+  true,
+  'private delivery receipt ingestion is security definer'
+);
+select ok(
   not has_function_privilege(
     'authenticated',
     'public.get_support_message_delivery(uuid,uuid)',
@@ -1216,6 +1297,26 @@ select is(
   (select status from public.channel_connections where id = 'ca000000-0000-0000-0000-000000000001'),
   'draft',
   'new channel connections start as draft'
+);
+insert into public.channel_webhook_endpoints (
+  id,
+  organization_id,
+  channel_connection_id,
+  provider,
+  secret_hash,
+  status,
+  created_by,
+  configured_at
+)
+values (
+  'ea000000-0000-0000-0000-000000000001',
+  'a0000000-0000-0000-0000-000000000001',
+  'ca000000-0000-0000-0000-000000000001',
+  'pending-provider',
+  repeat('a', 64),
+  'active',
+  '10000000-0000-0000-0000-000000000001',
+  now()
 );
 insert into public.contacts (id, organization_id, name, phone)
 values
@@ -1952,6 +2053,16 @@ select is(
 );
 select is(
   (
+    select delivery_status
+    from public.support_messages
+    where organization_id = 'a0000000-0000-0000-0000-000000000001'
+      and client_request_id = 'd1000000-0000-4000-8000-000000000001'
+  ),
+  'sending',
+  'new outbound support message starts in the delivery lifecycle'
+);
+select is(
+  (
     public.begin_support_message_send(
       'a0000000-0000-0000-0000-000000000001',
       (select id from public.support_conversations where organization_id = 'a0000000-0000-0000-0000-000000000001' limit 1),
@@ -2093,6 +2204,195 @@ select throws_ok(
   '42501',
   'organization_member_required',
   'tenant A cannot retry a message through tenant B'
+);
+
+reset role;
+set local role service_role;
+set local request.jwt.claims = '{"role":"service_role"}';
+
+select lives_ok(
+  $$select public.finalize_support_message_send_attempt(
+    'a0000000-0000-0000-0000-000000000001',
+    (
+      select id
+      from public.support_messages
+      where organization_id = 'a0000000-0000-0000-0000-000000000001'
+        and client_request_id = 'd1000000-0000-4000-8000-000000000001'
+    ),
+    (
+      select id
+      from public.support_message_send_attempts
+      where organization_id = 'a0000000-0000-0000-0000-000000000001'
+        and request_id = 'd1000000-0000-4000-8000-000000000011'
+    ),
+    'sent',
+    'provider-delivery-test-001',
+    '{"acceptedAt":"2026-07-25T12:00:00Z"}'::jsonb
+  )$$,
+  'service role records provider acceptance without an ambiguous column'
+);
+select is(
+  (
+    select provider_message_id
+    from public.support_message_send_attempts
+    where organization_id = 'a0000000-0000-0000-0000-000000000001'
+      and request_id = 'd1000000-0000-4000-8000-000000000011'
+  ),
+  'provider-delivery-test-001',
+  'successful attempt stores the provider message id'
+);
+select is(
+  (
+    select delivery_status
+    from public.support_messages
+    where organization_id = 'a0000000-0000-0000-0000-000000000001'
+      and client_request_id = 'd1000000-0000-4000-8000-000000000001'
+  ),
+  'accepted',
+  'HTTP provider success is recorded as accepted, not delivered'
+);
+select lives_ok(
+  $$select public.ingest_support_message_delivery_update(
+    'ea000000-0000-0000-0000-000000000001',
+    'provider-delivery-test-001:delivered',
+    'provider-delivery-test-001',
+    'delivered',
+    repeat('b', 64),
+    '2026-07-25T12:01:00Z'
+  )$$,
+  'service role ingests a delivered receipt'
+);
+select is(
+  (
+    select delivery_status
+    from public.support_messages
+    where organization_id = 'a0000000-0000-0000-0000-000000000001'
+      and client_request_id = 'd1000000-0000-4000-8000-000000000001'
+  ),
+  'delivered',
+  'delivered receipt advances the visible lifecycle'
+);
+select lives_ok(
+  $$select public.ingest_support_message_delivery_update(
+    'ea000000-0000-0000-0000-000000000001',
+    'provider-delivery-test-001:read',
+    'provider-delivery-test-001',
+    'read',
+    repeat('c', 64),
+    '2026-07-25T12:02:00Z'
+  )$$,
+  'service role ingests a read receipt'
+);
+select is(
+  (
+    select delivery_status
+    from public.support_messages
+    where organization_id = 'a0000000-0000-0000-0000-000000000001'
+      and client_request_id = 'd1000000-0000-4000-8000-000000000001'
+  ),
+  'read',
+  'read receipt advances the visible lifecycle'
+);
+select lives_ok(
+  $$select public.ingest_support_message_delivery_update(
+    'ea000000-0000-0000-0000-000000000001',
+    'provider-delivery-test-001:late-sent',
+    'provider-delivery-test-001',
+    'sent',
+    repeat('d', 64),
+    '2026-07-25T12:00:30Z'
+  )$$,
+  'service role accepts an out-of-order sent receipt'
+);
+select is(
+  (
+    select delivery_status
+    from public.support_messages
+    where organization_id = 'a0000000-0000-0000-0000-000000000001'
+      and client_request_id = 'd1000000-0000-4000-8000-000000000001'
+  ),
+  'read',
+  'out-of-order receipt cannot regress a read message'
+);
+select is(
+  (
+    public.ingest_support_message_delivery_update(
+      'ea000000-0000-0000-0000-000000000001',
+      'provider-delivery-test-001:read',
+      'provider-delivery-test-001',
+      'read',
+      repeat('c', 64),
+      '2026-07-25T12:02:00Z'
+    ) ->> 'duplicate'
+  )::boolean,
+  true,
+  'duplicate receipt is idempotent'
+);
+select lives_ok(
+  $$select public.ingest_support_message_delivery_update(
+    'ea000000-0000-0000-0000-000000000001',
+    'provider-delivery-test-001:late-failed',
+    'provider-delivery-test-001',
+    'failed',
+    repeat('e', 64),
+    '2026-07-25T12:03:00Z'
+  )$$,
+  'service role accepts a late failure receipt'
+);
+select is(
+  (
+    select delivery_status
+    from public.support_messages
+    where organization_id = 'a0000000-0000-0000-0000-000000000001'
+      and client_request_id = 'd1000000-0000-4000-8000-000000000001'
+  ),
+  'read',
+  'late failure cannot regress a delivered or read message'
+);
+
+reset role;
+set local role authenticated;
+set local request.jwt.claims =
+  '{"sub":"10000000-0000-0000-0000-000000000001","role":"authenticated"}';
+
+select is(
+  (
+    select item ->> 'status'
+    from jsonb_array_elements(
+      public.get_support_message_delivery_states(
+        'a0000000-0000-0000-0000-000000000001',
+        (
+          select id
+          from public.support_conversations
+          where organization_id = 'a0000000-0000-0000-0000-000000000001'
+          limit 1
+        )
+      )
+    ) item
+    where item ->> 'messageId' = (
+      select id::text
+      from public.support_messages
+      where organization_id = 'a0000000-0000-0000-0000-000000000001'
+        and client_request_id = 'd1000000-0000-4000-8000-000000000001'
+    )
+  ),
+  'read',
+  'tenant member reads the final delivery state'
+);
+select is(
+  jsonb_array_length(
+    public.get_support_message_delivery_states(
+      'b0000000-0000-0000-0000-000000000002',
+      (
+        select id
+        from public.support_conversations
+        where organization_id = 'b0000000-0000-0000-0000-000000000002'
+        limit 1
+      )
+    )
+  ),
+  0,
+  'tenant member cannot read another organization delivery states'
 );
 
 reset role;

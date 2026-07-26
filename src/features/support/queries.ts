@@ -36,7 +36,7 @@ const supportInboxItemSchema = z.object({
   }),
 });
 
-const supportMessageSchema = z.object({
+const supportMessageBaseSchema = z.object({
   id: z.string().uuid(),
   direction: z.enum(["inbound", "outbound"]),
   content: z.string(),
@@ -50,6 +50,37 @@ const supportMessageSchema = z.object({
     "failed",
   ]),
   createdAt: z.string(),
+});
+
+const supportDeliveryStatusSchema = z.enum([
+  "not_sent",
+  "sending",
+  "accepted",
+  "sent",
+  "delivered",
+  "read",
+  "failed",
+]);
+
+const supportMessageDeliveryStateSchema = z.object({
+  messageId: z.string().uuid(),
+  status: supportDeliveryStatusSchema,
+  updatedAt: z.string().nullable(),
+  acceptedAt: z.string().nullable(),
+  sentAt: z.string().nullable(),
+  deliveredAt: z.string().nullable(),
+  readAt: z.string().nullable(),
+  failedAt: z.string().nullable(),
+});
+
+const supportMessageSchema = supportMessageBaseSchema.extend({
+  deliveryStatus: supportDeliveryStatusSchema,
+  deliveryUpdatedAt: z.string().nullable(),
+  acceptedAt: z.string().nullable(),
+  sentAt: z.string().nullable(),
+  deliveredAt: z.string().nullable(),
+  readAt: z.string().nullable(),
+  deliveryFailedAt: z.string().nullable(),
 });
 
 const supportConversationSchema = z.object({
@@ -142,7 +173,12 @@ export async function getSupportConversation(
   conversationId: string,
 ) {
   const supabase = await createSupabaseServerClient();
-  const [conversationResult, stateResult, eventsResult] = await Promise.all([
+  const [
+    conversationResult,
+    stateResult,
+    eventsResult,
+    deliveryStatesResult,
+  ] = await Promise.all([
     supabase.rpc("get_support_conversation", {
       target_organization_id: organizationId,
       target_conversation_id: conversationId,
@@ -156,20 +192,62 @@ export async function getSupportConversation(
       target_organization_id: organizationId,
       target_conversation_id: conversationId,
     }),
+    supabase.rpc("get_support_message_delivery_states", {
+      target_organization_id: organizationId,
+      target_conversation_id: conversationId,
+    }),
   ]);
 
   const error = conversationResult.error
     ?? stateResult.error
-    ?? eventsResult.error;
+    ?? eventsResult.error
+    ?? deliveryStatesResult.error;
   if (error) {
     throw new Error(`Falha ao abrir atendimento: ${error.message}`);
   }
 
+  const conversationData = z.record(
+    z.string(),
+    z.unknown(),
+  ).parse(conversationResult.data);
+  const deliveryStates = z.array(
+    supportMessageDeliveryStateSchema,
+  ).parse(deliveryStatesResult.data);
+  const deliveryByMessage = new Map(
+    deliveryStates.map((delivery) => [delivery.messageId, delivery]),
+  );
+  const messages = z.array(supportMessageBaseSchema)
+    .parse(conversationData.messages)
+    .map((message) => {
+      const delivery = deliveryByMessage.get(message.id);
+      return {
+        ...message,
+        acceptedAt: delivery?.acceptedAt ?? null,
+        deliveredAt: delivery?.deliveredAt ?? null,
+        deliveryFailedAt: delivery?.failedAt ?? null,
+        deliveryStatus: delivery?.status ?? getLegacyDeliveryStatus(message),
+        deliveryUpdatedAt: delivery?.updatedAt ?? null,
+        readAt: delivery?.readAt ?? null,
+        sentAt: delivery?.sentAt ?? null,
+      };
+    });
+
   return supportConversationSchema.parse({
-    ...z.record(z.string(), z.unknown()).parse(conversationResult.data),
+    ...conversationData,
     ...supportConversationStateSchema.parse(stateResult.data),
     events: supportEventsSchema.parse(eventsResult.data),
+    messages,
   });
+}
+
+function getLegacyDeliveryStatus(
+  message: z.infer<typeof supportMessageBaseSchema>,
+) {
+  if (message.direction !== "outbound") return "not_sent" as const;
+  if (message.status === "sending") return "sending" as const;
+  if (message.status === "sent") return "accepted" as const;
+  if (message.status === "failed") return "failed" as const;
+  return "not_sent" as const;
 }
 
 export async function getSupportMetrics(organizationId: string) {

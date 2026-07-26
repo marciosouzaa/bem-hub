@@ -39,8 +39,8 @@ describe("Uazapi adapter", () => {
       addUrlEvents: false,
       addUrlTypesMessages: false,
       enabled: true,
-      events: ["messages"],
-      excludeMessages: ["wasSentByApi", "isGroupYes"],
+      events: ["messages", "messages_update"],
+      excludeMessages: ["isGroupYes"],
       url: callbackUrl,
     });
     expect((requests[0].init?.headers as Record<string, string>).token).toBe(

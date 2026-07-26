@@ -121,18 +121,27 @@ export async function processChannelWebhook(
   let processed = 0;
 
   for (const event of events) {
-    const { data, error } = await admin.rpc("ingest_channel_inbound_message", {
-      event_type: event.type,
-      message_text: event.text,
-      payload_sha256: payloadSha256,
-      provider_event_id: event.providerMessageId,
-      provider_occurred_at: event.occurredAt,
-      sender_identity_type: event.senderIdentityType,
-      sender_identity_value: event.senderIdentityValue,
-      sender_name: event.senderName ?? "",
-      sender_phone: event.senderPhone ?? "",
-      target_webhook_endpoint_id: endpoint.id,
-    });
+    const { data, error } = event.type === "message.delivery_updated"
+      ? await admin.rpc("ingest_support_message_delivery_update", {
+          target_delivery_status: event.deliveryStatus,
+          target_payload_sha256: payloadSha256,
+          target_provider_event_id: event.eventId,
+          target_provider_message_id: event.providerMessageId,
+          target_provider_occurred_at: event.occurredAt,
+          target_webhook_endpoint_id: endpoint.id,
+        })
+      : await admin.rpc("ingest_channel_inbound_message", {
+          event_type: event.type,
+          message_text: event.text,
+          payload_sha256: payloadSha256,
+          provider_event_id: event.providerMessageId,
+          provider_occurred_at: event.occurredAt,
+          sender_identity_type: event.senderIdentityType,
+          sender_identity_value: event.senderIdentityValue,
+          sender_name: event.senderName ?? "",
+          sender_phone: event.senderPhone ?? "",
+          target_webhook_endpoint_id: endpoint.id,
+        });
     if (error) throw error;
 
     const result = ingestResultSchema.parse(data);
@@ -152,4 +161,3 @@ export async function processChannelWebhook(
     processed,
   };
 }
-

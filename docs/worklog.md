@@ -4,6 +4,58 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-25 - Confirmacoes De Entrega Aplicadas No Remoto
+
+### Causa Raiz
+
+- O fornecedor aceitava e entregava a mensagem, mas
+  `private.finalize_support_message_send_attempt` falhava com `SQLSTATE 42702`
+  porque `provider_message_id` podia significar tanto o parametro quanto a
+  coluna da tentativa.
+- O webhook Uazapi assinava somente `messages`, excluia mensagens enviadas pela
+  API e, por isso, nao recebia `messages_update`.
+- A resposta HTTP do fornecedor era gravada como `deliveredAt`, embora
+  comprovasse apenas que a mensagem fora aceita para processamento.
+
+### Feito
+
+- Aplicada remotamente a migration
+  `20260726022509_support_delivery_receipts`.
+- A finalizacao usa parametros posicionais e separa os estados `sending`,
+  `accepted`, `sent`, `delivered`, `read` e `failed`.
+- O webhook Uazapi passa a assinar `messages_update`; o normalizador aceita os
+  estados textuais documentados pelo fornecedor e preserva o filtro que evita
+  recriar o eco da mensagem enviada pela API.
+- Recibos sao idempotentes e monotonicos: duplicatas nao reaplicam mudancas e
+  eventos atrasados nao regridem uma mensagem entregue ou lida.
+- A interface mostra estados distintos e acessiveis: Enviando, Aceita, Enviada,
+  Entregue, Lida e Falhou.
+- Broadcast existente em `support_messages` continua sendo a invalidacao
+  provider-neutral para atualizar a conversa aberta.
+- As mensagens historicas travadas nao foram recuperadas, conforme decisao do
+  usuario; a mudanca e preventiva para novos envios.
+
+### Verificacao
+
+- Probe remoto transacional passou por `sending -> accepted -> delivered ->
+  read`, confirmou a correcao da ambiguidade, rejeitou regressao por `sent` e
+  `failed` atrasados e reconheceu recibo duplicado. Rollback confirmado, sem
+  fixture persistida.
+- 79 testes unitarios passaram.
+- pgTAP foi ampliado de 237 para 261 assertions; a execucao local continua
+  pendente porque Docker/Postgres nao esta disponivel.
+- `bun run lint`, `bun run build` e `git diff --check` passaram.
+- Advisors nao apontaram novo alerta de seguranca nem FK sem indice. Permanecem
+  apenas os avisos conhecidos.
+
+### Retomada
+
+1. Publicar o codigo da aplicacao.
+2. Reconfigurar uma vez os webhooks Uazapi existentes para ativar
+   `messages_update`; novos canais ja usam o contrato atualizado.
+3. Fazer um smoke real de novo envio e observar `Aceita -> Entregue -> Lida`.
+4. Executar o pgTAP quando houver Postgres local e concluir QA desktop/mobile.
+
 ## 2026-07-25 - Ciclo Operacional E Retry Aplicados No Remoto
 
 ### Feito

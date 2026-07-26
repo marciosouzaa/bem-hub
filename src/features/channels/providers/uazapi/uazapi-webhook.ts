@@ -20,7 +20,8 @@ export function verifyAndNormalizeUazapiWebhook(
     throw new ChannelWebhookVerificationError();
   }
 
-  const payloadInstance = readString(input.payload, "instance");
+  const payloadInstance = readString(input.payload, "instance")
+    ?? firstString(input.payload, ["instance.id"]);
   if (
     payloadInstance
     && input.expectedInstanceId
@@ -34,11 +35,71 @@ export function verifyAndNormalizeUazapiWebhook(
     ?? readString(input.payload, "EventType")
     ?? ""
   ).toLowerCase();
+  if (eventType === "messages_update" || eventType === "message_update") {
+    const fallbackTimestamp = firstValue(input.payload, [
+      "timestamp",
+      "eventTimestamp",
+    ]);
+    return collectMessageCandidates(input.payload)
+      .map((message) => normalizeDeliveryUpdate(message, fallbackTimestamp))
+      .filter((event): event is ChannelMessageEvent => event !== null);
+  }
   if (eventType !== "messages" && eventType !== "message") return [];
 
   return collectMessageCandidates(input.payload)
     .map(normalizeMessage)
     .filter((event): event is ChannelMessageEvent => event !== null);
+}
+
+function normalizeDeliveryUpdate(
+  message: UnknownRecord,
+  fallbackTimestamp: unknown,
+): ChannelMessageEvent | null {
+  const providerMessageId = firstString(message, [
+    "messageid",
+    "messageId",
+    "key.id",
+    "id",
+  ]);
+  const deliveryStatus = normalizeDeliveryStatus(
+    firstValue(message, [
+      "status",
+      "update.status",
+      "message.status",
+      "ack",
+    ]),
+  );
+  if (!providerMessageId || !deliveryStatus) return null;
+
+  return channelMessageEventSchema.parse({
+    deliveryStatus,
+    eventId: `${providerMessageId}:${deliveryStatus}`,
+    occurredAt: normalizeTimestamp(
+      firstValue(message, [
+        "messageTimestamp",
+        "timestamp",
+        "updatedAt",
+        "updated",
+      ]) ?? fallbackTimestamp,
+    ),
+    providerMessageId,
+    type: "message.delivery_updated",
+  });
+}
+
+function normalizeDeliveryStatus(value: unknown) {
+  if (typeof value !== "string") return null;
+
+  const normalized = value.trim().toLowerCase();
+  if (["canceled", "cancelled", "error", "failed"].includes(normalized)) {
+    return "failed" as const;
+  }
+  if (["sent", "server"].includes(normalized)) return "sent" as const;
+  if (["delivered", "delivery"].includes(normalized)) {
+    return "delivered" as const;
+  }
+  if (["played", "read"].includes(normalized)) return "read" as const;
+  return null;
 }
 
 function normalizeMessage(message: UnknownRecord): ChannelMessageEvent | null {

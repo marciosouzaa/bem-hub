@@ -102,7 +102,8 @@ fluxo interno de atendimento pode avancar sem esse gate.
 - [x] Normalizar mensagem manual `fromMe` como `message.sent_by_phone`, sem
   duplicar eco `wasSentByApi`.
 - [x] Reconfigurar webhook Uazapi sem o filtro `fromMeYes`.
-- [ ] Validar envio pelo app e pelo aparelho na mesma thread.
+- [ ] Validar envio pelo app e pelo aparelho na mesma thread apos publicar e
+  reconfigurar o webhook existente.
 - [x] Implementar localmente ciclo operacional com atribuicao, estados,
   prioridade, leitura por operador, auditoria imutavel e metricas de resolucao.
 - [x] Aplicar as migrations de ciclo e retry e executar probes de duas
@@ -110,8 +111,10 @@ fluxo interno de atendimento pode avancar sem esse gate.
 - [ ] Executar pgTAP e fazer QA visual autenticado do ciclo operacional.
 - [x] Implementar localmente retry explicito sobre a mesma mensagem, com
   tentativas idempotentes e auditaveis.
-- [ ] Capturar fixture real Uazapi `messages_update` e implementar estados de
-  entrega/leitura independentes do fluxo de revisao.
+- [x] Implementar estados de entrega/leitura independentes do fluxo de revisao
+  usando o contrato textual oficial de `messages_update`.
+- [ ] Capturar um callback real `messages_update` e congelar a fixture para
+  detectar mudancas futuras do fornecedor.
 - [ ] Validar duas semanas em modo assistido antes de automatizar.
 - [x] Implementar fundacao reutilizavel de DataTable, EntityDrawer, formularios
   e estados de tela.

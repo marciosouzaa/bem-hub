@@ -22,9 +22,25 @@ export const channelPhoneMessageEventSchema = channelInboundMessageEventSchema.e
   type: z.literal("message.sent_by_phone"),
 });
 
+export const channelDeliveryStatusSchema = z.enum([
+  "sent",
+  "delivered",
+  "read",
+  "failed",
+]);
+
+export const channelMessageDeliveryEventSchema = z.object({
+  deliveryStatus: channelDeliveryStatusSchema,
+  eventId: z.string().trim().min(1).max(400),
+  occurredAt: z.string().datetime(),
+  providerMessageId: z.string().trim().min(1).max(300),
+  type: z.literal("message.delivery_updated"),
+});
+
 export const channelMessageEventSchema = z.discriminatedUnion("type", [
   channelInboundMessageEventSchema,
   channelPhoneMessageEventSchema,
+  channelMessageDeliveryEventSchema,
 ]);
 
 export type ChannelMessageEvent = z.infer<typeof channelMessageEventSchema>;
