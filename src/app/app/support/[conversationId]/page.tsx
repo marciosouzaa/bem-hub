@@ -14,5 +14,13 @@ export default async function SupportConversationPage({
     conversationId,
   );
 
-  return <SupportConversationView conversation={conversation} />;
+  return (
+    <SupportConversationView
+      conversation={conversation}
+      viewerCanAdmin={["owner", "admin"].includes(
+        workspace.membership.role,
+      )}
+      viewerId={workspace.user.id}
+    />
+  );
 }

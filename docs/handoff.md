@@ -1,6 +1,30 @@
 # Handoff Notes
 
-Atualizado em 2026-07-24.
+Atualizado em 2026-07-25.
+
+## Handoff 2026-07-25 - Ciclo Operacional Local
+
+- Migration `20260726005359_support_operational_lifecycle.sql` adiciona
+  atribuicao temporal, resolucao, versao otimista, leitura por operador e
+  eventos imutaveis.
+- RPC atomica controla assumir, atribuir, devolver, abrir, deixar pendente,
+  escalar, resolver, reabrir e alterar prioridade, com lock e isolamento de
+  tenant. Update direto de estado por `authenticated` fica bloqueado.
+- A inbox mostra responsavel, nao lidas e metricas. A conversa oferece acoes de
+  ciclo, baixa leitura ao abrir e exibe timeline operacional.
+- O RPC legado `review_support_draft` foi mantido funcional por wrapper
+  `SECURITY INVOKER` e implementacao privada segura.
+- 74 testes, lint e build passaram. pgTAP agora planeja 216 assertions.
+- Docker/Postgres local continua indisponivel; migration, pgTAP, probes e QA
+  autenticado ainda nao foram executados. Nada foi aplicado no remoto.
+
+### Retomada Exata
+
+1. Com autorizacao explicita, aplicar a migration no projeto Supabase.
+2. Executar pgTAP e probes de concorrencia, cross-tenant, leitura e metricas;
+   depois conferir advisors.
+3. Fazer QA da inbox em desktop/mobile com dois operadores.
+4. Seguir para retry explicito e eventos de entrega/leitura do provedor.
 
 ## Handoff 2026-07-24 - Etiquetas Normalizadas Aplicadas
 

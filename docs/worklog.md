@@ -4,6 +4,52 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-25 - Ciclo Operacional De Atendimento Preparado
+
+### Feito
+
+- Implementado localmente o ciclo seguro de assumir, devolver, abrir, deixar
+  pendente, escalar, resolver, reabrir e alterar prioridade.
+- Atribuicao, estado e prioridade usam RPC atomica com lock da conversa,
+  versao otimista e checagem explicita de membro/administrador do tenant.
+- Updates diretos de estado foram removidos de `authenticated`; o envio atual
+  conserva acesso somente a `last_message_at`.
+- Leitura passou a ser individual por operador, com contador de nao lidas na
+  fila e baixa automatica ao abrir a conversa.
+- Mudancas operacionais geram eventos imutaveis de auditoria. A interface exibe
+  responsavel, timeline e metricas de fila, resolucao em sete dias e tempo
+  medio de resolucao.
+- O RPC legado de revisao de rascunho foi preservado por wrapper
+  `SECURITY INVOKER` e implementacao privada com validacao de tenant, evitando
+  regressao ao restringir a tabela de conversas.
+- Migration local:
+  `20260726005359_support_operational_lifecycle.sql`.
+
+### Verificacao
+
+- 74 testes unitarios passaram.
+- `bun run lint` passou.
+- `bun run build` passou com Next.js 16.2.9.
+- pgTAP foi ampliado de 171 para 216 assertions, cobrindo ACL, RLS, wrappers,
+  isolamento cross-tenant, concorrencia por versao, leitura, auditoria,
+  resolucao e reabertura.
+- `git diff --check` passou; avisos exibidos sao apenas da conversao
+  LF/CRLF configurada no Windows.
+- `supabase db lint --local` e pgTAP nao executaram porque Docker/Postgres local
+  nao esta disponivel.
+- A migration nao foi aplicada no Supabase remoto e nenhum dado real foi
+  alterado. QA visual autenticado tambem permanece pendente.
+
+### Retomada
+
+1. Revisar e aplicar a migration com autorizacao explicita, executar os 216
+   testes pgTAP e probes transacionais de duas organizacoes.
+2. Fazer QA autenticado desktop/mobile da fila, atribuicao, estados, nao lidas,
+   timeline e metricas.
+3. Implementar retry explicito do envio e separar entrega/leitura do estado de
+   revisao da mensagem.
+4. Validar envio pelo app e pelo aparelho na mesma thread com o canal real.
+
 ## 2026-07-24 - Modulo De Etiquetas Aplicado No Remoto
 
 ### Feito

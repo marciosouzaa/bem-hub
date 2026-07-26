@@ -1,4 +1,4 @@
-import { CircleAlert, Radio, Tag } from "lucide-react";
+import { CircleAlert, Radio, Tag, UserCheck } from "lucide-react";
 import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
@@ -28,9 +28,11 @@ const priorityEdge: Record<SupportInboxItemData["priority"], string> = {
 export function SupportInboxItem({
   active,
   item,
+  viewerId,
 }: {
   active: boolean;
   item: SupportInboxItemData;
+  viewerId: string;
 }) {
   const name = getSupportContactName(item.contact);
 
@@ -65,9 +67,19 @@ export function SupportInboxItem({
             <p className="truncate text-sm font-semibold text-foreground">
               {name}
             </p>
-            <time className="shrink-0 font-mono text-[10px] text-muted">
-              {formatSupportDate(item.lastMessageAt)}
-            </time>
+            <div className="flex shrink-0 items-center gap-1.5">
+              <time className="font-mono text-[10px] text-muted">
+                {formatSupportDate(item.lastMessageAt)}
+              </time>
+              {item.unreadCount > 0 ? (
+                <span
+                  aria-label={`${item.unreadCount} mensagens não lidas`}
+                  className="flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 py-0.5 font-mono text-[9px] font-bold text-primary-foreground"
+                >
+                  {item.unreadCount > 99 ? "99+" : item.unreadCount}
+                </span>
+              ) : null}
+            </div>
           </div>
 
           <div className="mt-1 flex min-w-0 items-center gap-1.5 text-xs text-muted">
@@ -96,6 +108,14 @@ export function SupportInboxItem({
                   <span className="truncate">{tag}</span>
                 </span>
               ))}
+              {item.assignedTo ? (
+                <span className="flex shrink-0 items-center gap-1 text-[10px] text-muted">
+                  <UserCheck className="size-2.5" />
+                  {item.assignedTo === viewerId
+                    ? "Com você"
+                    : item.assignee?.name?.trim() || "Em atendimento"}
+                </span>
+              ) : null}
             </div>
             {item.priority === "urgent" || item.priority === "high" ? (
               <CircleAlert

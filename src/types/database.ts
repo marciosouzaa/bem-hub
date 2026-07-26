@@ -1085,7 +1085,26 @@ export type Database = {
         Args: { target_organization_id: string }
         Returns: Json
       }
+      get_support_inbox_operational: {
+        Args: { target_organization_id: string }
+        Returns: Json
+      }
       get_support_conversation: { Args: { target_conversation_id: string; target_organization_id: string }; Returns: Json }
+      get_support_conversation_events: {
+        Args: {
+          event_limit?: number
+          target_conversation_id: string
+          target_organization_id: string
+        }
+        Returns: Json
+      }
+      get_support_conversation_state: {
+        Args: {
+          target_conversation_id: string
+          target_organization_id: string
+        }
+        Returns: Json
+      }
       begin_support_message_send: {
         Args: {
           message_content: string
@@ -1108,6 +1127,28 @@ export type Database = {
           delivery_status: string
           provider_message_id: string
           target_message_id: string
+          target_organization_id: string
+        }
+        Returns: Json
+      }
+      get_support_operational_metrics: {
+        Args: { target_organization_id: string }
+        Returns: Json
+      }
+      manage_support_conversation: {
+        Args: {
+          expected_version?: number | null
+          operation: string
+          target_conversation_id: string
+          target_organization_id: string
+          target_priority?: string | null
+          target_user_id?: string | null
+        }
+        Returns: Json
+      }
+      mark_support_conversation_read: {
+        Args: {
+          target_conversation_id: string
           target_organization_id: string
         }
         Returns: Json

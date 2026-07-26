@@ -103,7 +103,12 @@ fluxo interno de atendimento pode avancar sem esse gate.
   duplicar eco `wasSentByApi`.
 - [x] Reconfigurar webhook Uazapi sem o filtro `fromMeYes`.
 - [ ] Validar envio pelo app e pelo aparelho na mesma thread.
-- [ ] Registrar auditoria e metricas de resolucao.
+- [x] Implementar localmente ciclo operacional com atribuicao, estados,
+  prioridade, leitura por operador, auditoria imutavel e metricas de resolucao.
+- [ ] Aplicar a migration do ciclo operacional, executar pgTAP/probes de duas
+  organizacoes e fazer QA visual autenticado.
+- [ ] Implementar retry explicito e estados de entrega/leitura independentes do
+  fluxo de revisao.
 - [ ] Validar duas semanas em modo assistido antes de automatizar.
 - [x] Implementar fundacao reutilizavel de DataTable, EntityDrawer, formularios
   e estados de tela.

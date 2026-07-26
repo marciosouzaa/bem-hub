@@ -1,4 +1,11 @@
-import { AlertTriangle, AtSign, CircleDot, Phone, Radio } from "lucide-react";
+import {
+  AlertTriangle,
+  AtSign,
+  CircleDot,
+  History,
+  Phone,
+  Radio,
+} from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { formatContactPhone } from "@/features/contacts/phone-normalization";
@@ -6,6 +13,7 @@ import type { SupportConversation } from "@/features/support/queries";
 import {
   getContactInitials,
   getSupportContactName,
+  formatSupportDate,
   supportPriorityLabels,
   supportStatusLabels,
 } from "@/features/support/support-presenters";
@@ -70,8 +78,53 @@ export function SupportContactPanel({
         </div>
       </section>
 
+      <section className="mt-7 border-t border-panel-border pt-6">
+        <div className="flex items-center gap-2">
+          <History className="size-3.5 text-primary" />
+          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
+            Atividade operacional
+          </p>
+        </div>
+        {conversation.events.length ? (
+          <ol className="mt-4 space-y-4">
+            {conversation.events.slice(0, 8).map((event) => (
+              <li className="relative pl-4" key={event.id}>
+                <span className="absolute left-0 top-1.5 size-1.5 rounded-full bg-primary" />
+                <p className="text-xs leading-5 text-muted-strong">
+                  {describeSupportEvent(event)}
+                </p>
+                <p className="mt-1 font-mono text-[9px] text-muted">
+                  {event.actorName?.trim() || "Sistema"} ·{" "}
+                  {formatSupportDate(event.createdAt)}
+                </p>
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <p className="mt-3 text-xs leading-5 text-muted">
+            Mudanças de responsável, estado e prioridade aparecerão aqui.
+          </p>
+        )}
+      </section>
+
     </aside>
   );
+}
+
+function describeSupportEvent(
+  event: SupportConversation["events"][number],
+) {
+  if (event.type === "conversation.assigned") {
+    return event.nextValue === null
+      ? "Atendimento devolvido para a fila."
+      : "Responsável pelo atendimento atualizado.";
+  }
+  if (event.type === "conversation.status_changed") {
+    const status = event.nextValue as SupportConversation["status"];
+    return `Estado alterado para ${supportStatusLabels[status]?.toLocaleLowerCase("pt-BR") ?? "outro estado"}.`;
+  }
+  const priority = event.nextValue as SupportConversation["priority"];
+  return `Prioridade alterada para ${supportPriorityLabels[priority]?.toLocaleLowerCase("pt-BR") ?? "outro nível"}.`;
 }
 
 function Detail({

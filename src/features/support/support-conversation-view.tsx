@@ -4,8 +4,10 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SupportContactPanel } from "@/features/support/support-contact-panel";
+import { SupportConversationActions } from "@/features/support/support-conversation-actions";
 import { SupportMessageComposer } from "@/features/support/support-message-composer";
 import { SupportMessageThread } from "@/features/support/support-message-thread";
+import { SupportReadReceipt } from "@/features/support/support-read-receipt";
 import type { SupportConversation } from "@/features/support/queries";
 import {
   getContactInitials,
@@ -16,13 +18,18 @@ import {
 
 export function SupportConversationView({
   conversation,
+  viewerCanAdmin,
+  viewerId,
 }: {
   conversation: SupportConversation;
+  viewerCanAdmin: boolean;
+  viewerId: string;
 }) {
   const name = getSupportContactName(conversation.contact);
 
   return (
     <div className="flex h-full min-h-0 flex-col">
+      <SupportReadReceipt conversationId={conversation.id} />
       <header className="flex shrink-0 items-center gap-3 border-b border-panel-border bg-background/95 px-4 py-3 backdrop-blur sm:px-6">
         <Button asChild className="lg:hidden" size="icon" variant="ghost">
           <Link aria-label="Voltar para fila" href="/app/support">
@@ -51,7 +58,13 @@ export function SupportConversationView({
           </div>
         </div>
 
-        <div className="hidden items-center gap-2 sm:flex">
+        <SupportConversationActions
+          conversation={conversation}
+          viewerCanAdmin={viewerCanAdmin}
+          viewerId={viewerId}
+        />
+
+        <div className="hidden items-center gap-2 2xl:flex">
           <Badge className="border-panel-border bg-panel-elevated normal-case tracking-normal text-muted-strong">
             Prioridade {supportPriorityLabels[conversation.priority].toLocaleLowerCase("pt-BR")}
           </Badge>

@@ -1,5 +1,183 @@
 begin;
-select plan(171);
+select plan(216);
+
+select ok(
+  to_regclass('public.support_events') is not null,
+  'support events table exists'
+);
+select ok(
+  to_regclass('public.support_conversation_reads') is not null,
+  'per-operator support reads table exists'
+);
+select is(
+  (
+    select relrowsecurity
+    from pg_class
+    where oid = 'public.support_events'::regclass
+  ),
+  true,
+  'support events have row level security enabled'
+);
+select is(
+  (
+    select relrowsecurity
+    from pg_class
+    where oid = 'public.support_conversation_reads'::regclass
+  ),
+  true,
+  'support reads have row level security enabled'
+);
+select ok(
+  not has_table_privilege('authenticated', 'public.support_events', 'insert'),
+  'authenticated users cannot forge support audit events'
+);
+select ok(
+  has_table_privilege('authenticated', 'public.support_events', 'select'),
+  'authenticated users can read tenant-scoped support audit events'
+);
+select ok(
+  not has_column_privilege(
+    'authenticated',
+    'public.support_conversations',
+    'status',
+    'update'
+  ),
+  'authenticated users cannot bypass support status transitions'
+);
+select ok(
+  has_column_privilege(
+    'authenticated',
+    'public.support_conversations',
+    'last_message_at',
+    'update'
+  ),
+  'authenticated send RPC can still refresh conversation activity'
+);
+select ok(
+  not has_function_privilege(
+    'anon',
+    'public.manage_support_conversation(uuid,uuid,text,uuid,text,bigint)',
+    'execute'
+  ),
+  'anon cannot mutate support lifecycle'
+);
+select ok(
+  has_function_privilege(
+    'authenticated',
+    'public.manage_support_conversation(uuid,uuid,text,uuid,text,bigint)',
+    'execute'
+  ),
+  'authenticated members can call support lifecycle RPC'
+);
+select is(
+  (
+    select prosecdef
+    from pg_proc
+    where oid =
+      'public.manage_support_conversation(uuid,uuid,text,uuid,text,bigint)'::regprocedure
+  ),
+  false,
+  'public support lifecycle RPC is security invoker'
+);
+select is(
+  (
+    select prosecdef
+    from pg_proc
+    where oid =
+      'private.manage_support_conversation(uuid,uuid,text,uuid,text,bigint)'::regprocedure
+  ),
+  true,
+  'private support lifecycle implementation is security definer'
+);
+select ok(
+  not has_function_privilege(
+    'anon',
+    'public.review_support_draft(uuid,uuid,text)',
+    'execute'
+  ),
+  'anon cannot review support drafts'
+);
+select is(
+  (
+    select prosecdef
+    from pg_proc
+    where oid =
+      'public.review_support_draft(uuid,uuid,text)'::regprocedure
+  ),
+  false,
+  'public draft review RPC remains security invoker'
+);
+select is(
+  (
+    select prosecdef
+    from pg_proc
+    where oid =
+      'private.review_support_draft(uuid,uuid,text)'::regprocedure
+  ),
+  true,
+  'private draft review implementation is security definer'
+);
+select ok(
+  not has_function_privilege(
+    'anon',
+    'public.mark_support_conversation_read(uuid,uuid)',
+    'execute'
+  ),
+  'anon cannot mark support conversations as read'
+);
+select ok(
+  has_function_privilege(
+    'authenticated',
+    'public.mark_support_conversation_read(uuid,uuid)',
+    'execute'
+  ),
+  'authenticated members can mark support conversations as read'
+);
+select is(
+  (
+    select prosecdef
+    from pg_proc
+    where oid =
+      'public.mark_support_conversation_read(uuid,uuid)'::regprocedure
+  ),
+  false,
+  'public support read RPC is security invoker'
+);
+select ok(
+  has_function_privilege(
+    'authenticated',
+    'public.get_support_inbox_operational(uuid)',
+    'execute'
+  ),
+  'authenticated members can load operational support inbox'
+);
+select ok(
+  has_function_privilege(
+    'authenticated',
+    'public.get_support_operational_metrics(uuid)',
+    'execute'
+  ),
+  'authenticated members can load support metrics'
+);
+select ok(
+  exists (
+    select 1
+    from pg_trigger
+    where tgrelid = 'public.support_conversations'::regclass
+      and tgname = 'audit_support_conversation_change'
+      and not tgisinternal
+  ),
+  'support lifecycle changes have an audit trigger'
+);
+select ok(
+  exists (
+    select 1
+    from pg_indexes
+    where schemaname = 'public'
+      and indexname = 'support_events_conversation_created_idx'
+  ),
+  'support audit timeline has a composite lookup index'
+);
 
 select ok(
   not has_function_privilege('anon', 'public.list_contacts(uuid)', 'execute'),
@@ -948,6 +1126,27 @@ insert into public.support_conversations (organization_id, contact_id, channel_c
 values
   ('a0000000-0000-0000-0000-000000000001', 'c1000000-0000-0000-0000-000000000001', 'ca000000-0000-0000-0000-000000000001'),
   ('b0000000-0000-0000-0000-000000000002', 'c2000000-0000-0000-0000-000000000002', 'cb000000-0000-0000-0000-000000000002');
+insert into public.support_messages (
+  id,
+  organization_id,
+  conversation_id,
+  channel_connection_id,
+  direction,
+  content,
+  external_message_id,
+  status
+)
+select
+  'aa000000-0000-0000-0000-000000000001',
+  conversation.organization_id,
+  conversation.id,
+  conversation.channel_connection_id,
+  'inbound',
+  'Mensagem ainda não lida',
+  'fixture-unread-a',
+  'received'
+from public.support_conversations conversation
+where conversation.organization_id = 'a0000000-0000-0000-0000-000000000001';
 select ok(
   exists (
     select 1
@@ -981,6 +1180,294 @@ grant insert, select on tenant_a_results to authenticated;
 set local role authenticated;
 set local request.jwt.claims =
   '{"sub":"10000000-0000-0000-0000-000000000001","role":"authenticated"}';
+
+select is(
+  (
+    select (item ->> 'unreadCount')::integer
+    from jsonb_array_elements(
+      public.get_support_inbox_operational(
+        'a0000000-0000-0000-0000-000000000001'
+      )
+    ) item
+    limit 1
+  ),
+  1,
+  'tenant inbox starts with its unread inbound message'
+);
+select lives_ok(
+  $$select public.manage_support_conversation(
+    'a0000000-0000-0000-0000-000000000001',
+    (
+      select id
+      from public.support_conversations
+      where organization_id = 'a0000000-0000-0000-0000-000000000001'
+      limit 1
+    ),
+    'take',
+    null,
+    null,
+    1
+  )$$,
+  'tenant member can take an unassigned conversation'
+);
+select is(
+  (
+    select assigned_to
+    from public.support_conversations
+    where organization_id = 'a0000000-0000-0000-0000-000000000001'
+    limit 1
+  ),
+  '10000000-0000-0000-0000-000000000001'::uuid,
+  'taken conversation records its responsible member'
+);
+select is(
+  (
+    select count(*)
+    from public.support_events
+    where organization_id = 'a0000000-0000-0000-0000-000000000001'
+      and event_type = 'conversation.assigned'
+  ),
+  1::bigint,
+  'taking a conversation writes an immutable audit event'
+);
+select throws_ok(
+  $$select public.manage_support_conversation(
+    'a0000000-0000-0000-0000-000000000001',
+    (
+      select id
+      from public.support_conversations
+      where organization_id = 'a0000000-0000-0000-0000-000000000001'
+      limit 1
+    ),
+    'pending',
+    null,
+    null,
+    1
+  )$$,
+  '40001',
+  'support_conversation_version_conflict',
+  'stale operator cannot overwrite a newer conversation state'
+);
+select lives_ok(
+  $$select public.manage_support_conversation(
+    'a0000000-0000-0000-0000-000000000001',
+    (
+      select id
+      from public.support_conversations
+      where organization_id = 'a0000000-0000-0000-0000-000000000001'
+      limit 1
+    ),
+    'pending',
+    null,
+    null,
+    2
+  )$$,
+  'responsible member can mark conversation pending'
+);
+select is(
+  (
+    select status
+    from public.support_conversations
+    where organization_id = 'a0000000-0000-0000-0000-000000000001'
+    limit 1
+  ),
+  'pending',
+  'pending lifecycle state is persisted'
+);
+select is(
+  (
+    select count(*)
+    from public.support_events
+    where organization_id = 'a0000000-0000-0000-0000-000000000001'
+      and event_type = 'conversation.status_changed'
+      and next_value = 'pending'
+  ),
+  1::bigint,
+  'pending transition is audited'
+);
+select lives_ok(
+  $$select public.manage_support_conversation(
+    'a0000000-0000-0000-0000-000000000001',
+    (
+      select id
+      from public.support_conversations
+      where organization_id = 'a0000000-0000-0000-0000-000000000001'
+      limit 1
+    ),
+    'set_priority',
+    null,
+    'urgent',
+    3
+  )$$,
+  'responsible member can update support priority'
+);
+select is(
+  (
+    select priority
+    from public.support_conversations
+    where organization_id = 'a0000000-0000-0000-0000-000000000001'
+    limit 1
+  ),
+  'urgent',
+  'support priority update is persisted'
+);
+select is(
+  (
+    select count(*)
+    from public.support_events
+    where organization_id = 'a0000000-0000-0000-0000-000000000001'
+      and event_type = 'conversation.priority_changed'
+      and next_value = 'urgent'
+  ),
+  1::bigint,
+  'priority transition is audited'
+);
+select lives_ok(
+  $$select public.mark_support_conversation_read(
+    'a0000000-0000-0000-0000-000000000001',
+    (
+      select id
+      from public.support_conversations
+      where organization_id = 'a0000000-0000-0000-0000-000000000001'
+      limit 1
+    )
+  )$$,
+  'member can mark its conversation read'
+);
+select is(
+  (
+    select count(*)
+    from public.support_conversation_reads
+    where organization_id = 'a0000000-0000-0000-0000-000000000001'
+      and user_id = '10000000-0000-0000-0000-000000000001'
+  ),
+  1::bigint,
+  'read receipt is isolated per operator'
+);
+select is(
+  (
+    select (item ->> 'unreadCount')::integer
+    from jsonb_array_elements(
+      public.get_support_inbox_operational(
+        'a0000000-0000-0000-0000-000000000001'
+      )
+    ) item
+    limit 1
+  ),
+  0,
+  'reading the conversation clears only the operator unread count'
+);
+select throws_ok(
+  $$select public.manage_support_conversation(
+    'b0000000-0000-0000-0000-000000000002',
+    (
+      select id
+      from public.support_conversations
+      where organization_id = 'b0000000-0000-0000-0000-000000000002'
+      limit 1
+    ),
+    'take',
+    null,
+    null,
+    1
+  )$$,
+  '42501',
+  'organization_member_required',
+  'tenant A cannot take tenant B conversation'
+);
+select lives_ok(
+  $$select public.manage_support_conversation(
+    'a0000000-0000-0000-0000-000000000001',
+    (
+      select id
+      from public.support_conversations
+      where organization_id = 'a0000000-0000-0000-0000-000000000001'
+      limit 1
+    ),
+    'resolve',
+    null,
+    null,
+    4
+  )$$,
+  'responsible member can resolve conversation'
+);
+select ok(
+  (
+    select resolved_at is not null
+    from public.support_conversations
+    where organization_id = 'a0000000-0000-0000-0000-000000000001'
+    limit 1
+  ),
+  'resolution records its timestamp'
+);
+select is(
+  (
+    public.get_support_operational_metrics(
+      'a0000000-0000-0000-0000-000000000001'
+    ) ->> 'resolved'
+  )::integer,
+  1,
+  'support metrics count resolved conversations'
+);
+select lives_ok(
+  $$select public.manage_support_conversation(
+    'a0000000-0000-0000-0000-000000000001',
+    (
+      select id
+      from public.support_conversations
+      where organization_id = 'a0000000-0000-0000-0000-000000000001'
+      limit 1
+    ),
+    'reopen',
+    null,
+    null,
+    5
+  )$$,
+  'responsible member can reopen resolved conversation'
+);
+select is(
+  (
+    select status
+    from public.support_conversations
+    where organization_id = 'a0000000-0000-0000-0000-000000000001'
+    limit 1
+  ),
+  'open',
+  'reopened conversation returns to open state'
+);
+select is(
+  (
+    public.get_support_operational_metrics(
+      'a0000000-0000-0000-0000-000000000001'
+    ) ->> 'open'
+  )::integer,
+  1,
+  'support metrics reflect reopened conversation'
+);
+select is(
+  jsonb_array_length(
+    public.get_support_conversation_events(
+      'a0000000-0000-0000-0000-000000000001',
+      (
+        select id
+        from public.support_conversations
+        where organization_id = 'a0000000-0000-0000-0000-000000000001'
+        limit 1
+      ),
+      40
+    )
+  ),
+  5,
+  'support event timeline returns assignment and lifecycle history'
+);
+select throws_ok(
+  $$update public.support_conversations
+    set status = 'resolved'
+    where organization_id = 'a0000000-0000-0000-0000-000000000001'$$,
+  '42501',
+  'permission denied for table support_conversations',
+  'authenticated user cannot bypass lifecycle RPC with direct update'
+);
 
 with deleted as (
   delete from public.documents

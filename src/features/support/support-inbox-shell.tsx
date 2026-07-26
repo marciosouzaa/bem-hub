@@ -7,6 +7,7 @@ import { useDeferredValue, useMemo, useState } from "react";
 import { IconButton } from "@/components/ui/icon-button";
 import { Input } from "@/components/ui/input";
 import type { SupportInboxItem as SupportInboxItemData } from "@/features/support/queries";
+import type { SupportMetrics } from "@/features/support/queries";
 import {
   filterSupportInbox,
   type SupportInboxView,
@@ -25,9 +26,13 @@ const views: Array<{ label: string; value: SupportInboxView }> = [
 export function SupportInboxShell({
   children,
   conversations,
+  metrics,
+  viewerId,
 }: {
   children: React.ReactNode;
   conversations: SupportInboxItemData[];
+  metrics: SupportMetrics;
+  viewerId: string;
 }) {
   const pathname = usePathname();
   const [query, setQuery] = useState("");
@@ -84,6 +89,21 @@ export function SupportInboxShell({
                 em curso
               </p>
             </div>
+          </div>
+
+          <div className="mt-4 grid grid-cols-3 gap-1.5">
+            <OperationalMetric
+              label="Sem responsável"
+              value={String(metrics.unassigned)}
+            />
+            <OperationalMetric
+              label="Resolvidos 7d"
+              value={String(metrics.resolvedLast7Days)}
+            />
+            <OperationalMetric
+              label="Tempo médio"
+              value={formatResolutionTime(metrics.averageResolutionMinutes)}
+            />
           </div>
 
           <div className="relative mt-4">
@@ -149,6 +169,7 @@ export function SupportInboxShell({
                 active={pathname === `/app/support/${item.id}`}
                 item={item}
                 key={item.id}
+                viewerId={viewerId}
               />
             ))
           ) : (
@@ -177,4 +198,22 @@ export function SupportInboxShell({
       </section>
     </div>
   );
+}
+
+function OperationalMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-[9px] border border-panel-border bg-panel px-2.5 py-2">
+      <p className="font-mono text-sm font-semibold text-foreground">{value}</p>
+      <p className="mt-0.5 truncate text-[9px] uppercase tracking-[0.06em] text-muted">
+        {label}
+      </p>
+    </div>
+  );
+}
+
+function formatResolutionTime(minutes: number | null) {
+  if (minutes === null) return "—";
+  if (minutes < 60) return `${Math.round(minutes)}min`;
+  if (minutes < 1_440) return `${(minutes / 60).toFixed(1)}h`;
+  return `${(minutes / 1_440).toFixed(1)}d`;
 }

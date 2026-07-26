@@ -67,8 +67,9 @@ tecnico recorrente.
 
 Status: fundação e primeiro adapter em validação operacional. Canal Uazapi real
 conecta, entrega callback e cria atendimento. Broadcast privado foi aplicado no
-remoto e passou nos probes de banco e isolamento; falta o smoke WebSocket
-autenticado da inbox sem recarga.
+remoto. O ciclo de atribuicao, estados, leitura por operador, auditoria e
+metricas esta implementado localmente, aguardando migration, pgTAP e QA
+autenticado.
 
 Gate de produto: escolher Evolution API, Z-API ou outro BSP, definir custos,
 termos e credenciais. A integracao deve ficar atras de um adapter de canal para
@@ -83,8 +84,12 @@ evitar acoplamento do dominio ao fornecedor.
 - [ ] Gerar rascunho usando catalogo, preco, disponibilidade e tom da marca.
 - [ ] Criar modo assistido: aprovar, editar ou escalar antes de enviar.
 - [ ] Escalar reclamacao, devolucao, pagamento e baixa confianca para humano.
-- [ ] Registrar trilha de auditoria de entrada, resposta, aprovacao e envio.
-- [ ] Exibir painel simples de resolvidas, pendentes e escaladas.
+- [x] Implementar localmente trilha operacional de atribuicao, estado e
+  prioridade; auditoria de entrada, resposta, aprovacao e envio ainda depende
+  da separacao completa dos estados de entrega.
+- [x] Implementar localmente painel simples de resolvidas, pendentes, escaladas,
+  nao atribuidas e tempo medio de resolucao.
+- [ ] Aplicar e validar no ambiente remoto o ciclo operacional e suas metricas.
 - [ ] Liberar modo automatico somente depois do periodo de validacao.
 
 Criterio de sucesso: pelo menos 60% das perguntas elegiveis sao resolvidas sem
