@@ -86,9 +86,11 @@ e operar os hosts self-hosted com numeros de teste separados.
   e fazer smoke de conexao, webhook, entrada, saida e reconciliacao de contatos.
 - [x] Preparar Evolution API `2.3.7` local com Postgres/Redis, volumes,
   credenciais aleatorias, HTTPS temporario e instancia provisionada sem QR.
-- [ ] Subir Evolution API self-hosted com Postgres/Redis e fazer smoke com outro
-  numero antes de comparar estabilidade e escolher o provider principal; falta
-  somente cadastrar o numero, escanear QR e executar o smoke real.
+- [x] Parear Evolution API com outro numero e validar a primeira mensagem
+  iniciada pelo modulo de Atendimento.
+- [ ] Fechar o smoke Evolution com resposta na mesma conversa, entrega/leitura,
+  envio pelo aparelho e persistencia apos reinicio antes de comparar
+  estabilidade e escolher o provider principal.
 - [x] Implementar webhook provider-neutral seguro, idempotente e observável,
   com entrada Uazapi normalizada.
 - [x] Validar callback real Uazapi: uma mensagem de outro número deve preencher

@@ -2,27 +2,30 @@
 
 Atualizado em 2026-07-26.
 
-## Handoff 2026-07-26 - Evolution Aguardando QR
+## Handoff 2026-07-26 - Evolution Pareada E Primeira Saida Validada
 
 - Evolution API oficial `2.3.7` foi clonada em `C:\repos\evolution-api`.
 - Stack local esta ativa em `127.0.0.1:8082` com Postgres, Redis, volumes
   persistentes e Quick Tunnel HTTPS.
-- Instancia `bem-hub-piloto-evolution` foi provisionada sem QR e esta `close`.
+- Instancia `bem-hub-piloto-evolution` foi pareada por QR na primeira tentativa.
 - API key, HTTPS e adapter BEM HUB foram validados; nenhum segredo foi exibido.
 - Arquivos locais nao versionados: `docker-compose.local.yml`,
   `setup-local.ps1` e `show-bem-hub-config.ps1`; `.env` permanece ignorado.
-- Nao existe canal Evolution no Supabase remoto. Numero e QR dependem do
-  operador.
+- Canal Evolution foi cadastrado e conectado no BEM HUB.
+- O operador usou `Iniciar atendimento`; a primeira mensagem saiu pelo canal
+  Evolution sem erro nem ajuste adicional.
+- Evolution Manager existe em `/manager`, mas permanece desativado no Compose
+  local com `SERVER_DISABLE_MANAGER=true`. O BEM HUB cobre a operacao atual e
+  manter o painel desligado reduz a superficie administrativa exposta.
 
 ### Retomada Exata
 
-1. Reservar numero diferente do Wuzapi e criar canal QR em `/app/channels`.
-2. Em `C:\repos\evolution-api`, executar
-   `show-bem-hub-config.ps1 -CopyApiKey`.
-3. Salvar URL, instancia e API key no canal Evolution.
-4. Gerar QR, escanear, atualizar estado e ativar recebimento.
-5. Fazer primeira saida pelo BEM HUB, responder e confirmar mesma thread,
-   entrega/leitura, envio manual pelo aparelho e persistencia apos reinicio.
+1. Responder pelo contato e confirmar entrada na mesma conversa.
+2. Confirmar transicoes de entrega e leitura vindas de `messages.update`.
+3. Enviar manualmente pelo aparelho e confirmar a mesma conversa.
+4. Reiniciar a stack Evolution e confirmar persistencia da sessao.
+5. Manter Evolution e Wuzapi em observacao antes de escolher o provider
+   principal.
 
 ## Handoff 2026-07-26 - Primeira Mensagem Pelo BEM HUB
 

@@ -59,6 +59,12 @@ do BEM HUB; uma troca de versao exige repetir contratos, QR, webhooks e smoke.
 O uso de Evolution API fica identificado na tela administrativa de Canais e
 neste runbook, conforme a notificacao exigida pela licenca do projeto.
 
+A Evolution tambem fornece o painel administrativo Evolution Manager em
+`/manager`. Neste ambiente ele permanece desativado com
+`SERVER_DISABLE_MANAGER=true`: o BEM HUB cobre conexao, QR, estado, webhook e
+envio, e o painel adicional aumentaria a superficie administrativa exposta
+pelo Quick Tunnel. Habilite-o somente para diagnostico intencional.
+
 Prepare e suba:
 
 ```powershell

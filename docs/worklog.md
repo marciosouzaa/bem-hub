@@ -4,7 +4,7 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
-## 2026-07-26 - Evolution API Local Pronta Para Pareamento
+## 2026-07-26 - Evolution Pareada E Primeira Saida Validada
 
 ### Feito
 
@@ -15,25 +15,28 @@ do marco ativo.
 - Evolution roda em `127.0.0.1:8082` com PostgreSQL 15, Redis 7 e tres volumes
   persistentes. Banco e Redis nao publicam portas.
 - API key aleatoria foi validada em `/verify-creds`; Quick Tunnel HTTPS foi
-  criado; instancia `bem-hub-piloto-evolution` existe no estado `close`.
+  criado; instancia `bem-hub-piloto-evolution` foi pareada por QR na primeira
+  tentativa.
 - O adapter real do BEM HUB executou `provision` e `getHealth` contra a API
-  Evolution via HTTPS e retornou `disconnected`, como esperado antes do QR.
+  Evolution via HTTPS antes do pareamento.
+- Canal Evolution foi salvo e conectado. O operador iniciou atendimento pelo
+  modulo de Atendimento e a primeira mensagem saiu sem erro ou surpresa.
 - Verificacao fechada com 19 testes focados, suite completa com 99 testes,
   lint e build de producao aprovados.
 - Corrigido no Compose o CORS da Evolution 2.3.7: requests server-to-server sem
   `Origin` recebem 500 quando a origem e restrita. O host permanece local-only
   e todas as rotas operacionais exigem `apikey`.
-- Confirmado no Supabase remoto que ainda nao existe canal Evolution; nenhum
-  numero, credencial ou registro foi inventado.
+- A Evolution API fornece o Evolution Manager em `/manager`, mas ele foi
+  mantido desativado no Compose local por `SERVER_DISABLE_MANAGER=true`; o BEM
+  HUB ja cobre o fluxo operacional necessario.
 
-### Pendente Manual
+### Proxima Validacao
 
-1. Reservar outro numero, diferente do Wuzapi.
-2. Criar o canal Evolution em `/app/channels`.
-3. Executar `show-bem-hub-config.ps1 -CopyApiKey`, preencher URL, instancia e
-   API key e salvar.
-4. Gerar QR no BEM HUB e escanear em `WhatsApp > Aparelhos conectados`.
-5. Atualizar estado, ativar recebimento e executar entrada/saida/entrega/leitura.
+1. Responder pelo contato e confirmar a mesma conversa.
+2. Confirmar entrega e leitura pelo callback real `messages.update`.
+3. Enviar pelo aparelho e confirmar reconciliacao na mesma conversa.
+4. Reiniciar a stack e confirmar persistencia da sessao.
+5. Observar Evolution e Wuzapi antes de escolher o provider principal.
 
 ## 2026-07-26 - Atendimento Iniciado Pelo Operador
 
