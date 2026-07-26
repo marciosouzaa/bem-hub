@@ -493,7 +493,9 @@ as $$
     and attempt.organization_id = target_organization_id
     and attempt.status = 'sending'
     and message.status = 'sending'
-    and (select auth.role()) = 'service_role';
+    and (
+      current_setting('request.jwt.claims', true)::jsonb ->> 'role'
+    ) = 'service_role';
 $$;
 
 revoke all on function private.get_support_message_delivery_attempt(
@@ -542,7 +544,10 @@ as $$
 declare
   target_attempt public.support_message_send_attempts%rowtype;
 begin
-  if (select auth.role()) <> 'service_role' then
+  if coalesce(
+    current_setting('request.jwt.claims', true)::jsonb ->> 'role',
+    ''
+  ) <> 'service_role' then
     raise exception 'service_role_required' using errcode = '42501';
   end if;
 
