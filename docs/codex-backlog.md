@@ -107,8 +107,10 @@ fluxo interno de atendimento pode avancar sem esse gate.
   prioridade, leitura por operador, auditoria imutavel e metricas de resolucao.
 - [ ] Aplicar a migration do ciclo operacional, executar pgTAP/probes de duas
   organizacoes e fazer QA visual autenticado.
-- [ ] Implementar retry explicito e estados de entrega/leitura independentes do
-  fluxo de revisao.
+- [x] Implementar localmente retry explicito sobre a mesma mensagem, com
+  tentativas idempotentes e auditaveis.
+- [ ] Capturar fixture real Uazapi `messages_update` e implementar estados de
+  entrega/leitura independentes do fluxo de revisao.
 - [ ] Validar duas semanas em modo assistido antes de automatizar.
 - [x] Implementar fundacao reutilizavel de DataTable, EntityDrawer, formularios
   e estados de tela.

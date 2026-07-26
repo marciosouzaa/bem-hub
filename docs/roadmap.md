@@ -68,7 +68,8 @@ tecnico recorrente.
 Status: fundação e primeiro adapter em validação operacional. Canal Uazapi real
 conecta, entrega callback e cria atendimento. Broadcast privado foi aplicado no
 remoto. O ciclo de atribuicao, estados, leitura por operador, auditoria e
-metricas esta implementado localmente, aguardando migration, pgTAP e QA
+metricas esta implementado localmente. Retry explicito com tentativas
+auditaveis tambem esta preparado. Ambos aguardam migrations, pgTAP e QA
 autenticado.
 
 Gate de produto: escolher Evolution API, Z-API ou outro BSP, definir custos,
@@ -89,6 +90,9 @@ evitar acoplamento do dominio ao fornecedor.
   da separacao completa dos estados de entrega.
 - [x] Implementar localmente painel simples de resolvidas, pendentes, escaladas,
   nao atribuidas e tempo medio de resolucao.
+- [x] Implementar localmente retry explicito sem duplicar a mensagem.
+- [ ] Capturar callback real e persistir entrega/leitura do provedor em eixo
+  separado da revisao.
 - [ ] Aplicar e validar no ambiente remoto o ciclo operacional e suas metricas.
 - [ ] Liberar modo automatico somente depois do periodo de validacao.
 

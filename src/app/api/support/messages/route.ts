@@ -1,15 +1,18 @@
 import { z } from "zod";
 
 import {
-  directSupportMessageSchema,
+  retrySupportMessage,
   sendSupportMessage,
   SupportMessageSendError,
+  supportMessageRequestSchema,
 } from "@/features/support/send-support-message";
 
 export async function POST(request: Request) {
   try {
-    const input = directSupportMessageSchema.parse(await request.json());
-    const result = await sendSupportMessage(input);
+    const input = supportMessageRequestSchema.parse(await request.json());
+    const result = input.action === "send"
+      ? await sendSupportMessage(input)
+      : await retrySupportMessage(input);
     return Response.json(result, {
       status: result.status === "sending" ? 202 : result.duplicate ? 200 : 201,
     });

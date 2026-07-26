@@ -9,9 +9,13 @@ import { Textarea } from "@/components/ui/textarea";
 import type { SupportConversation } from "@/features/support/queries";
 
 export function SupportMessageComposer({
+  assigned,
+  canSend,
   conversationId,
   status,
 }: {
+  assigned: boolean;
+  canSend: boolean;
   conversationId: string;
   status: SupportConversation["status"];
 }) {
@@ -33,6 +37,18 @@ export function SupportMessageComposer({
     );
   }
 
+  if (!canSend) {
+    return (
+      <div className="border-t border-panel-border bg-panel-subtle px-4 py-4 sm:px-6">
+        <div className="mx-auto max-w-3xl rounded-xl border border-warning/20 bg-warning/5 px-4 py-3 text-center text-sm text-muted-strong">
+          {assigned
+            ? "Atendimento com outro responsável. Peça a transferência para responder."
+            : "Assuma o atendimento antes de responder ao contato."}
+        </div>
+      </div>
+    );
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const message = content.trim();
@@ -43,6 +59,7 @@ export function SupportMessageComposer({
     try {
       const response = await fetch("/api/support/messages", {
         body: JSON.stringify({
+          action: "send",
           clientRequestId: crypto.randomUUID(),
           content: message,
           conversationId,

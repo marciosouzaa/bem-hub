@@ -4,6 +4,53 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-25 - Retry Explicito De Atendimento Preparado
+
+### Feito
+
+- Criada migration local `20260726011718_support_message_retry.sql`.
+- Cada envio pelo app passa a gerar uma tentativa imutavel com chave
+  idempotente, numero sequencial, estado, erro e ID retornado pelo provedor.
+- Retry reutiliza a mensagem `failed`, cria uma nova tentativa e impede dois
+  envios concorrentes do mesmo registro.
+- Somente o responsavel pelo atendimento ou owner/admin pode enviar e tentar
+  novamente; a interface bloqueia o composer quando falta atribuicao.
+- A mensagem com falha agora oferece `Tentar novamente` no proprio balao.
+- Credenciais administrativas sao validadas antes de persistir o envio,
+  evitando criar `sending` orfao quando o ambiente server-side esta incompleto.
+- O endpoint existente diferencia explicitamente `send` e `retry`, sem criar
+  uma segunda superficie HTTP.
+
+### Verificacao
+
+- Preflight remoto somente leitura encontrou 11 envios historicos com
+  `client_request_id`; todos usam `sending`, `sent` ou `failed` e cabem no
+  backfill planejado.
+- 77 testes unitarios passaram.
+- `bun run lint` passou.
+- `bun run build` passou com Next.js 16.2.9.
+- pgTAP foi ampliado de 216 para 237 assertions, incluindo ACL/RLS da outbox,
+  wrappers, idempotencia, retry do mesmo registro e isolamento cross-tenant.
+- Migration e pgTAP nao foram executados: Docker/Postgres local segue
+  indisponivel e nenhuma migration foi aplicada no remoto.
+
+### Descoberta Sobre Entrega E Leitura
+
+- A documentacao Uazapi atual confirma a assinatura do evento
+  `messages_update`, separado de `messages`.
+- O material consultado nao forneceu uma fixture inequivoca do callback atual.
+  O canal continuara sem assinar esse evento ate capturar um payload real; nao
+  sera criado normalizador por suposicao.
+
+### Retomada
+
+1. Aplicar, com autorizacao explicita e na ordem, as migrations de ciclo
+   operacional e retry; executar pgTAP, probes e advisors.
+2. Fazer smoke de falha controlada seguido de retry, garantindo uma mensagem e
+   duas tentativas.
+3. Capturar callback real `messages_update`, congelar fixture e so entao
+   persistir `sent`, `delivered`, `read` e `failed` fora do eixo de revisao.
+
 ## 2026-07-25 - Ciclo Operacional De Atendimento Preparado
 
 ### Feito

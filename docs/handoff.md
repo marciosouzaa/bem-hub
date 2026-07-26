@@ -2,6 +2,30 @@
 
 Atualizado em 2026-07-25.
 
+## Handoff 2026-07-25 - Retry Explicito Local
+
+- Migration `20260726011718_support_message_retry.sql` cria
+  `support_message_send_attempts` com RLS, ACL restrita, idempotencia por
+  requisicao e sequencia por mensagem.
+- Envio novo e retry usam implementacoes privadas `SECURITY DEFINER` com
+  wrappers publicos `SECURITY INVOKER`; apenas responsavel ou admin envia.
+- Retry preserva o ID da mensagem e adiciona tentativa. A UI oferece a acao no
+  balao `failed` e bloqueia o composer sem atribuicao.
+- Preflight remoto encontrou 11 envios para backfill e nenhum estado
+  incompatível.
+- 77 testes, lint e build passaram; pgTAP planeja 237 assertions.
+- As duas migrations de 2026-07-25 continuam apenas locais. Nenhuma alteracao
+  foi aplicada no Supabase remoto.
+- Uazapi documenta `messages_update`, mas falta capturar a fixture real antes de
+  implementar entrega/leitura.
+
+### Retomada Exata
+
+1. Aplicar as migrations de ciclo e retry, nessa ordem, somente com autorizacao.
+2. Executar pgTAP, probes de retry/cross-tenant e advisors.
+3. Fazer smoke de erro recuperavel e retry com canal real.
+4. Capturar `messages_update`; congelar fixture antes de assinar o evento.
+
 ## Handoff 2026-07-25 - Ciclo Operacional Local
 
 - Migration `20260726005359_support_operational_lifecycle.sql` adiciona

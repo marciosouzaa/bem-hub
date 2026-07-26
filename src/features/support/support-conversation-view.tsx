@@ -78,9 +78,20 @@ export function SupportConversationView({
       <div className="grid min-h-0 flex-1 xl:grid-cols-[minmax(0,1fr)_280px]">
         <main className="flex min-h-0 min-w-0 flex-col">
           <SupportMessageThread
+            canRetry={
+              conversation.status !== "resolved"
+              && (
+                viewerCanAdmin
+                || conversation.assignedTo === viewerId
+              )
+            }
             messages={conversation.messages}
           />
           <SupportMessageComposer
+            assigned={conversation.assignedTo !== null}
+            canSend={
+              viewerCanAdmin || conversation.assignedTo === viewerId
+            }
             conversationId={conversation.id}
             status={conversation.status}
           />

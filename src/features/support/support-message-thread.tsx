@@ -1,8 +1,10 @@
 "use client";
 
-import { Headset, UserRound } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { Headset, LoaderCircle, RotateCcw, UserRound } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
+import { Button } from "@/components/ui/button";
 import type { SupportConversation } from "@/features/support/queries";
 import {
   formatSupportTime,
@@ -11,11 +13,19 @@ import {
 import { cn } from "@/lib/utils";
 
 export function SupportMessageThread({
+  canRetry,
   messages,
 }: {
+  canRetry: boolean;
   messages: SupportConversation["messages"];
 }) {
+  const router = useRouter();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [retryingId, setRetryingId] = useState<string | null>(null);
+  const [retryError, setRetryError] = useState<{
+    message: string;
+    messageId: string;
+  } | null>(null);
 
   useEffect(() => {
     const container = scrollContainerRef.current;
@@ -26,6 +36,45 @@ export function SupportMessageThread({
       top: container.scrollHeight,
     });
   }, [messages]);
+
+  async function retryMessage(messageId: string) {
+    if (retryingId) return;
+
+    setRetryingId(messageId);
+    setRetryError(null);
+    try {
+      const response = await fetch("/api/support/messages", {
+        body: JSON.stringify({
+          action: "retry",
+          clientRequestId: crypto.randomUUID(),
+          messageId,
+        }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
+      const payload: unknown = await response.json().catch(() => null);
+      if (!response.ok) {
+        const providerMessage = payload
+          && typeof payload === "object"
+          && "message" in payload
+          && typeof payload.message === "string"
+          ? payload.message
+          : "Não foi possível tentar novamente.";
+        throw new Error(providerMessage);
+      }
+
+      router.refresh();
+    } catch (error) {
+      setRetryError({
+        message: error instanceof Error
+          ? error.message
+          : "Não foi possível tentar novamente.",
+        messageId,
+      });
+    } finally {
+      setRetryingId(null);
+    }
+  }
 
   return (
     <div
@@ -94,6 +143,36 @@ export function SupportMessageThread({
                       <span aria-hidden="true">·</span>
                       <span>{supportMessageStatusLabels[message.status]}</span>
                     </div>
+
+                    {outbound
+                      && message.status === "failed"
+                      && canRetry ? (
+                        <div className="mt-2 border-t border-danger/15 pt-2 text-right">
+                          <Button
+                            disabled={retryingId !== null}
+                            onClick={() => retryMessage(message.id)}
+                            size="sm"
+                            variant="ghost"
+                          >
+                            {retryingId === message.id ? (
+                              <LoaderCircle className="size-3.5 animate-spin motion-reduce:animate-none" />
+                            ) : (
+                              <RotateCcw className="size-3.5" />
+                            )}
+                            {retryingId === message.id
+                              ? "Tentando"
+                              : "Tentar novamente"}
+                          </Button>
+                          {retryError?.messageId === message.id ? (
+                            <p
+                              aria-live="polite"
+                              className="mt-1 max-w-72 text-[11px] leading-4 text-danger"
+                            >
+                              {retryError.message}
+                            </p>
+                          ) : null}
+                        </div>
+                      ) : null}
                   </div>
                 </article>
               );

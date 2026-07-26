@@ -1114,6 +1114,33 @@ export type Database = {
         }
         Returns: Json
       }
+      begin_support_message_retry: {
+        Args: {
+          request_id: string
+          target_message_id: string
+          target_organization_id: string
+        }
+        Returns: Json
+      }
+      get_support_message_delivery_attempt: {
+        Args: {
+          target_attempt_id: string
+          target_message_id: string
+          target_organization_id: string
+        }
+        Returns: Json
+      }
+      finalize_support_message_send_attempt: {
+        Args: {
+          delivery_metadata: Json
+          delivery_status: string
+          provider_message_id: string
+          target_attempt_id: string
+          target_message_id: string
+          target_organization_id: string
+        }
+        Returns: Json
+      }
       get_support_message_delivery: {
         Args: {
           target_message_id: string

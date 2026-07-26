@@ -490,7 +490,8 @@ necessario e atualiza ultima mensagem/nao lida para cada operador.
 - [ ] aplicar/validar o ciclo e adicionar transferencia simples por seletor;
 - [x] composer de texto direto, persistencia anterior ao fornecedor e
   idempotencia;
-- [ ] retry explicito e entrega/leitura;
+- [x] retry explicito sobre a mesma mensagem com tentativas auditaveis;
+- [ ] capturar fixture Uazapi `messages_update` e implementar entrega/leitura;
 - bloqueio e explicacao quando o canal nao permite resposta livre.
 
 Aceite: dois operadores conseguem atender sem sobrescrever atribuicao; envio

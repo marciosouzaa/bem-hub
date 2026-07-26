@@ -1,5 +1,5 @@
 begin;
-select plan(216);
+select plan(237);
 
 select ok(
   to_regclass('public.support_events') is not null,
@@ -539,6 +539,105 @@ select is(
   ),
   false,
   'support message begin RPC is security invoker'
+);
+select is(
+  (
+    select prosecdef
+    from pg_proc
+    where oid =
+      'private.begin_support_message_send(uuid,uuid,text,uuid)'::regprocedure
+  ),
+  true,
+  'private support message begin implementation is security definer'
+);
+select ok(
+  to_regclass('public.support_message_send_attempts') is not null,
+  'support send attempts table exists'
+);
+select is(
+  (
+    select relrowsecurity
+    from pg_class
+    where oid = 'public.support_message_send_attempts'::regclass
+  ),
+  true,
+  'support send attempts have row level security enabled'
+);
+select ok(
+  not has_table_privilege(
+    'authenticated',
+    'public.support_message_send_attempts',
+    'insert'
+  ),
+  'authenticated users cannot forge support send attempts'
+);
+select ok(
+  has_table_privilege(
+    'authenticated',
+    'public.support_message_send_attempts',
+    'select'
+  ),
+  'authenticated members can inspect tenant-scoped send attempts'
+);
+select ok(
+  not has_function_privilege(
+    'anon',
+    'public.begin_support_message_retry(uuid,uuid,uuid)',
+    'execute'
+  ),
+  'anon cannot retry support messages'
+);
+select ok(
+  has_function_privilege(
+    'authenticated',
+    'public.begin_support_message_retry(uuid,uuid,uuid)',
+    'execute'
+  ),
+  'authenticated members can request an explicit retry'
+);
+select is(
+  (
+    select prosecdef
+    from pg_proc
+    where oid =
+      'public.begin_support_message_retry(uuid,uuid,uuid)'::regprocedure
+  ),
+  false,
+  'public support retry RPC is security invoker'
+);
+select is(
+  (
+    select prosecdef
+    from pg_proc
+    where oid =
+      'private.begin_support_message_retry(uuid,uuid,uuid)'::regprocedure
+  ),
+  true,
+  'private support retry implementation is security definer'
+);
+select ok(
+  not has_function_privilege(
+    'authenticated',
+    'public.get_support_message_delivery_attempt(uuid,uuid,uuid)',
+    'execute'
+  ),
+  'authenticated cannot read attempt delivery credentials'
+);
+select ok(
+  has_function_privilege(
+    'service_role',
+    'public.get_support_message_delivery_attempt(uuid,uuid,uuid)',
+    'execute'
+  ),
+  'service role can load one delivery attempt'
+);
+select ok(
+  has_function_privilege(
+    'service_role',
+    'public.finalize_support_message_send_attempt(uuid,uuid,uuid,text,text,jsonb)',
+    'execute'
+  ),
+  'service role can finalize one delivery attempt'
 );
 select ok(
   not has_function_privilege(
@@ -1834,6 +1933,16 @@ select lives_ok(
 select is(
   (
     select count(*)
+    from public.support_message_send_attempts
+    where organization_id = 'a0000000-0000-0000-0000-000000000001'
+      and request_id = 'd1000000-0000-4000-8000-000000000001'
+  ),
+  1::bigint,
+  'direct support send records its first immutable attempt'
+);
+select is(
+  (
+    select count(*)
     from public.support_messages
     where organization_id = 'a0000000-0000-0000-0000-000000000001'
       and status = 'sending'
@@ -1863,6 +1972,127 @@ select throws_ok(
   '42501',
   'organization_member_required',
   'tenant A cannot send through tenant B'
+);
+
+reset role;
+set local role service_role;
+set local request.jwt.claims = '{"role":"service_role"}';
+
+select lives_ok(
+  $$select public.finalize_support_message_send_attempt(
+    'a0000000-0000-0000-0000-000000000001',
+    (
+      select message_id
+      from public.support_message_send_attempts
+      where organization_id = 'a0000000-0000-0000-0000-000000000001'
+        and request_id = 'd1000000-0000-4000-8000-000000000001'
+    ),
+    (
+      select id
+      from public.support_message_send_attempts
+      where organization_id = 'a0000000-0000-0000-0000-000000000001'
+        and request_id = 'd1000000-0000-4000-8000-000000000001'
+    ),
+    'failed',
+    '',
+    '{"errorCode":"provider_unavailable"}'::jsonb
+  )$$,
+  'service role finalizes the failed first attempt'
+);
+
+reset role;
+set local role authenticated;
+set local request.jwt.claims =
+  '{"sub":"10000000-0000-0000-0000-000000000001","role":"authenticated"}';
+
+select is(
+  (
+    select status
+    from public.support_messages
+    where organization_id = 'a0000000-0000-0000-0000-000000000001'
+      and client_request_id = 'd1000000-0000-4000-8000-000000000001'
+  ),
+  'failed',
+  'failed attempt updates the visible message status'
+);
+select lives_ok(
+  $$select public.begin_support_message_retry(
+    'a0000000-0000-0000-0000-000000000001',
+    (
+      select id
+      from public.support_messages
+      where organization_id = 'a0000000-0000-0000-0000-000000000001'
+        and client_request_id = 'd1000000-0000-4000-8000-000000000001'
+    ),
+    'd1000000-0000-4000-8000-000000000011'
+  )$$,
+  'responsible member can retry the failed message'
+);
+select is(
+  (
+    select count(*)
+    from public.support_message_send_attempts
+    where organization_id = 'a0000000-0000-0000-0000-000000000001'
+      and message_id = (
+        select id
+        from public.support_messages
+        where organization_id = 'a0000000-0000-0000-0000-000000000001'
+          and client_request_id = 'd1000000-0000-4000-8000-000000000001'
+      )
+  ),
+  2::bigint,
+  'retry appends a second attempt without duplicating the message'
+);
+select is(
+  (
+    select status
+    from public.support_messages
+    where organization_id = 'a0000000-0000-0000-0000-000000000001'
+      and client_request_id = 'd1000000-0000-4000-8000-000000000001'
+  ),
+  'sending',
+  'retry returns the same failed message to sending'
+);
+select is(
+  (
+    public.begin_support_message_retry(
+      'a0000000-0000-0000-0000-000000000001',
+      (
+        select id
+        from public.support_messages
+        where organization_id = 'a0000000-0000-0000-0000-000000000001'
+          and client_request_id = 'd1000000-0000-4000-8000-000000000001'
+      ),
+      'd1000000-0000-4000-8000-000000000011'
+    ) ->> 'created'
+  )::boolean,
+  false,
+  'same retry request is idempotent'
+);
+select is(
+  (
+    select status
+    from public.support_message_send_attempts
+    where organization_id = 'a0000000-0000-0000-0000-000000000001'
+      and request_id = 'd1000000-0000-4000-8000-000000000011'
+  ),
+  'sending',
+  'latest retry attempt remains independently observable'
+);
+select throws_ok(
+  $$select public.begin_support_message_retry(
+    'b0000000-0000-0000-0000-000000000002',
+    (
+      select id
+      from public.support_messages
+      where organization_id = 'a0000000-0000-0000-0000-000000000001'
+        and client_request_id = 'd1000000-0000-4000-8000-000000000001'
+    ),
+    'd2000000-0000-4000-8000-000000000012'
+  )$$,
+  '42501',
+  'organization_member_required',
+  'tenant A cannot retry a message through tenant B'
 );
 
 reset role;
