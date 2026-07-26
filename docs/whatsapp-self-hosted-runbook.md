@@ -41,6 +41,76 @@ Depois que a API responder por HTTPS, no BEM HUB:
 
 O BEM HUB configura o webhook, envia texto e acompanha entrega/leitura.
 
+### Desenvolvimento local preparado no Windows
+
+O ambiente preparado em 2026-07-26 usa:
+
+- Evolution API oficial pinada em `2.3.7`;
+- repositorio `https://github.com/EvolutionAPI/evolution-api.git` em
+  `C:\repos\evolution-api`;
+- API local em `127.0.0.1:8082`;
+- PostgreSQL 15 e Redis 7 sem portas publicadas;
+- volumes persistentes separados para banco, cache e instancias;
+- `docker-compose.local.yml`, `setup-local.ps1` e
+  `show-bem-hub-config.ps1`.
+
+Nao use `latest` neste ambiente. A versao `2.3.7` foi testada contra o adapter
+do BEM HUB; uma troca de versao exige repetir contratos, QR, webhooks e smoke.
+O uso de Evolution API fica identificado na tela administrativa de Canais e
+neste runbook, conforme a notificacao exigida pela licenca do projeto.
+
+Prepare e suba:
+
+```powershell
+Set-Location C:\repos\evolution-api
+powershell -ExecutionPolicy Bypass -File .\setup-local.ps1
+docker compose -f .\docker-compose.local.yml up -d
+powershell -ExecutionPolicy Bypass -File .\show-bem-hub-config.ps1
+```
+
+O setup preserva o `.env` existente e gera API key e senha do banco aleatorias.
+Nao apague nem registre esse arquivo. O script de status nunca imprime a API
+key; para coloca-la na area de transferencia:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\show-bem-hub-config.ps1 -CopyApiKey
+```
+
+O endpoint `/` da Evolution consulta a versao web do WhatsApp e pode demorar em
+rede restrita. O readiness local usa `/verify-creds` e o estado da instancia.
+`CORS_ORIGIN=*` e necessario na `2.3.7` para aceitar requests server-to-server
+sem header `Origin`; a API continua restrita a `127.0.0.1` e autenticada por
+`apikey`.
+
+Para HTTPS temporario:
+
+```powershell
+& 'C:\Program Files (x86)\cloudflared\cloudflared.exe' tunnel --url http://127.0.0.1:8082 --no-autoupdate 2> .\.cloudflared-evolution.log
+```
+
+Mantenha esse terminal aberto. Depois execute `show-bem-hub-config.ps1` em
+outro terminal; ele encontra a URL no `.cloudflared-evolution.log`.
+
+No BEM HUB:
+
+1. crie um canal nao oficial com o numero reservado para Evolution e metodo QR;
+2. abra `Conectar`, escolha `Evolution API` e use `Url` e `InstanceName`
+   mostrados pelo script;
+3. execute o script com `-CopyApiKey` e cole em `API key`;
+4. clique `Validar e salvar`;
+5. clique `Gerar QR Code`;
+6. no aparelho, abra `WhatsApp > Aparelhos conectados > Conectar um aparelho`
+   e escaneie;
+7. clique `Atualizar estado` ate aparecer `Conectado`;
+8. clique `Ativar recebimento`;
+9. execute o smoke obrigatorio deste runbook.
+
+Para parar sem apagar sessao, banco ou cache:
+
+```powershell
+docker compose -f .\docker-compose.local.yml stop
+```
+
 ## Wuzapi
 
 Use o Docker Compose oficial com PostgreSQL. Configure ao menos:

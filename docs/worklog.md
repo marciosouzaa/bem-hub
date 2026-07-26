@@ -4,6 +4,37 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-26 - Evolution API Local Pronta Para Pareamento
+
+### Feito
+
+- Clonado o repositorio oficial Evolution API em `C:\repos\evolution-api` e
+  pinada a versao `2.3.7`; `latest` nao e usado.
+- Criados Compose local, setup de segredos e script seguro para exibir a
+  configuracao do BEM HUB sem imprimir a API key.
+- Evolution roda em `127.0.0.1:8082` com PostgreSQL 15, Redis 7 e tres volumes
+  persistentes. Banco e Redis nao publicam portas.
+- API key aleatoria foi validada em `/verify-creds`; Quick Tunnel HTTPS foi
+  criado; instancia `bem-hub-piloto-evolution` existe no estado `close`.
+- O adapter real do BEM HUB executou `provision` e `getHealth` contra a API
+  Evolution via HTTPS e retornou `disconnected`, como esperado antes do QR.
+- Verificacao fechada com 19 testes focados, suite completa com 99 testes,
+  lint e build de producao aprovados.
+- Corrigido no Compose o CORS da Evolution 2.3.7: requests server-to-server sem
+  `Origin` recebem 500 quando a origem e restrita. O host permanece local-only
+  e todas as rotas operacionais exigem `apikey`.
+- Confirmado no Supabase remoto que ainda nao existe canal Evolution; nenhum
+  numero, credencial ou registro foi inventado.
+
+### Pendente Manual
+
+1. Reservar outro numero, diferente do Wuzapi.
+2. Criar o canal Evolution em `/app/channels`.
+3. Executar `show-bem-hub-config.ps1 -CopyApiKey`, preencher URL, instancia e
+   API key e salvar.
+4. Gerar QR no BEM HUB e escanear em `WhatsApp > Aparelhos conectados`.
+5. Atualizar estado, ativar recebimento e executar entrada/saida/entrega/leitura.
+
 ## 2026-07-26 - Atendimento Iniciado Pelo Operador
 
 ### Feito

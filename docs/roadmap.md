@@ -68,9 +68,10 @@ tecnico recorrente.
 Status: fundação e adapters em validação operacional. Canal Uazapi real conecta,
 entrega callback e cria atendimento. Wuzapi completou smoke local com
 Docker/Postgres, HTTPS temporario, HMAC, entrada, saida e reconciliacao de
-contatos. Evolution API esta implementada, mas sua infraestrutura Postgres/Redis
-e o smoke com outro numero continuam pendentes. Z-API esta pausada para novas
-configuracoes. Broadcast privado foi aplicado no remoto. O ciclo de atribuicao,
+contatos. Evolution API `2.3.7` agora roda localmente com Postgres/Redis,
+HTTPS temporario e instancia provisionada; pareamento e smoke com outro numero
+continuam pendentes. Z-API esta pausada para novas configuracoes. Broadcast
+privado foi aplicado no remoto. O ciclo de atribuicao,
 estados, leitura por operador, auditoria e metricas, junto do retry explicito
 com tentativas auditaveis e o eixo separado de entrega/leitura, foi aplicado e
 validado no remoto. O operador também pode iniciar a conversa e enviar a

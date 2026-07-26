@@ -84,8 +84,11 @@ e operar os hosts self-hosted com numeros de teste separados.
   entrega/leitura e autenticacao do callback.
 - [x] Subir Wuzapi local com Docker/Postgres, HTTPS temporario, usuario isolado
   e fazer smoke de conexao, webhook, entrada, saida e reconciliacao de contatos.
+- [x] Preparar Evolution API `2.3.7` local com Postgres/Redis, volumes,
+  credenciais aleatorias, HTTPS temporario e instancia provisionada sem QR.
 - [ ] Subir Evolution API self-hosted com Postgres/Redis e fazer smoke com outro
-  numero antes de comparar estabilidade e escolher o provider principal.
+  numero antes de comparar estabilidade e escolher o provider principal; falta
+  somente cadastrar o numero, escanear QR e executar o smoke real.
 - [x] Implementar webhook provider-neutral seguro, idempotente e observável,
   com entrada Uazapi normalizada.
 - [x] Validar callback real Uazapi: uma mensagem de outro número deve preencher
