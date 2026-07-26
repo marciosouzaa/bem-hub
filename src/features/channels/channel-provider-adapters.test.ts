@@ -258,6 +258,10 @@ describe("Wuzapi adapter", () => {
     expect(JSON.parse(String(requests[0].init?.body))).toEqual({
       hmac_key: wuzapiCredentials.webhookHmacKey,
     });
+    expect(JSON.parse(String(requests[1].init?.body))).toEqual({
+      events: ["Message", "ReadReceipt"],
+      webhookURL: callbackUrl,
+    });
     expect((requests[0].init?.headers as Record<string, string>).token)
       .toBe(wuzapiCredentials.userToken);
   });

@@ -66,12 +66,14 @@ tecnico recorrente.
 ## M2 - Atendimento Assistido No WhatsApp
 
 Status: fundação e adapters em validação operacional. Canal Uazapi real conecta,
-entrega callback e cria atendimento. Evolution API e Wuzapi estao implementados
-para o piloto self-hosted; Z-API esta pausada para novas configuracoes. Broadcast
-privado foi aplicado no remoto. O ciclo de atribuicao, estados, leitura por operador, auditoria e
-metricas, junto do retry explicito com tentativas auditaveis e o eixo separado
-de entrega/leitura, foi aplicado e validado no remoto. Publicacao da aplicacao,
-reconfiguracao dos webhooks existentes, pgTAP local e QA autenticado ainda
+entrega callback e cria atendimento. Wuzapi completou smoke local com
+Docker/Postgres, HTTPS temporario, HMAC, entrada, saida e reconciliacao de
+contatos. Evolution API esta implementada, mas sua infraestrutura Postgres/Redis
+e o smoke com outro numero continuam pendentes. Z-API esta pausada para novas
+configuracoes. Broadcast privado foi aplicado no remoto. O ciclo de atribuicao,
+estados, leitura por operador, auditoria e metricas, junto do retry explicito
+com tentativas auditaveis e o eixo separado de entrega/leitura, foi aplicado e
+validado no remoto. Publicacao da aplicacao, pgTAP local e QA autenticado ainda
 estao pendentes.
 
 Gate de produto: disponibilizar a infraestrutura Evolution/Wuzapi, validar

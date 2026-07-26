@@ -80,6 +80,65 @@ de pelo menos 32 caracteres. Ao ativar o recebimento, o BEM HUB grava essa HMAC
 no usuario Wuzapi, configura o webhook e passa a rejeitar callbacks sem
 assinatura valida.
 
+### Desenvolvimento local validado no Windows
+
+O smoke de 2026-07-26 usou:
+
+- Docker Desktop, Engine `29.6.2` e Compose `v5.3.1`;
+- `cloudflared 2026.7.3`;
+- repositorio `https://github.com/asternic/wuzapi.git`;
+- checkout local `C:\repos\wuzapi`, commit `70642149a0e8`;
+- `C:\repos\wuzapi\docker-compose.local.yml`;
+- `C:\repos\wuzapi\setup-local.ps1`;
+- BEM HUB em `C:\repos\bem-hub`.
+
+Prepare e suba o Wuzapi:
+
+```powershell
+Set-Location C:\repos\wuzapi
+powershell -ExecutionPolicy Bypass -File .\setup-local.ps1
+docker compose -f .\docker-compose.local.yml up -d --build
+Invoke-WebRequest http://127.0.0.1:8081/health
+```
+
+O script preserva um `.env` existente. Nao apague esse arquivo: ele guarda
+Admin Token, token do usuario, HMAC, credenciais do banco e chave global de
+criptografia. Para a chave AES-256, o script gera 16 bytes aleatorios em
+hexadecimal, equivalentes a 32 caracteres/bytes ASCII aceitos pelo Wuzapi.
+
+O Compose local contem apenas `wuzapi-server` e `db`. PostgreSQL nao publica
+porta no host e a persistencia fica no volume `wuzapi_local_db_data`. RabbitMQ
+nao participa deste ambiente.
+
+Para HTTPS gratuito e temporario durante desenvolvimento, abra um terminal para
+cada tunnel e mantenha os processos ativos:
+
+```powershell
+& 'C:\Program Files (x86)\cloudflared\cloudflared.exe' tunnel --url http://127.0.0.1:8081
+& 'C:\Program Files (x86)\cloudflared\cloudflared.exe' tunnel --url http://127.0.0.1:3000
+```
+
+Use a primeira URL como URL do servidor Wuzapi no canal. Use a segunda em
+`APP_BASE_URL` no `.env.local` do BEM HUB. Como Quick Tunnels mudam ao
+reiniciar:
+
+1. inicie o BEM HUB com `bun dev`;
+2. crie os dois tunnels;
+3. atualize `APP_BASE_URL` com o tunnel do BEM HUB;
+4. substitua a URL do servidor no canal pela URL do tunnel Wuzapi;
+5. clique `Reconfigurar recebimento` para gravar o novo callback.
+
+O usuario `bem-hub-piloto` e a sessao WhatsApp permanecem no volume do banco.
+Nao recrie o usuario se ele ja existir. Para parar sem destruir dados:
+
+```powershell
+docker compose -f .\docker-compose.local.yml stop
+```
+
+Quick Tunnels servem somente ao desenvolvimento. Producao exige host continuo,
+dominio HTTPS estavel, backup, monitoramento e rotacao dos segredos expostos
+durante testes.
+
 ## Smoke test obrigatorio
 
 Para cada provider:

@@ -4,6 +4,77 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-26 - Wuzapi Local Validado De Ponta A Ponta
+
+### Infraestrutura Adicional
+
+- Instalado Docker Desktop; ambiente validado com Docker Engine `29.6.2` e
+  Docker Compose `v5.3.1`.
+- Instalado `cloudflared 2026.7.3` em
+  `C:\Program Files (x86)\cloudflared\cloudflared.exe`.
+- Clonado o repositorio adicional
+  `https://github.com/asternic/wuzapi.git` em `C:\repos\wuzapi`, no commit
+  `70642149a0e8`.
+- Criados no repositorio Wuzapi os arquivos locais nao versionados
+  `docker-compose.local.yml` e `setup-local.ps1`. O `.env` gerado permanece
+  ignorado pelo Git e concentra todos os segredos.
+- O Compose local executa somente Wuzapi e PostgreSQL, com API publicada em
+  `127.0.0.1:8081`, banco sem porta publica e volume
+  `wuzapi_local_db_data`.
+- RabbitMQ nao esta instalado nem ativo. O fluxo atual usa webhook HTTP direto;
+  RabbitMQ permanece opcional para fila duravel, retry desacoplado e dead-letter
+  quando houver necessidade operacional comprovada.
+- Dois Quick Tunnels temporarios do Cloudflare expuseram Wuzapi e BEM HUB por
+  HTTPS. As URLs mudam a cada reinicio e nao substituem dominio/proxy reverso
+  de producao.
+
+### Correcoes Durante O Smoke
+
+- O adapter Wuzapi passou a autenticar endpoints de usuario com o header
+  `token`; `Authorization` fica reservado ao Admin Token.
+- O status foi alinhado ao contrato real `connected`/`loggedIn`.
+- A ativacao do recebimento agora assina explicitamente `Message` e
+  `ReadReceipt`; sem a lista, o cache Wuzapi descartava mensagens antes do
+  webhook.
+- A chave global de criptografia Wuzapi foi corrigida para 32 bytes. Como o
+  script usa hexadecimal, ele gera 16 bytes aleatorios, resultando em 32
+  caracteres ASCII aceitos pelo AES-256.
+- O normalizador passou a priorizar `SenderAlt` em mensagens recebidas e
+  `RecipientAlt` em mensagens enviadas pelo aparelho. Isso recupera o telefone
+  quando o WhatsApp usa LID e remove o sufixo de dispositivo do JID.
+- Dois contatos LID sem nome/telefone criados durante o diagnostico foram
+  fundidos nos contatos telefonicos Uazapi correspondentes. Conversas,
+  mensagens e identidades foram preservadas; somente os dois registros orfaos
+  foram removidos.
+
+### Verificacao
+
+- Wuzapi respondeu `/health`, conectou e restaurou a sessao apos reinicio do
+  container.
+- HMAC e webhook foram configurados com sucesso.
+- Mensagens enviadas pelo aparelho e pelo BEM HUB chegaram ao mesmo dominio de
+  Atendimento; contatos foram reconciliados por telefone entre Uazapi e
+  Wuzapi.
+- O reparo remoto terminou com cinco contatos, zero registros obsoletos e zero
+  contatos simultaneamente sem nome e sem telefone na organizacao validada.
+- 17 testes focados de adapters/webhook passaram; `bun run lint` e
+  `bun run build` passaram com Next.js `16.2.9`.
+- O codigo BEM HUB desta validacao permanece no worktree, sem commit e sem
+  deploy para Vercel.
+
+### Retomada
+
+1. Preservar `C:\repos\wuzapi\.env`; nunca registrar seus valores em docs,
+   commits ou screenshots.
+2. Retomar os containers e os dois tunnels seguindo
+   `docs/whatsapp-self-hosted-runbook.md`. Atualizar `APP_BASE_URL` e as URLs do
+   canal porque Quick Tunnels sao efemeros.
+3. Implementar a proxima feature solicitada no modulo Atendimento.
+4. Em seguida, subir Evolution API local com Postgres e Redis e executar o
+   mesmo smoke com outro numero.
+5. Antes de producao, rotacionar o token Wuzapi exposto durante o diagnostico,
+   usar dominio HTTPS estavel e decidir backup/monitoramento.
+
 ## 2026-07-25 - Evolution E Wuzapi Preparados
 
 ### Decisao

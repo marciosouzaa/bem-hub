@@ -59,7 +59,10 @@ export function createWuzapiAdapter(
         fetcher,
         `${credentials.baseUrl}/webhook`,
         {
-          body: JSON.stringify({ webhookURL: input.url }),
+          body: JSON.stringify({
+            events: ["Message", "ReadReceipt"],
+            webhookURL: input.url,
+          }),
           headers,
           method: "POST",
         },

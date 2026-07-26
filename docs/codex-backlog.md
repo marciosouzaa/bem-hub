@@ -82,7 +82,10 @@ e operar os hosts self-hosted com numeros de teste separados.
 - [x] Pausar novas configuracoes Z-API sem remover o adapter legado.
 - [x] Implementar Evolution API e Wuzapi para saude, QR, envio, webhook,
   entrega/leitura e autenticacao do callback.
-- [ ] Subir os dois servicos self-hosted e fazer smoke com numeros separados.
+- [x] Subir Wuzapi local com Docker/Postgres, HTTPS temporario, usuario isolado
+  e fazer smoke de conexao, webhook, entrada, saida e reconciliacao de contatos.
+- [ ] Subir Evolution API self-hosted com Postgres/Redis e fazer smoke com outro
+  numero antes de comparar estabilidade e escolher o provider principal.
 - [x] Implementar webhook provider-neutral seguro, idempotente e observável,
   com entrada Uazapi normalizada.
 - [x] Validar callback real Uazapi: uma mensagem de outro número deve preencher
@@ -185,9 +188,10 @@ Bloqueado pela auditoria da plataforma e disponibilidade dos dados.
   executavel por authenticated; e intencional para consultar `auth.users`, com
   admin/tenant/papel/limite/owner validados dentro da RPC e anon revogado.
 - Uazapi comprovou o fluxo real inicial. Z-API foi pausada para novas
-  configuracoes, preservando somente compatibilidade legada. Evolution API e
-  Wuzapi agora implementam o contrato completo no codigo; falta disponibilizar
-  os dois hosts, usar numeros separados e executar o smoke comparativo.
+  configuracoes, preservando somente compatibilidade legada. Wuzapi completou o
+  smoke local com Docker/Postgres e tunnels HTTPS temporarios. Evolution API
+  continua implementada no adapter, mas falta subir Postgres/Redis, conectar
+  outro numero e executar o smoke comparativo.
 
 ## Concluido
 

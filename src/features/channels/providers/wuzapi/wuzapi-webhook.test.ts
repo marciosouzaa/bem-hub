@@ -40,6 +40,72 @@ describe("Wuzapi webhook", () => {
     }]);
   });
 
+  test("prioriza telefone alternativo para mensagem recebida por LID", () => {
+    const payload = {
+      event: {
+        Info: {
+          Chat: "80620915011752@lid",
+          ID: "message-lid-inbound",
+          IsFromMe: false,
+          IsGroup: false,
+          PushName: "Ana",
+          Sender: "80620915011752:12@lid",
+          SenderAlt: "5521964827715:12@s.whatsapp.net",
+          Timestamp: "2026-07-25T10:00:00Z",
+        },
+        Message: { conversation: "Mensagem recebida." },
+      },
+      type: "Message",
+      userID: "1",
+    };
+
+    const [event] = verifyAndNormalizeWuzapiWebhook(
+      signedInput(payload),
+      hmacKey,
+    );
+
+    expect(event).toMatchObject({
+      senderIdentityType: "phone",
+      senderIdentityValue: "5521964827715",
+      senderName: "Ana",
+      senderPhone: "+5521964827715",
+      type: "message.received",
+    });
+  });
+
+  test("usa telefone do destinatário em mensagem enviada pelo aparelho", () => {
+    const payload = {
+      event: {
+        Info: {
+          Chat: "80620915011752@lid",
+          ID: "message-lid-outbound",
+          IsFromMe: true,
+          IsGroup: false,
+          PushName: "Nome da conta conectada",
+          RecipientAlt: "5521964827715@s.whatsapp.net",
+          Sender: "123456789:34@lid",
+          Timestamp: "2026-07-25T10:00:00Z",
+        },
+        Message: { conversation: "Mensagem enviada." },
+      },
+      type: "Message",
+      userID: "1",
+    };
+
+    const [event] = verifyAndNormalizeWuzapiWebhook(
+      signedInput(payload),
+      hmacKey,
+    );
+
+    expect(event).toMatchObject({
+      senderIdentityType: "phone",
+      senderIdentityValue: "5521964827715",
+      senderName: null,
+      senderPhone: "+5521964827715",
+      type: "message.sent_by_phone",
+    });
+  });
+
   test("normaliza confirmações para todos os IDs", () => {
     const payload = {
       event: {

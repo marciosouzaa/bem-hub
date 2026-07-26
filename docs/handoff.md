@@ -1,6 +1,41 @@
 # Handoff Notes
 
-Atualizado em 2026-07-25.
+Atualizado em 2026-07-26.
+
+## Handoff 2026-07-26 - Wuzapi Local Operacional
+
+- Wuzapi foi clonado em `C:\repos\wuzapi` a partir de
+  `https://github.com/asternic/wuzapi.git`, commit `70642149a0e8`.
+- Infra local adicional: Docker Desktop/Compose, PostgreSQL do Wuzapi e
+  `cloudflared`. Os arquivos locais `docker-compose.local.yml` e
+  `setup-local.ps1` estao no repositorio Wuzapi e ainda nao foram versionados.
+- A API local usa `127.0.0.1:8081`; os tunnels HTTPS do Wuzapi e do BEM HUB sao
+  Quick Tunnels temporarios e mudam ao reiniciar.
+- RabbitMQ nao e usado. A entrega atual e Wuzapi -> webhook HTTP -> BEM HUB ->
+  Supabase/Postgres -> Realtime.
+- Sessao WhatsApp, HMAC, webhook, entrada e saida foram validados. O volume
+  Postgres preservou a sessao depois de recriar o container.
+- Corrigidos no BEM HUB: header `token`, status em camelCase, assinatura
+  explicita de `Message`/`ReadReceipt` e identidade telefonica via
+  `SenderAlt`/`RecipientAlt`.
+- Dois contatos LID orfaos foram fundidos nos contatos telefonicos existentes,
+  sem apagar conversas ou mensagens.
+- 17 testes focados, lint e build passaram. As quatro alteracoes Wuzapi no BEM
+  HUB continuam sem commit e sem deploy.
+- Segredos permanecem somente em `C:\repos\wuzapi\.env` e nas credenciais
+  criptografadas do BEM HUB. O token mostrado em screenshot deve ser rotacionado
+  antes de qualquer producao.
+
+### Retomada Exata
+
+1. Consultar `docs/whatsapp-self-hosted-runbook.md`, secao de desenvolvimento
+   local Wuzapi.
+2. Confirmar Docker, `localhost:8081`, BEM HUB em `localhost:3000` e criar dois
+   novos Quick Tunnels.
+3. Atualizar `APP_BASE_URL`, substituir a URL Wuzapi do canal e clicar
+   `Reconfigurar recebimento`.
+4. Implementar a proxima feature do modulo Atendimento.
+5. Depois, iniciar Evolution API com outro numero e repetir o smoke.
 
 ## Handoff 2026-07-25 - Ciclo E Retry Aplicados
 

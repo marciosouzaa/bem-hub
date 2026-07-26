@@ -67,6 +67,10 @@ function normalizeMessage(event: UnknownRecord): ChannelMessageEvent[] {
 
   const chatId = jidToString(firstValue(info, ["Chat", "chat"]));
   const senderId = jidToString(firstValue(info, ["Sender", "sender"]));
+  const senderAlt = jidToString(firstValue(info, ["SenderAlt", "senderAlt"]));
+  const recipientAlt = jidToString(
+    firstValue(info, ["RecipientAlt", "recipientAlt"]),
+  );
   const providerMessageId = firstString(info, ["ID", "id"]);
   const message = firstRecord(event, ["Message", "message"]);
   const text = message ? firstString(message, [
@@ -79,7 +83,9 @@ function normalizeMessage(event: UnknownRecord): ChannelMessageEvent[] {
   ]) : null;
   if (!chatId || !providerMessageId || !text) return [];
 
-  const identitySource = fromMe ? chatId : senderId ?? chatId;
+  const identitySource = fromMe
+    ? preferPhoneIdentity(chatId, recipientAlt)
+    : preferPhoneIdentity(senderId ?? chatId, senderAlt);
   const identity = normalizeIdentity(identitySource);
   return [channelMessageEventSchema.parse({
     occurredAt: normalizeTimestamp(
@@ -111,15 +117,39 @@ function normalizeIdentity(value: string): {
   const normalized = value.trim().toLowerCase();
   if (normalized.endsWith("@lid")) return { type: "lid", value: normalized };
   if (normalized.endsWith("@s.whatsapp.net") || /^\+?\d+$/.test(normalized)) {
-    return { type: "phone", value: normalized.replace(/\D/g, "") };
+    return {
+      type: "phone",
+      value: normalizePhoneDigits(normalized) ?? normalized.replace(/\D/g, ""),
+    };
   }
   return { type: "remote_jid", value: normalized };
 }
 
 function normalizePhone(value: string) {
   if (value.toLowerCase().endsWith("@lid")) return null;
-  const digits = value.replace(/\D/g, "");
+  const digits = normalizePhoneDigits(value);
+  if (!digits) return null;
   return digits.length >= 8 && digits.length <= 15 ? `+${digits}` : null;
+}
+
+function preferPhoneIdentity(
+  fallback: string,
+  ...values: Array<string | null>
+) {
+  const available = [
+    ...values.filter((value): value is string => value !== null),
+    fallback,
+  ];
+  return available.find((value) => normalizePhoneDigits(value) !== null)
+    ?? fallback;
+}
+
+function normalizePhoneDigits(value: string) {
+  const normalized = value.trim().toLowerCase();
+  if (normalized.endsWith("@lid")) return null;
+  const localPart = normalized.split("@", 1)[0].split(":", 1)[0];
+  const digits = localPart.replace(/\D/g, "");
+  return digits.length >= 8 && digits.length <= 15 ? digits : null;
 }
 
 function normalizeTimestamp(value: unknown) {
