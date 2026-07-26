@@ -446,10 +446,12 @@ dois provedores para o mesmo contrato interno, sem persistir segredo em log.
 
 - [x] preparar migration incremental para leitura por operador, eventos de
   ciclo e versao otimista;
-- [ ] aplicar a migration e concluir outbox/separacao review/delivery;
+- [x] aplicar as migrations de ciclo operacional e outbox/retry;
+- [ ] concluir separacao entre review e delivery;
 - [x] preparar indices, unicidade, RLS e RPCs atomicas do ciclo operacional;
 - backfill seguro dos rascunhos existentes;
-- [ ] executar testes com duas organizacoes no banco configurado.
+- [x] executar probes transacionais com duas organizacoes no banco configurado;
+- [ ] executar a suite pgTAP completa.
 
 Aceite: duplicata nao cria mensagem/conversa; usuario A nao le ou altera tenant
 B; membro nao pula estados por update direto.
@@ -487,7 +489,8 @@ necessario e atualiza ultima mensagem/nao lida para cada operador.
 - layout de tres areas;
 - busca, fila/meus/resolvidos, filtros e paginacao;
 - [x] implementar localmente assumir, ler, resolver e reabrir;
-- [ ] aplicar/validar o ciclo e adicionar transferencia simples por seletor;
+- [x] aplicar/validar o ciclo;
+- [ ] adicionar transferencia simples por seletor;
 - [x] composer de texto direto, persistencia anterior ao fornecedor e
   idempotencia;
 - [x] retry explicito sobre a mesma mensagem com tentativas auditaveis;

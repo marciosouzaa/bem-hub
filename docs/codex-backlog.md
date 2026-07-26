@@ -105,8 +105,9 @@ fluxo interno de atendimento pode avancar sem esse gate.
 - [ ] Validar envio pelo app e pelo aparelho na mesma thread.
 - [x] Implementar localmente ciclo operacional com atribuicao, estados,
   prioridade, leitura por operador, auditoria imutavel e metricas de resolucao.
-- [ ] Aplicar a migration do ciclo operacional, executar pgTAP/probes de duas
-  organizacoes e fazer QA visual autenticado.
+- [x] Aplicar as migrations de ciclo e retry e executar probes de duas
+  organizacoes no remoto.
+- [ ] Executar pgTAP e fazer QA visual autenticado do ciclo operacional.
 - [x] Implementar localmente retry explicito sobre a mesma mensagem, com
   tentativas idempotentes e auditaveis.
 - [ ] Capturar fixture real Uazapi `messages_update` e implementar estados de

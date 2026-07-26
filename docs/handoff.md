@@ -2,6 +2,28 @@
 
 Atualizado em 2026-07-25.
 
+## Handoff 2026-07-25 - Ciclo E Retry Aplicados
+
+- Ciclo operacional, retry, correcao da ambiguidade de `request_id` e indices
+  das FKs de leitura foram aplicados no Supabase remoto.
+- Historico remoto:
+  `20260726013623_support_operational_lifecycle`,
+  `20260726013644_support_message_retry`,
+  `20260726013946_disambiguate_support_retry_request_id` e
+  `20260726014116_index_support_conversation_read_foreign_keys`.
+- Backfill confirmou 11 tentativas. Probes transacionais passaram para ciclo,
+  leitura, isolamento cross-tenant, envio novo e retry, com rollback completo e
+  sem chamar o fornecedor.
+- Advisors nao apontam nova regressao de seguranca nem FK sem indice.
+- pgTAP local e QA autenticado desktop/mobile ainda estao pendentes.
+
+### Retomada Exata
+
+1. Fazer QA autenticado com dois operadores.
+2. Fazer smoke de erro recuperavel e retry com canal real.
+3. Capturar `messages_update`; congelar fixture antes de assinar o evento.
+4. Rodar pgTAP quando Docker/Postgres local estiver disponivel.
+
 ## Handoff 2026-07-25 - Retry Explicito Local
 
 - Migration `20260726011718_support_message_retry.sql` cria
@@ -14,17 +36,15 @@ Atualizado em 2026-07-25.
 - Preflight remoto encontrou 11 envios para backfill e nenhum estado
   incompatível.
 - 77 testes, lint e build passaram; pgTAP planeja 237 assertions.
-- As duas migrations de 2026-07-25 continuam apenas locais. Nenhuma alteracao
-  foi aplicada no Supabase remoto.
+- As migrations foram aplicadas e validadas no checkpoint remoto acima.
 - Uazapi documenta `messages_update`, mas falta capturar a fixture real antes de
   implementar entrega/leitura.
 
 ### Retomada Exata
 
-1. Aplicar as migrations de ciclo e retry, nessa ordem, somente com autorizacao.
-2. Executar pgTAP, probes de retry/cross-tenant e advisors.
-3. Fazer smoke de erro recuperavel e retry com canal real.
-4. Capturar `messages_update`; congelar fixture antes de assinar o evento.
+1. Executar pgTAP quando o banco local estiver disponivel.
+2. Fazer QA autenticado e smoke de retry com canal real.
+3. Capturar `messages_update`; congelar fixture antes de assinar o evento.
 
 ## Handoff 2026-07-25 - Ciclo Operacional Local
 
@@ -39,16 +59,15 @@ Atualizado em 2026-07-25.
 - O RPC legado `review_support_draft` foi mantido funcional por wrapper
   `SECURITY INVOKER` e implementacao privada segura.
 - 74 testes, lint e build passaram. pgTAP agora planeja 216 assertions.
-- Docker/Postgres local continua indisponivel; migration, pgTAP, probes e QA
-  autenticado ainda nao foram executados. Nada foi aplicado no remoto.
+- Docker/Postgres local continua indisponivel para pgTAP. Migration e probes
+  foram executados no checkpoint remoto acima; QA autenticado segue pendente.
 
 ### Retomada Exata
 
-1. Com autorizacao explicita, aplicar a migration no projeto Supabase.
-2. Executar pgTAP e probes de concorrencia, cross-tenant, leitura e metricas;
-   depois conferir advisors.
+1. Executar pgTAP quando o banco local estiver disponivel.
+2. Fazer QA autenticado de concorrencia, leitura e metricas.
 3. Fazer QA da inbox em desktop/mobile com dois operadores.
-4. Seguir para retry explicito e eventos de entrega/leitura do provedor.
+4. Seguir para eventos de entrega/leitura do provedor.
 
 ## Handoff 2026-07-24 - Etiquetas Normalizadas Aplicadas
 

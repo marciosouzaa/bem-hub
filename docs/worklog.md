@@ -4,6 +4,42 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-25 - Ciclo Operacional E Retry Aplicados No Remoto
+
+### Feito
+
+- Aplicadas no projeto remoto, nesta ordem:
+  `20260726013623_support_operational_lifecycle`,
+  `20260726013644_support_message_retry`,
+  `20260726013946_disambiguate_support_retry_request_id` e
+  `20260726014116_index_support_conversation_read_foreign_keys`.
+- O backfill criou 11 tentativas para os envios historicos elegiveis.
+- Um probe transacional revelou ambiguidade entre o parametro `request_id` e a
+  coluna homonima nos RPCs privados de envio/retry. A migration corretiva
+  regravou apenas essas referencias com os parametros posicionais originais.
+- Dois indices foram adicionados para cobrir as FKs de mensagem e usuario em
+  `support_conversation_reads`.
+
+### Verificacao
+
+- Probes transacionais passaram para ciclo operacional, leitura individual,
+  isolamento cross-tenant, novo envio e retry da mesma mensagem.
+- O retry preservou a mensagem e criou a segunda tentativa; todos os probes
+  foram revertidos e nenhum envio ao fornecedor foi disparado.
+- Catalogo remoto confirmou RLS, wrappers, 11 tentativas, funcoes corrigidas e
+  os dois indices.
+- Advisors nao ganharam alerta de seguranca nem FK sem indice. Permanecem apenas
+  os avisos conhecidos de funcoes administrativas intencionais, protecao de
+  senha vazada desativada e indices ainda sem uso.
+- pgTAP local continua pendente porque Docker/Postgres nao esta disponivel.
+
+### Retomada
+
+1. Fazer QA autenticado desktop/mobile com dois operadores.
+2. Fazer smoke controlado de falha e retry com o canal real.
+3. Capturar callback real `messages_update` antes de implementar entrega e
+   leitura do provedor.
+
 ## 2026-07-25 - Retry Explicito De Atendimento Preparado
 
 ### Feito
@@ -31,8 +67,8 @@ do marco ativo.
 - `bun run build` passou com Next.js 16.2.9.
 - pgTAP foi ampliado de 216 para 237 assertions, incluindo ACL/RLS da outbox,
   wrappers, idempotencia, retry do mesmo registro e isolamento cross-tenant.
-- Migration e pgTAP nao foram executados: Docker/Postgres local segue
-  indisponivel e nenhuma migration foi aplicada no remoto.
+- pgTAP nao foi executado porque Docker/Postgres local segue indisponivel. A
+  migration foi aplicada e validada no checkpoint remoto acima.
 
 ### Descoberta Sobre Entrega E Leitura
 
@@ -44,8 +80,8 @@ do marco ativo.
 
 ### Retomada
 
-1. Aplicar, com autorizacao explicita e na ordem, as migrations de ciclo
-   operacional e retry; executar pgTAP, probes e advisors.
+1. Executar pgTAP quando o banco local estiver disponivel e concluir o QA
+   autenticado com dois operadores.
 2. Fazer smoke de falha controlada seguido de retry, garantindo uma mensagem e
    duas tentativas.
 3. Capturar callback real `messages_update`, congelar fixture e so entao
@@ -84,17 +120,15 @@ do marco ativo.
   LF/CRLF configurada no Windows.
 - `supabase db lint --local` e pgTAP nao executaram porque Docker/Postgres local
   nao esta disponivel.
-- A migration nao foi aplicada no Supabase remoto e nenhum dado real foi
-  alterado. QA visual autenticado tambem permanece pendente.
+- A migration foi aplicada e validada no checkpoint remoto acima. QA visual
+  autenticado permanece pendente.
 
 ### Retomada
 
-1. Revisar e aplicar a migration com autorizacao explicita, executar os 216
-   testes pgTAP e probes transacionais de duas organizacoes.
+1. Executar os testes pgTAP quando o banco local estiver disponivel.
 2. Fazer QA autenticado desktop/mobile da fila, atribuicao, estados, nao lidas,
    timeline e metricas.
-3. Implementar retry explicito do envio e separar entrega/leitura do estado de
-   revisao da mensagem.
+3. Separar entrega/leitura do provedor do estado de revisao da mensagem.
 4. Validar envio pelo app e pelo aparelho na mesma thread com o canal real.
 
 ## 2026-07-24 - Modulo De Etiquetas Aplicado No Remoto
