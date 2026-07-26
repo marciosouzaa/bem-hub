@@ -14,8 +14,8 @@ import { verifyAndNormalizeWuzapiWebhook } from "@/features/channels/providers/w
 
 const statusResponseSchema = z.object({
   data: z.object({
-    Connected: z.boolean(),
-    LoggedIn: z.boolean(),
+    connected: z.boolean(),
+    loggedIn: z.boolean(),
   }),
 });
 
@@ -39,8 +39,8 @@ export function createWuzapiAdapter(
 ): ChannelProviderAdapter {
   const credentials = wuzapiCredentialsSchema.parse(rawCredentials);
   const headers = {
-    Authorization: credentials.userToken,
     "Content-Type": "application/json",
+    token: credentials.userToken,
   };
 
   return {
@@ -100,7 +100,7 @@ export function createWuzapiAdapter(
         { headers, method: "GET" },
       );
       const status = statusResponseSchema.parse(statusPayload);
-      if (status.data.LoggedIn) return { kind: "none", value: null };
+      if (status.data.loggedIn) return { kind: "none", value: null };
 
       const qrPayload = await fetchProviderJson(
         fetcher,
@@ -147,10 +147,10 @@ export function createWuzapiAdapter(
 function mapHealth(
   payload: z.infer<typeof statusResponseSchema>,
 ): ChannelProviderHealth {
-  if (payload.data.Connected && payload.data.LoggedIn) {
+  if (payload.data.connected && payload.data.loggedIn) {
     return { externalInstanceId: null, reason: null, status: "connected" };
   }
-  if (payload.data.Connected) {
+  if (payload.data.connected) {
     return {
       externalInstanceId: null,
       reason: "Aguardando leitura do QR Code.",

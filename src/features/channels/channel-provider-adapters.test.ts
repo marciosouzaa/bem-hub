@@ -217,6 +217,24 @@ describe("Uazapi adapter", () => {
 });
 
 describe("Wuzapi adapter", () => {
+  test("consulta saúde usando contrato e header atuais", async () => {
+    let request: { init?: RequestInit; url?: string } = {};
+    const fetcher = (async (input: string | URL | Request, init?: RequestInit) => {
+      request = { init, url: input.toString() };
+      return jsonResponse({
+        data: { connected: true, loggedIn: true },
+        success: true,
+      });
+    }) as typeof fetch;
+
+    const health = await createWuzapiAdapter(wuzapiCredentials, fetcher).getHealth();
+
+    expect(request.url).toBe("https://wuzapi.example.com/session/status");
+    expect((request.init?.headers as Record<string, string>).token)
+      .toBe(wuzapiCredentials.userToken);
+    expect(health.status).toBe("connected");
+  });
+
   test("configura HMAC antes do webhook e confirma a URL", async () => {
     const requests: Array<{ init?: RequestInit; url: string }> = [];
     const callbackUrl = "https://app.example.com/api/webhooks/channels/wuzapi/token";
@@ -240,7 +258,7 @@ describe("Wuzapi adapter", () => {
     expect(JSON.parse(String(requests[0].init?.body))).toEqual({
       hmac_key: wuzapiCredentials.webhookHmacKey,
     });
-    expect((requests[0].init?.headers as Record<string, string>).Authorization)
+    expect((requests[0].init?.headers as Record<string, string>).token)
       .toBe(wuzapiCredentials.userToken);
   });
 
