@@ -77,7 +77,7 @@ export function ChannelEditorDrawer({ channel, onClose, onSaved, open }: Channel
 
   return (
     <EntityDrawer
-      description={isEditing ? "Atualize a identificação e o método de pareamento deste número." : "Cadastre o número; depois valide Uazapi ou Z-API na ação Conectar."}
+      description={isEditing ? "Atualize a identificação e o método de pareamento deste número." : "Cadastre o número; depois conecte Evolution API, Wuzapi ou Uazapi."}
       formId={formId}
       isDirty={isDirty}
       isSubmitting={isSubmitting}

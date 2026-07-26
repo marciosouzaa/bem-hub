@@ -2,17 +2,20 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { RadioTower } from "lucide-react";
-import Image from "next/image";
 import { useEffect, useState } from "react";
-import { useForm, useWatch, type UseFormRegisterReturn } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EntityDrawer } from "@/components/ui/entity-drawer";
 import { FormField } from "@/components/ui/form-field";
 import { FormSection } from "@/components/ui/form-section";
-import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { ChannelProviderCredentialFields } from "@/features/channels/channel-provider-credential-fields";
+import {
+  ChannelConnectionState,
+  ChannelPairingPanel,
+} from "@/features/channels/channel-provider-status-panels";
 import {
   configureChannelWebhookAction,
   configureChannelProviderAction,
@@ -31,12 +34,21 @@ import type { ChannelConnection } from "@/features/channels/channel-schema";
 const formId = "channel-provider-form";
 
 function getDefaultValues(channel: ChannelConnection): ChannelProviderFormValues {
+  const provider = (
+    ["uazapi", "z_api", "evolution", "wuzapi"] as const
+  ).find((candidate) => candidate === channel.provider) ?? "evolution";
+
   return {
-    baseUrl: channel.providerBaseUrl ?? "https://free.uazapi.com",
+    apiKey: "",
+    baseUrl: channel.providerBaseUrl
+      ?? (provider === "uazapi" ? "https://free.uazapi.com" : ""),
     clientToken: "",
     instanceId: channel.externalInstanceId ?? "",
+    instanceName: channel.externalInstanceId ?? `bem-hub-${channel.id.slice(0, 8)}`,
     instanceToken: "",
-    provider: channel.provider === "z_api" ? "z_api" : "uazapi",
+    provider,
+    userToken: "",
+    webhookHmacKey: "",
   };
 }
 
@@ -85,7 +97,14 @@ export function ChannelProviderDrawer({
     );
     setFeedback(result.message);
     if (!result.ok) return;
-    reset({ ...values, clientToken: "", instanceToken: "" });
+    reset({
+      ...values,
+      apiKey: "",
+      clientToken: "",
+      instanceToken: "",
+      userToken: "",
+      webhookHmacKey: "",
+    });
     onSaved();
   }
 
@@ -136,7 +155,7 @@ export function ChannelProviderDrawer({
         title={`Conectar ${channel.name}`}
       >
         <form className="space-y-7" id={formId} onSubmit={handleSubmit(submit)}>
-          <ConnectionState channel={channel} />
+          <ChannelConnectionState channel={channel} />
 
           <FormSection
             description="Cada provedor implementa o mesmo contrato interno de conexão."
@@ -144,34 +163,19 @@ export function ChannelProviderDrawer({
           >
             <FormField error={errors.provider?.message} htmlFor="channel-provider" label="API não oficial">
               <Select id="channel-provider" {...register("provider")}>
+                <option value="evolution">Evolution API</option>
+                <option value="wuzapi">Wuzapi</option>
                 <option value="uazapi">Uazapi</option>
-                <option value="z_api">Z-API</option>
+                <option disabled value="z_api">Z-API — pausada</option>
               </Select>
             </FormField>
           </FormSection>
 
-          {provider === "z_api" ? (
-            <FormSection
-              description="Disponíveis em Instâncias Web e Segurança no painel da Z-API."
-              title="Credenciais Z-API"
-            >
-              <FormField error={errors.instanceId?.message} htmlFor="z-api-instance-id" label="ID da instância">
-                <Input autoComplete="off" className="font-mono" id="z-api-instance-id" {...register("instanceId")} />
-              </FormField>
-              <SecretField error={errors.instanceToken?.message} id="z-api-instance-token" label="Token da instância" registration={register("instanceToken")} />
-              <SecretField error={errors.clientToken?.message} id="z-api-client-token" label="Client-Token" registration={register("clientToken")} />
-            </FormSection>
-          ) : (
-            <FormSection
-              description="Use o endereço do servidor e o token da instância, nunca o Admin Token."
-              title="Credenciais Uazapi"
-            >
-              <FormField error={errors.baseUrl?.message} htmlFor="uazapi-base-url" label="URL do servidor">
-                <Input className="font-mono" id="uazapi-base-url" placeholder="https://free.uazapi.com" {...register("baseUrl")} />
-              </FormField>
-              <SecretField error={errors.instanceToken?.message} id="uazapi-instance-token" label="Token da instância" registration={register("instanceToken")} />
-            </FormSection>
-          )}
+          <ChannelProviderCredentialFields
+            errors={errors}
+            provider={provider}
+            register={register}
+          />
 
           {feedback ? (
             <p className="rounded-[var(--radius-control)] border border-panel-border bg-panel-subtle px-3 py-2.5 text-sm text-muted-strong" role="status">
@@ -179,7 +183,7 @@ export function ChannelProviderDrawer({
             </p>
           ) : null}
 
-          {pairing ? <PairingPanel pairing={pairing} /> : null}
+          {pairing ? <ChannelPairingPanel pairing={pairing} /> : null}
 
           {channel.hasCredentials ? (
             <>
@@ -226,7 +230,9 @@ export function ChannelProviderDrawer({
               >
                 <div className="flex flex-wrap gap-2">
                   <Button disabled={operating} onClick={runPairing} type="button" variant="secondary">
-                    {channel.authMethod === "pin" ? "Gerar código" : "Gerar QR Code"}
+                    {channel.provider !== "wuzapi" && channel.authMethod === "pin"
+                      ? "Gerar código"
+                      : "Gerar QR Code"}
                   </Button>
                   <Button disabled={operating} onClick={() => runOperation(() => refreshChannelProviderHealthAction(channel.id))} type="button" variant="ghost">
                     Atualizar estado
@@ -251,64 +257,5 @@ export function ChannelProviderDrawer({
         variant="danger"
       />
     </>
-  );
-}
-
-function SecretField({
-  error,
-  id,
-  label,
-  registration,
-}: {
-  error?: string;
-  id: string;
-  label: string;
-  registration: UseFormRegisterReturn;
-}) {
-  return (
-    <FormField description="O valor não retorna para a interface depois de salvo." error={error} htmlFor={id} label={label}>
-      <Input autoComplete="off" className="font-mono" id={id} type="password" {...registration} />
-    </FormField>
-  );
-}
-
-function ConnectionState({ channel }: { channel: ChannelConnection }) {
-  const labels: Partial<Record<ChannelConnection["status"], string>> = {
-    awaiting_pairing: "Aguardando pareamento",
-    connected: "Conectado",
-    connecting: "Conectando",
-    draft: "Não configurado",
-    failed: "Com falha",
-  };
-  return (
-    <div className="rounded-[var(--radius-panel)] border border-panel-border bg-panel-subtle p-4">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.1em] text-muted">Estado operacional</p>
-          <p className="mt-1 font-medium text-foreground">{labels[channel.status] ?? "Desconectado"}</p>
-        </div>
-        <span className={`size-2.5 rounded-full ${channel.status === "connected" ? "bg-success" : channel.status === "failed" ? "bg-danger" : "bg-warning"}`} />
-      </div>
-      {channel.statusReason ? <p className="mt-3 text-sm text-muted">{channel.statusReason}</p> : null}
-    </div>
-  );
-}
-
-function PairingPanel({ pairing }: { pairing: ChannelPairing }) {
-  if (pairing.kind === "none") {
-    return <p className="text-sm text-muted">Nenhum pareamento necessário neste momento.</p>;
-  }
-  if (pairing.kind === "code") {
-    return (
-      <div className="rounded-[var(--radius-panel)] border border-primary/25 bg-primary/5 p-5 text-center">
-        <p className="text-xs font-semibold uppercase tracking-[0.1em] text-primary">Código de pareamento</p>
-        <p className="mt-3 font-mono text-2xl font-semibold tracking-[0.18em] text-foreground">{pairing.value}</p>
-      </div>
-    );
-  }
-  return (
-    <div className="rounded-[var(--radius-panel)] border border-primary/25 bg-white p-4">
-      <Image alt="QR Code para conectar o WhatsApp" className="mx-auto size-64" height={256} src={pairing.value} unoptimized width={256} />
-    </div>
   );
 }

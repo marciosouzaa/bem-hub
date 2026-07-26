@@ -1,6 +1,17 @@
 import { z } from "zod";
 
-export const channelProviderSchema = z.enum(["uazapi", "z_api"]);
+export const channelProviderSchema = z.enum([
+  "uazapi",
+  "z_api",
+  "evolution",
+  "wuzapi",
+]);
+
+export const configurableChannelProviderSchema = z.enum([
+  "uazapi",
+  "evolution",
+  "wuzapi",
+]);
 
 export const channelProviderStatusSchema = z.enum([
   "draft",
@@ -34,18 +45,55 @@ export const zApiCredentialsSchema = z.object({
   instanceToken: z.string().trim().min(8, "Informe o token da instância."),
 });
 
+export const evolutionCredentialsSchema = z.object({
+  provider: z.literal("evolution"),
+  apiKey: z.string().trim().min(16, "Informe a API key da Evolution."),
+  baseUrl: httpsBaseUrlSchema,
+  instanceName: z
+    .string()
+    .trim()
+    .min(3, "Informe o nome da instância.")
+    .max(100, "Use no máximo 100 caracteres.")
+    .regex(/^[a-zA-Z0-9_-]+$/, "Use apenas letras, números, hífen ou sublinhado."),
+});
+
+export const wuzapiCredentialsSchema = z.object({
+  provider: z.literal("wuzapi"),
+  baseUrl: httpsBaseUrlSchema,
+  userToken: z.string().trim().min(16, "Informe o token do usuário Wuzapi."),
+  webhookHmacKey: z
+    .string()
+    .min(32, "A chave HMAC precisa ter ao menos 32 caracteres.")
+    .max(256, "Use no máximo 256 caracteres."),
+});
+
 export const channelProviderCredentialsSchema = z.discriminatedUnion("provider", [
   uazapiCredentialsSchema,
   zApiCredentialsSchema,
+  evolutionCredentialsSchema,
+  wuzapiCredentialsSchema,
 ]);
 
 export const channelProviderFormSchema = z.object({
+  apiKey: z.string(),
   baseUrl: z.string(),
   clientToken: z.string(),
   instanceId: z.string(),
+  instanceName: z.string(),
   instanceToken: z.string(),
   provider: channelProviderSchema,
+  userToken: z.string(),
+  webhookHmacKey: z.string(),
 }).superRefine((value, context) => {
+  if (value.provider === "z_api") {
+    context.addIssue({
+      code: "custom",
+      message: "Novas configurações Z-API estão pausadas.",
+      path: ["provider"],
+    });
+    return;
+  }
+
   const parsed = channelProviderCredentialsSchema.safeParse(
     toChannelProviderCredentials(value),
   );
@@ -56,9 +104,7 @@ export const channelProviderFormSchema = z.object({
     context.addIssue({
       code: "custom",
       message: issue.message,
-      path: field === "baseUrl" || field === "clientToken" || field === "instanceId"
-        ? [field]
-        : ["instanceToken"],
+      path: typeof field === "string" ? [field] : ["provider"],
     });
   }
 });
@@ -75,11 +121,27 @@ export function toChannelProviderCredentials(
       provider: "uazapi",
     };
   }
+  if (values.provider === "z_api") {
+    return {
+      clientToken: values.clientToken,
+      instanceId: values.instanceId,
+      instanceToken: values.instanceToken,
+      provider: "z_api",
+    };
+  }
+  if (values.provider === "evolution") {
+    return {
+      apiKey: values.apiKey,
+      baseUrl: values.baseUrl,
+      instanceName: values.instanceName,
+      provider: "evolution",
+    };
+  }
   return {
-    clientToken: values.clientToken,
-    instanceId: values.instanceId,
-    instanceToken: values.instanceToken,
-    provider: "z_api",
+    baseUrl: values.baseUrl,
+    provider: "wuzapi",
+    userToken: values.userToken,
+    webhookHmacKey: values.webhookHmacKey,
   };
 }
 

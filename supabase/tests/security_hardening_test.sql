@@ -1,5 +1,5 @@
 begin;
-select plan(261);
+select plan(263);
 
 select ok(
   to_regclass('public.support_events') is not null,
@@ -970,6 +970,27 @@ select ok(
     'execute'
   ),
   'service role can store channel credentials from the server'
+);
+select ok(
+  (
+    select pg_catalog.pg_get_constraintdef(oid)
+      like '%evolution%'
+      and pg_catalog.pg_get_constraintdef(oid) like '%wuzapi%'
+      and pg_catalog.pg_get_constraintdef(oid) like '%z_api%'
+    from pg_constraint
+    where conrelid = 'public.channel_credentials'::regclass
+      and conname = 'channel_credentials_provider_check'
+  ),
+  'channel credentials accept active providers and legacy Z-API rows'
+);
+select ok(
+  pg_catalog.strpos(
+    pg_catalog.pg_get_functiondef(
+      'public.save_channel_provider_configuration(uuid,uuid,text,text,text,text,uuid,text,text)'::regprocedure
+    ),
+    $$configured_provider not in ('uazapi', 'evolution', 'wuzapi')$$
+  ) > 0,
+  'new Z-API configurations are blocked in the credential RPC'
 );
 
 select is(

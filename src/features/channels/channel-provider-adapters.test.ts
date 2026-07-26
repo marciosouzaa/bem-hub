@@ -1,7 +1,17 @@
 import { describe, expect, test } from "bun:test";
 
+import { createEvolutionAdapter } from "@/features/channels/providers/evolution/evolution-adapter";
+import { createEvolutionWebhookSecret } from "@/features/channels/providers/evolution/evolution-webhook";
 import { createUazapiAdapter } from "@/features/channels/providers/uazapi/uazapi-adapter";
+import { createWuzapiAdapter } from "@/features/channels/providers/wuzapi/wuzapi-adapter";
 import { createZApiAdapter } from "@/features/channels/providers/z-api/z-api-adapter";
+
+const evolutionCredentials = {
+  apiKey: "evolution-api-key-for-tests",
+  baseUrl: "https://evolution.example.com",
+  instanceName: "bem-hub-test",
+  provider: "evolution" as const,
+};
 
 const uazapiCredentials = {
   baseUrl: "https://free.uazapi.com",
@@ -15,6 +25,93 @@ const zApiCredentials = {
   instanceToken: "instance-token-test",
   provider: "z_api" as const,
 };
+
+const wuzapiCredentials = {
+  baseUrl: "https://wuzapi.example.com",
+  provider: "wuzapi" as const,
+  userToken: "wuzapi-user-token-for-tests",
+  webhookHmacKey: "wuzapi-hmac-key-with-more-than-32-characters",
+};
+
+describe("Evolution API adapter", () => {
+  test("cria a instância quando ela ainda não existe", async () => {
+    const requests: Array<{ init?: RequestInit; url: string }> = [];
+    const fetcher = (async (input: string | URL | Request, init?: RequestInit) => {
+      requests.push({ init, url: input.toString() });
+      if (requests.length === 1) return jsonResponse({ error: "not found" }, 404);
+      return jsonResponse({ instance: { instanceName: "bem-hub-test" } }, 201);
+    }) as typeof fetch;
+
+    await createEvolutionAdapter(evolutionCredentials, fetcher).provision?.();
+
+    expect(requests.map((request) => request.url)).toEqual([
+      "https://evolution.example.com/instance/connectionState/bem-hub-test",
+      "https://evolution.example.com/instance/create",
+    ]);
+    expect(JSON.parse(String(requests[1].init?.body))).toEqual({
+      instanceName: "bem-hub-test",
+      integration: "WHATSAPP-BAILEYS",
+      qrcode: true,
+    });
+  });
+
+  test("configura webhook com header secreto e eventos de mensagem", async () => {
+    const requests: Array<{ init?: RequestInit; url: string }> = [];
+    const callbackUrl = "https://app.example.com/api/webhooks/channels/evolution/token";
+    const fetcher = (async (input: string | URL | Request, init?: RequestInit) => {
+      requests.push({ init, url: input.toString() });
+      return init?.method === "POST"
+        ? jsonResponse({ enabled: true })
+        : jsonResponse({ enabled: true, url: callbackUrl });
+    }) as typeof fetch;
+
+    await createEvolutionAdapter(evolutionCredentials, fetcher).configureWebhook?.({
+      url: callbackUrl,
+    });
+
+    expect(JSON.parse(String(requests[0].init?.body))).toEqual({
+      webhook: {
+        base64: false,
+        byEvents: false,
+        enabled: true,
+        events: ["MESSAGES_UPSERT", "MESSAGES_UPDATE"],
+        headers: {
+          "X-BEM-HUB-Webhook-Key": createEvolutionWebhookSecret(
+            evolutionCredentials.apiKey,
+            evolutionCredentials.instanceName,
+          ),
+        },
+        url: callbackUrl,
+      },
+    });
+  });
+
+  test("envia texto e preserva o ID retornado pelo WhatsApp", async () => {
+    let request: { init?: RequestInit; url?: string } = {};
+    const fetcher = (async (input: string | URL | Request, init?: RequestInit) => {
+      request = { init, url: input.toString() };
+      return jsonResponse({ key: { id: "evolution-message-001" } });
+    }) as typeof fetch;
+
+    const result = await createEvolutionAdapter(
+      evolutionCredentials,
+      fetcher,
+    ).sendTextMessage?.({
+      recipient: "+55 (11) 99999-9999",
+      text: "Mensagem Evolution",
+      trackingId: "internal-id",
+    });
+
+    expect(request.url).toBe(
+      "https://evolution.example.com/message/sendText/bem-hub-test",
+    );
+    expect(JSON.parse(String(request.init?.body))).toEqual({
+      number: "5511999999999",
+      text: "Mensagem Evolution",
+    });
+    expect(result).toEqual({ externalMessageId: "evolution-message-001" });
+  });
+});
 
 describe("Uazapi adapter", () => {
   test("configura mensagens recebidas e saídas manuais", async () => {
@@ -116,6 +213,62 @@ describe("Uazapi adapter", () => {
       track_source: "bem-hub-support",
     });
     expect(result).toEqual({ externalMessageId: "provider-message-001" });
+  });
+});
+
+describe("Wuzapi adapter", () => {
+  test("configura HMAC antes do webhook e confirma a URL", async () => {
+    const requests: Array<{ init?: RequestInit; url: string }> = [];
+    const callbackUrl = "https://app.example.com/api/webhooks/channels/wuzapi/token";
+    const fetcher = (async (input: string | URL | Request, init?: RequestInit) => {
+      requests.push({ init, url: input.toString() });
+      if (init?.method === "GET") {
+        return jsonResponse({ data: { webhook: callbackUrl }, success: true });
+      }
+      return jsonResponse({ data: { Details: "ok" }, success: true });
+    }) as typeof fetch;
+
+    await createWuzapiAdapter(wuzapiCredentials, fetcher).configureWebhook?.({
+      url: callbackUrl,
+    });
+
+    expect(requests.map((request) => request.url)).toEqual([
+      "https://wuzapi.example.com/session/hmac/config",
+      "https://wuzapi.example.com/webhook",
+      "https://wuzapi.example.com/webhook",
+    ]);
+    expect(JSON.parse(String(requests[0].init?.body))).toEqual({
+      hmac_key: wuzapiCredentials.webhookHmacKey,
+    });
+    expect((requests[0].init?.headers as Record<string, string>).Authorization)
+      .toBe(wuzapiCredentials.userToken);
+  });
+
+  test("usa um ID determinístico ao enviar texto", async () => {
+    let body = "";
+    const fetcher = (async (_input: string | URL | Request, init?: RequestInit) => {
+      body = String(init?.body);
+      return jsonResponse({
+        data: { Id: "ABC123", Timestamp: "2026-07-25T10:00:00Z" },
+        success: true,
+      });
+    }) as typeof fetch;
+
+    const result = await createWuzapiAdapter(
+      wuzapiCredentials,
+      fetcher,
+    ).sendTextMessage?.({
+      recipient: "+55 (21) 99999-9999",
+      text: "Mensagem Wuzapi",
+      trackingId: "abc-123",
+    });
+
+    expect(JSON.parse(body)).toEqual({
+      Body: "Mensagem Wuzapi",
+      Id: "ABC123",
+      Phone: "5521999999999",
+    });
+    expect(result).toEqual({ externalMessageId: "ABC123" });
   });
 });
 

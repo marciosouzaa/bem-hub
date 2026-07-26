@@ -9,11 +9,12 @@ do MVP nem incorpora canais e recursos fora do escopo definido.
 
 - Manter um unico dominio interno de atendimento, independente do fornecedor.
 - Usar a **Meta WhatsApp Cloud API diretamente** para o canal oficial.
-- Validar **Uazapi como primeiro adapter do piloto nao oficial** e **Z-API como
-  segundo adapter** no mesmo contrato interno. A escolha usa testes reais do
-  responsavel pelo produto e reduz risco de depender de um unico fornecedor.
-- Nao usar Evolution API ou WAHA no primeiro corte. Continuam substituiveis por
-  adapter, sem contaminar o dominio.
+- Manter **Uazapi** como referencia do primeiro fluxo real e validar
+  **Evolution API** como principal self-hosted e **Wuzapi** como alternativa
+  enxuta, sempre atras do mesmo contrato interno.
+- Pausar novas configuracoes **Z-API** sem remover o adapter legado. Usar
+  numeros separados ao comparar Evolution e Wuzapi; nao ha failover concorrente
+  seguro para a mesma sessao.
 - Entregar primeiro texto de ponta a ponta: conectar numero, receber mensagem,
   criar contato/conversa, assumir, responder e acompanhar entrega.
 - Mensagem escrita pelo operador no composer e enviada diretamente por endpoint
@@ -146,16 +147,17 @@ Fontes oficiais:
 - [Mensagens e status por webhook](https://www.postman.com/meta/whatsapp-business-platform/folder/o48mro7/messages)
 - [Exemplos oficiais com validacao de assinatura](https://github.com/fbsamples/whatsapp-api-examples)
 
-### WhatsApp nao oficial: Uazapi e Z-API no primeiro piloto
+### WhatsApp nao oficial: Uazapi, Evolution API e Wuzapi
 
-Uazapi abre a primeira fatia por ja ter sido testada diretamente. Z-API entra em
-seguida no mesmo marco para provar que dominio, inbox e mensagens nao dependem
-do payload de um fornecedor. Ambas evitam operar um novo servico stateful no
-primeiro deploy do BEM HUB.
+Uazapi comprovou a primeira fatia real. Evolution API passa a ser o candidato
+principal self-hosted e Wuzapi a alternativa mais estreita para comparar custo
+operacional e estabilidade. Z-API permanece apenas para compatibilidade legada.
+O dominio, a inbox e as mensagens continuam independentes do payload de cada
+fornecedor.
 
 Ela so sera aprovada depois de um spike provar:
 
-- criacao e cancelamento de instancia pelo fluxo de parceiro;
+- criacao e cancelamento de instancia ou usuario no host;
 - QR e codigo de pareamento dentro do BEM HUB;
 - recebimento, envio, entrega, leitura e desconexao;
 - estrategia aceitavel de autenticacao do callback;
@@ -167,29 +169,31 @@ O produto deve exibir aceite explicito: a conexao usa uma sessao WhatsApp Web
 nao homologada, pode desconectar e pode sofrer restricao do WhatsApp. Ela nao
 pode ser vendida como equivalente operacional ou juridico da API oficial.
 
-Fontes do fornecedor:
+Fontes dos projetos:
 
-- [Introducao e fluxo da Z-API](https://developer.z-api.io/en/quickstart/introduction)
-- [Criacao de instancia para parceiros](https://developer.z-api.io/en/partner/create-instance)
-- [Eventos de webhook](https://developer.z-api.io/en/webhooks/introduction)
-- [Token adicional de conta](https://developer.z-api.io/security/client-token)
+- [Evolution API](https://docs.evolutionfoundation.com.br/evolution-api)
+- [Instalacao Evolution API](https://docs.evolutionfoundation.com.br/evolution-api/installation)
+- [Webhooks Evolution API](https://docs.evolutionfoundation.com.br/evolution-api/configuration/webhooks)
+- [Wuzapi](https://github.com/asternic/wuzapi)
+- [API Wuzapi](https://github.com/asternic/wuzapi/blob/main/API.md)
 
 ### Fallback e opcoes adiadas
 
 | Opcao | Uso no plano | Motivo |
 | --- | --- | --- |
-| Wuzapi/whatsmeow | Fallback self-hosted | Escopo estreito, HMAC/retry documentados e codigo aberto; exige operar sessoes e banco separadamente. |
-| Evolution API/Baileys | Adiada | Boa cobertura, mas adiciona Redis/banco/operacao, amplitude desnecessaria e mudancas recentes de licenca/ativacao a validar. |
+| Evolution API/Baileys | Principal self-hosted em validacao | Boa cobertura e instancia provisionada pelo BEM HUB; exige Postgres, Redis, HTTPS e operacao continua. |
+| Wuzapi/whatsmeow | Alternativa self-hosted em validacao | Escopo estreito, HMAC e codigo aberto; exige usuario isolado, Postgres, HTTPS e `WEBHOOK_FORMAT=json`. |
+| Z-API | Pausada | Adapter legado preservado, mas novas configuracoes estao bloqueadas. |
 | WAHA | Adiada | Multiplas engines e diferencas de contrato aumentam teste e manutencao. |
 | Implementacao propria de Baileys/whatsmeow | Rejeitada no MVP | BEM HUB passaria a manter protocolo nao oficial e infraestrutura stateful sem vantagem comercial comprovada. |
 
-A escolha fica encapsulada. Trocar Z-API por Wuzapi deve exigir um novo adapter e
-migracao de credenciais, nao mudanca em contatos, conversas ou interface.
+A escolha fica encapsulada. Alternar o provider exige novas credenciais e
+pareamento, nao mudanca em contatos, conversas ou no dominio de atendimento.
 
 ## Arquitetura proposta
 
 ```text
-Meta Cloud / Z-API
+Meta Cloud / Evolution / Wuzapi / Uazapi
         |
         v
 webhook publico -> verificacao -> registro idempotente -> normalizador do adapter
@@ -434,9 +438,9 @@ Estimativas sao dias ideais de engenharia, nao prazo comercial.
 
 - congelar os eventos internos e fixtures por fornecedor;
 - testar Meta com numero de teste;
-- testar parceiro Z-API, QR/codigo, callbacks, envio e desconexao;
+- testar Evolution e Wuzapi, QR/codigo, callbacks, envio e desconexao;
 - provar autenticacao, retry e idempotencia dos callbacks;
-- registrar diferencas operacionais entre Uazapi e Z-API sem leva-las ao
+- registrar diferencas operacionais entre os providers sem leva-las ao
   dominio interno.
 
 Aceite: um script/teste normaliza texto recebido, entrega, falha e desconexao dos
@@ -526,7 +530,7 @@ falha; midia nao atravessa tenant nem fica publica.
 O proximo item nao deve ser a geracao de rascunho por IA. A ordem local correta
 para este modulo passa a ser:
 
-1. executar a Fase 0 e fechar Uazapi e Z-API no contrato não oficial;
+1. executar a Fase 0 e comparar Evolution e Wuzapi com numeros separados;
 2. corrigir modelo/seguranca da Fase 1;
 3. entregar uma fatia vertical de texto com o adapter nao oficial;
 4. repetir a mesma fatia com Meta Cloud;
@@ -539,7 +543,8 @@ IA avance sobre uma base de atendimento ainda simulada.
 ## Gates antes de implementar
 
 - Conta/app Meta e numero de teste disponiveis.
-- Conta de parceiro/teste Z-API ou decisao explicita por Wuzapi.
+- Hosts HTTPS para Evolution e Wuzapi, com Postgres/Redis quando aplicavel.
+- Numeros separados e acesso aos aparelhos para leitura de QR.
 - Segredo de criptografia/secret manager definido.
 - Aceite comercial e juridico do risco do canal nao oficial.
 - Retencao LGPD minima definida.

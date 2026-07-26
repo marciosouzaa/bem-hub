@@ -39,6 +39,7 @@ export interface ChannelProviderAdapter {
   configureWebhook?(input: ChannelWebhookConfiguration): Promise<void>;
   disconnect(): Promise<void>;
   getHealth(): Promise<ChannelProviderHealth>;
+  provision?(): Promise<void>;
   provider: ChannelProvider;
   requestPairing(input: PairingInput): Promise<ChannelPairing>;
   sendTextMessage?(

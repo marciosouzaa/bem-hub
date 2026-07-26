@@ -65,17 +65,18 @@ tecnico recorrente.
 
 ## M2 - Atendimento Assistido No WhatsApp
 
-Status: fundação e primeiro adapter em validação operacional. Canal Uazapi real
-conecta, entrega callback e cria atendimento. Broadcast privado foi aplicado no
-remoto. O ciclo de atribuicao, estados, leitura por operador, auditoria e
+Status: fundação e adapters em validação operacional. Canal Uazapi real conecta,
+entrega callback e cria atendimento. Evolution API e Wuzapi estao implementados
+para o piloto self-hosted; Z-API esta pausada para novas configuracoes. Broadcast
+privado foi aplicado no remoto. O ciclo de atribuicao, estados, leitura por operador, auditoria e
 metricas, junto do retry explicito com tentativas auditaveis e o eixo separado
 de entrega/leitura, foi aplicado e validado no remoto. Publicacao da aplicacao,
 reconfiguracao dos webhooks existentes, pgTAP local e QA autenticado ainda
 estao pendentes.
 
-Gate de produto: escolher Evolution API, Z-API ou outro BSP, definir custos,
-termos e credenciais. A integracao deve ficar atras de um adapter de canal para
-evitar acoplamento do dominio ao fornecedor.
+Gate de produto: disponibilizar a infraestrutura Evolution/Wuzapi, validar
+termos, risco e estabilidade com numeros separados e escolher um provider
+principal. A integracao permanece atras do adapter de canal.
 
 - [x] Validar em produção o recebimento real por webhook, com persistência
   idempotente e uma única conversa na inbox.

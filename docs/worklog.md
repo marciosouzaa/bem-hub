@@ -4,6 +4,56 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-25 - Evolution E Wuzapi Preparados
+
+### Decisao
+
+- Z-API foi pausada por decisao do responsavel pelo produto. O adapter legado
+  permanece no codigo e conexoes existentes continuam legiveis, mas interface,
+  Server Action e RPC impedem nova configuracao.
+- Evolution API passa a ser a opcao principal para o primeiro piloto
+  self-hosted. Wuzapi entra como alternativa enxuta e deve usar outro numero
+  durante a comparacao; o mesmo WhatsApp nao deve conectar nos dois ao mesmo
+  tempo.
+
+### Feito
+
+- Implementados adapters Evolution API e Wuzapi para saude, pareamento,
+  desconexao, envio de texto e configuracao automatica de webhook.
+- Evolution cria a instancia `WHATSAPP-BAILEYS` quando o nome ainda nao existe.
+- Webhooks Evolution normalizam `messages.upsert` e `messages.update`, incluindo
+  entrega e leitura, e validam API key e instancia.
+- Webhooks Wuzapi exigem HMAC-SHA256 do corpo bruto e normalizam `Message` e
+  `ReadReceipt`.
+- O drawer de canais oferece Evolution, Wuzapi e Uazapi; Z-API aparece apenas
+  como opcao pausada para orientar migracao de conexoes legadas.
+- Aplicada remotamente a migration
+  `enable_evolution_and_wuzapi_providers`. A constraint preserva `z_api` para
+  dados legados, enquanto o RPC aceita somente os tres providers ativos.
+- Criado `docs/whatsapp-self-hosted-runbook.md` com o limite entre configuracao
+  automatica do BEM HUB e os passos de infraestrutura/QR.
+
+### Verificacao
+
+- 92 testes passaram; 28 cobrem especificamente schemas, adapters e webhooks
+  de canais.
+- `bun run lint` e `bun run build` passaram com Next.js 16.2.9.
+- pgTAP foi ampliado de 261 para 263 assertions; a execucao local continua
+  pendente porque Docker/Postgres nao esta disponivel.
+- Catalogo remoto confirmou a constraint e o bloqueio de Z-API no RPC.
+- Advisors nao apontaram alerta novo causado pela migration; permanecem apenas
+  os avisos conhecidos de funcoes administrativas, senha vazada desativada e
+  indices ainda sem uso.
+
+### Retomada
+
+1. Escolher host, criar DNS HTTPS e disponibilizar Evolution API.
+2. Informar no BEM HUB URL, API key e nome da instancia; escanear o QR.
+3. Disponibilizar Wuzapi com `WEBHOOK_FORMAT=json`, criar um usuario isolado e
+   informar URL, token do usuario e HMAC; testar com outro numero.
+4. Fazer smoke de entrada, envio e `Aceita -> Entregue -> Lida` em cada
+   provider antes de decidir qual permanece como principal.
+
 ## 2026-07-25 - Confirmacoes De Entrega Aplicadas No Remoto
 
 ### Causa Raiz

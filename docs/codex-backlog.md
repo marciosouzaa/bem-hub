@@ -73,12 +73,16 @@ primeira pergunta util sem ajuda do engenheiro.
 
 ## FUTURO - M2 Atendimento Assistido
 
-Adapters de conexao e envio continuam bloqueados pelo gate de fornecedor; o
-fluxo interno de atendimento pode avancar sem esse gate.
+Adapters de conexao e envio estao implementados; o gate agora e disponibilizar
+e operar os hosts self-hosted com numeros de teste separados.
 
 - [x] Definir contrato independente de provedor para canal de mensagens.
 - [x] Implementar adapters de conexão Uazapi e Z-API com credenciais
   criptografadas, saúde, QR/código e desconexão.
+- [x] Pausar novas configuracoes Z-API sem remover o adapter legado.
+- [x] Implementar Evolution API e Wuzapi para saude, QR, envio, webhook,
+  entrega/leitura e autenticacao do callback.
+- [ ] Subir os dois servicos self-hosted e fazer smoke com numeros separados.
 - [x] Implementar webhook provider-neutral seguro, idempotente e observável,
   com entrada Uazapi normalizada.
 - [x] Validar callback real Uazapi: uma mensagem de outro número deve preencher
@@ -180,12 +184,10 @@ Bloqueado pela auditoria da plataforma e disponibilidade dos dados.
 - Advisor sinaliza `add_organization_member_by_email` como `SECURITY DEFINER`
   executavel por authenticated; e intencional para consultar `auth.users`, com
   admin/tenant/papel/limite/owner validados dentro da RPC e anon revogado.
-- Uazapi e Z-API foram escolhidas para o primeiro piloto não oficial. Uazapi já
-  conecta, entrega callback e cria atendimento em produção. Broadcast privado
-  foi aplicado remotamente após remover `DROP POLICY` e `COMMENT ON POLICY`,
-  operações bloqueadas pelo ownership da tabela gerenciada. Falta o smoke
-  WebSocket autenticado. Z-API continua somente com conexão/saúde, sem
-  normalizador de webhook.
+- Uazapi comprovou o fluxo real inicial. Z-API foi pausada para novas
+  configuracoes, preservando somente compatibilidade legada. Evolution API e
+  Wuzapi agora implementam o contrato completo no codigo; falta disponibilizar
+  os dois hosts, usar numeros separados e executar o smoke comparativo.
 
 ## Concluido
 

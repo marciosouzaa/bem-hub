@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import {
   channelProviderCredentialsSchema,
+  configurableChannelProviderSchema,
   type ChannelProviderCredentials,
   type ChannelProviderStatus,
 } from "@/features/channels/channel-provider-schema";
@@ -53,12 +54,19 @@ export async function configureChannelProviderAction(
   if (!id.success || !credentials.success) {
     return { ok: false, message: "Revise as credenciais informadas." };
   }
+  if (!configurableChannelProviderSchema.safeParse(credentials.data.provider).success) {
+    return {
+      ok: false,
+      message: "Novas configurações Z-API estão pausadas. Escolha outro provedor.",
+    };
+  }
 
   const context = await getChannelAdminContext(id.data);
   if (!context.ok) return context.result;
 
   try {
     const adapter = resolveChannelProvider(credentials.data);
+    await adapter.provision?.();
     const health = await adapter.getHealth();
     const encryptedCredentials = encryptSecret(JSON.stringify(credentials.data));
     const { error } = await context.admin.rpc("save_channel_provider_configuration", {
@@ -352,9 +360,9 @@ async function persistHealth(
 }
 
 function getProviderBaseUrl(credentials: ChannelProviderCredentials) {
-  return credentials.provider === "uazapi"
-    ? credentials.baseUrl
-    : "https://api.z-api.io";
+  return credentials.provider === "z_api"
+    ? "https://api.z-api.io"
+    : credentials.baseUrl;
 }
 
 function providerErrorResult(error: unknown): ChannelProviderActionResult {
