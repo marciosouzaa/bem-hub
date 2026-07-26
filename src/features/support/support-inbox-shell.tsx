@@ -1,11 +1,30 @@
 "use client";
 
-import { Inbox, Search, SlidersHorizontal, X } from "lucide-react";
+import {
+  ChevronDown,
+  Inbox,
+  MessageSquarePlus,
+  Radio,
+  Search,
+  SlidersHorizontal,
+  X,
+} from "lucide-react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useDeferredValue, useMemo, useState } from "react";
 
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { IconButton } from "@/components/ui/icon-button";
 import { Input } from "@/components/ui/input";
+import type { ChannelConnection } from "@/features/channels/channel-schema";
 import type { SupportInboxItem as SupportInboxItemData } from "@/features/support/queries";
 import type { SupportMetrics } from "@/features/support/queries";
 import {
@@ -13,6 +32,7 @@ import {
   type SupportInboxView,
 } from "@/features/support/support-inbox-filters";
 import { SupportInboxItem } from "@/features/support/support-inbox-item";
+import { SupportStartDrawer } from "@/features/support/support-start-drawer";
 import { cn } from "@/lib/utils";
 
 const views: Array<{ label: string; value: SupportInboxView }> = [
@@ -25,17 +45,20 @@ const views: Array<{ label: string; value: SupportInboxView }> = [
 
 export function SupportInboxShell({
   children,
+  channels,
   conversations,
   metrics,
   viewerId,
 }: {
   children: React.ReactNode;
+  channels: ChannelConnection[];
   conversations: SupportInboxItemData[];
   metrics: SupportMetrics;
   viewerId: string;
 }) {
   const pathname = usePathname();
   const [query, setQuery] = useState("");
+  const [startDrawerOpen, setStartDrawerOpen] = useState(false);
   const [view, setView] = useState<SupportInboxView>("all");
   const deferredQuery = useDeferredValue(query);
   const hasSelection = pathname !== "/app/support";
@@ -57,7 +80,8 @@ export function SupportInboxShell({
   );
 
   return (
-    <div className="grid h-[calc(100dvh-4rem)] min-h-[560px] overflow-hidden bg-background lg:grid-cols-[340px_minmax(0,1fr)] xl:grid-cols-[380px_minmax(0,1fr)]">
+    <>
+      <div className="grid h-[calc(100dvh-4rem)] min-h-[560px] overflow-hidden bg-background lg:grid-cols-[340px_minmax(0,1fr)] xl:grid-cols-[380px_minmax(0,1fr)]">
       <aside
         aria-label="Fila de atendimentos"
         className={cn(
@@ -81,14 +105,35 @@ export function SupportInboxShell({
                 Atendimentos
               </h1>
             </div>
-            <div className="rounded-[10px] border border-panel-border bg-panel px-3 py-2 text-right">
-              <p className="font-mono text-lg font-semibold text-foreground">
-                {counts.open + counts.pending + counts.escalated}
-              </p>
-              <p className="text-[10px] uppercase tracking-[0.08em] text-muted">
-                em curso
-              </p>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  aria-label="Abrir opções de atendimento"
+                  className="shrink-0"
+                  size="sm"
+                  type="button"
+                >
+                  Opções
+                  <ChevronDown aria-hidden="true" className="size-3.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>Ações da fila</DropdownMenuLabel>
+                <DropdownMenuItem
+                  onSelect={() => setStartDrawerOpen(true)}
+                >
+                  <MessageSquarePlus aria-hidden="true" className="size-4" />
+                  Iniciar atendimento
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/app/channels">
+                    <Radio aria-hidden="true" className="size-4" />
+                    Gerenciar canais
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           <div className="mt-4 grid grid-cols-3 gap-1.5">
@@ -196,7 +241,13 @@ export function SupportInboxShell({
       >
         {children}
       </section>
-    </div>
+      </div>
+      <SupportStartDrawer
+        channels={channels}
+        onClose={() => setStartDrawerOpen(false)}
+        open={startDrawerOpen}
+      />
+    </>
   );
 }
 

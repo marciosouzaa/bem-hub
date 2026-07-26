@@ -1,5 +1,5 @@
 begin;
-select plan(263);
+select plan(280);
 
 select ok(
   to_regclass('public.support_events') is not null,
@@ -549,6 +549,42 @@ select is(
   ),
   true,
   'private support message begin implementation is security definer'
+);
+select ok(
+  not has_function_privilege(
+    'anon',
+    'public.start_support_conversation(uuid,uuid,text,text,text,uuid)',
+    'execute'
+  ),
+  'anon cannot start a support conversation'
+);
+select ok(
+  has_function_privilege(
+    'authenticated',
+    'public.start_support_conversation(uuid,uuid,text,text,text,uuid)',
+    'execute'
+  ),
+  'authenticated members can start a support conversation'
+);
+select is(
+  (
+    select prosecdef
+    from pg_proc
+    where oid =
+      'public.start_support_conversation(uuid,uuid,text,text,text,uuid)'::regprocedure
+  ),
+  false,
+  'public support conversation start RPC is security invoker'
+);
+select is(
+  (
+    select prosecdef
+    from pg_proc
+    where oid =
+      'private.start_support_conversation(uuid,uuid,text,text,text,uuid)'::regprocedure
+  ),
+  true,
+  'private support conversation start implementation is security definer'
 );
 select ok(
   to_regclass('public.support_message_send_attempts') is not null,
@@ -1313,7 +1349,39 @@ values
 insert into public.channel_connections (id, organization_id, kind, provider, display_name, phone_number)
 values
   ('ca000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', 'official', 'pending-provider', 'Canal A', '+551100000001'),
-  ('cb000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000002', 'unofficial', 'pending-provider', 'Canal B', '+551100000002');
+  ('cb000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000002', 'unofficial', 'pending-provider', 'Canal B', '+551100000002'),
+  ('ce000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', 'unofficial', 'evolution', 'Evolution A', '+553100000003'),
+  ('cw000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', 'unofficial', 'wuzapi', 'Wuzapi A', '+553100000004');
+
+update public.channel_connections
+set status = 'connected'
+where id in (
+  'ce000000-0000-0000-0000-000000000001',
+  'cw000000-0000-0000-0000-000000000001'
+);
+
+insert into public.channel_credentials (
+  organization_id,
+  channel_connection_id,
+  provider,
+  encrypted_credentials,
+  created_by
+)
+values
+  (
+    'a0000000-0000-0000-0000-000000000001',
+    'ce000000-0000-0000-0000-000000000001',
+    'evolution',
+    'fixture-evolution',
+    '10000000-0000-0000-0000-000000000001'
+  ),
+  (
+    'a0000000-0000-0000-0000-000000000001',
+    'cw000000-0000-0000-0000-000000000001',
+    'wuzapi',
+    'fixture-wuzapi',
+    '10000000-0000-0000-0000-000000000001'
+  );
 select is(
   (select status from public.channel_connections where id = 'ca000000-0000-0000-0000-000000000001'),
   'draft',
@@ -2612,6 +2680,174 @@ select is(
 select lives_ok(
   $$select * from public.bootstrap_owned_organization('b0000000-0000-0000-0000-000000000002')$$,
   'bootstrap accepts the organization owner'
+);
+
+set local request.jwt.claims =
+  '{"sub":"10000000-0000-0000-0000-000000000001","role":"authenticated"}';
+
+select lives_ok(
+  $$select public.start_support_conversation(
+    'a0000000-0000-0000-0000-000000000001',
+    'ce000000-0000-0000-0000-000000000001',
+    '+55 31 99876-5432',
+    'Contato iniciado',
+    'Primeira mensagem Evolution',
+    'e1000000-0000-4000-8000-000000000001'
+  )$$,
+  'tenant member starts a conversation through Evolution'
+);
+select is(
+  (
+    select connection.provider
+    from public.support_messages message
+    join public.channel_connections connection
+      on connection.id = message.channel_connection_id
+    where message.organization_id = 'a0000000-0000-0000-0000-000000000001'
+      and message.client_request_id =
+        'e1000000-0000-4000-8000-000000000001'
+  ),
+  'evolution',
+  'Evolution start keeps the selected provider channel'
+);
+select lives_ok(
+  $$select public.start_support_conversation(
+    'a0000000-0000-0000-0000-000000000001',
+    'cw000000-0000-0000-0000-000000000001',
+    '+55 31 99876-5432',
+    'Nome não sobrescrito',
+    'Primeira mensagem Wuzapi',
+    'e1000000-0000-4000-8000-000000000002'
+  )$$,
+  'tenant member starts a conversation through Wuzapi'
+);
+select is(
+  (
+    select connection.provider
+    from public.support_messages message
+    join public.channel_connections connection
+      on connection.id = message.channel_connection_id
+    where message.organization_id = 'a0000000-0000-0000-0000-000000000001'
+      and message.client_request_id =
+        'e1000000-0000-4000-8000-000000000002'
+  ),
+  'wuzapi',
+  'Wuzapi start keeps the selected provider channel'
+);
+select is(
+  (
+    select count(*)
+    from public.contacts
+    where organization_id = 'a0000000-0000-0000-0000-000000000001'
+      and phone_match_key = 'br:5531998765432'
+  ),
+  1::bigint,
+  'starting through two providers reuses the canonical contact'
+);
+select is(
+  (
+    select count(*)
+    from public.support_conversations conversation
+    join public.contacts contact
+      on contact.id = conversation.contact_id
+    where conversation.organization_id =
+        'a0000000-0000-0000-0000-000000000001'
+      and contact.phone_match_key = 'br:5531998765432'
+  ),
+  2::bigint,
+  'same contact has one active conversation per channel'
+);
+select is(
+  (
+    select count(*)
+    from public.support_conversations conversation
+    join public.contacts contact
+      on contact.id = conversation.contact_id
+    where conversation.organization_id =
+        'a0000000-0000-0000-0000-000000000001'
+      and contact.phone_match_key = 'br:5531998765432'
+      and conversation.assigned_to =
+        '10000000-0000-0000-0000-000000000001'
+  ),
+  2::bigint,
+  'operator starting conversations becomes responsible'
+);
+select is(
+  (
+    select count(*)
+    from public.support_message_send_attempts attempt
+    where attempt.organization_id =
+        'a0000000-0000-0000-0000-000000000001'
+      and attempt.request_id in (
+        'e1000000-0000-4000-8000-000000000001',
+        'e1000000-0000-4000-8000-000000000002'
+      )
+  ),
+  2::bigint,
+  'each provider start records one immutable send attempt'
+);
+select is(
+  (
+    public.start_support_conversation(
+      'a0000000-0000-0000-0000-000000000001',
+      'ce000000-0000-0000-0000-000000000001',
+      '+55 31 99876-5432',
+      'Contato iniciado',
+      'Primeira mensagem Evolution',
+      'e1000000-0000-4000-8000-000000000001'
+    ) ->> 'created'
+  )::boolean,
+  false,
+  'repeating the same start request is idempotent'
+);
+select is(
+  (
+    select count(*)
+    from public.support_messages
+    where organization_id = 'a0000000-0000-0000-0000-000000000001'
+      and client_request_id =
+        'e1000000-0000-4000-8000-000000000001'
+  ),
+  1::bigint,
+  'idempotent start keeps one first message'
+);
+select throws_ok(
+  $$select public.start_support_conversation(
+    'b0000000-0000-0000-0000-000000000002',
+    'ce000000-0000-0000-0000-000000000001',
+    '+55 31 99765-4321',
+    '',
+    'Tentativa cruzada',
+    'e2000000-0000-4000-8000-000000000001'
+  )$$,
+  '42501',
+  'organization_member_required',
+  'tenant member cannot start through another organization'
+);
+select throws_ok(
+  $$select public.start_support_conversation(
+    'a0000000-0000-0000-0000-000000000001',
+    'ca000000-0000-0000-0000-000000000001',
+    '+55 31 99765-4321',
+    '',
+    'Canal desconectado',
+    'e1000000-0000-4000-8000-000000000003'
+  )$$,
+  '55000',
+  'channel_connection_not_ready',
+  'disconnected channel cannot start an attendance'
+);
+select throws_ok(
+  $$select public.start_support_conversation(
+    'a0000000-0000-0000-0000-000000000001',
+    'ce000000-0000-0000-0000-000000000001',
+    '123',
+    '',
+    'Telefone inválido',
+    'e1000000-0000-4000-8000-000000000004'
+  )$$,
+  '22023',
+  'invalid_support_contact_phone',
+  'invalid phone cannot start an attendance'
 );
 
 select * from finish();

@@ -1,3 +1,4 @@
+import { listChannelConnections } from "@/features/channels/channel-queries";
 import { getRequiredWorkspace } from "@/features/organizations/queries";
 import {
   getSupportMetrics,
@@ -12,7 +13,8 @@ export default async function SupportLayout({
   children: React.ReactNode;
 }) {
   const workspace = await getRequiredWorkspace();
-  const [conversations, metrics] = await Promise.all([
+  const [channels, conversations, metrics] = await Promise.all([
+    listChannelConnections(workspace.organization.id),
     listSupportInbox(workspace.organization.id),
     getSupportMetrics(workspace.organization.id),
   ]);
@@ -21,6 +23,7 @@ export default async function SupportLayout({
     <>
       <SupportRealtimeListener organizationId={workspace.organization.id} />
       <SupportInboxShell
+        channels={channels}
         conversations={conversations}
         metrics={metrics}
         viewerId={workspace.user.id}

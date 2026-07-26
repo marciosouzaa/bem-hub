@@ -73,8 +73,9 @@ e o smoke com outro numero continuam pendentes. Z-API esta pausada para novas
 configuracoes. Broadcast privado foi aplicado no remoto. O ciclo de atribuicao,
 estados, leitura por operador, auditoria e metricas, junto do retry explicito
 com tentativas auditaveis e o eixo separado de entrega/leitura, foi aplicado e
-validado no remoto. Publicacao da aplicacao, pgTAP local e QA autenticado ainda
-estao pendentes.
+validado no remoto. O operador também pode iniciar a conversa e enviar a
+primeira mensagem por canal conectado. Publicacao da aplicacao, pgTAP completo
+e QA autenticado ainda estao pendentes.
 
 Gate de produto: disponibilizar a infraestrutura Evolution/Wuzapi, validar
 termos, risco e estabilidade com numeros separados e escolher um provider
@@ -86,6 +87,9 @@ principal. A integracao permanece atras do adapter de canal.
   triggers e isolamento no banco.
 - [ ] Validar pelo WebSocket que nova mensagem atualiza a inbox sem recarga.
 - [x] Modelar contatos e conversas externas com isolamento por organizacao.
+- [x] Permitir ao operador iniciar atendimento com primeira mensagem por
+  Evolution API ou Wuzapi, preservando contato, conversa, atribuição,
+  idempotência e retry.
 - [ ] Gerar rascunho usando catalogo, preco, disponibilidade e tom da marca.
 - [ ] Criar modo assistido: aprovar, editar ou escalar antes de enviar.
 - [ ] Escalar reclamacao, devolucao, pagamento e baixa confianca para humano.

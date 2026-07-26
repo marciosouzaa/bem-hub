@@ -4,6 +4,51 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-26 - Atendimento Iniciado Pelo Operador
+
+### Feito
+
+- Atendimento ganhou ação primária `Iniciar atendimento` na fila e drawer
+  direito com canal, telefone, nome opcional e primeira mensagem.
+- Somente canais conectados e com credenciais ficam disponíveis. Evolution API
+  e Wuzapi usam o mesmo contrato provider-neutral já usado nas respostas.
+- A RPC atômica normaliza o telefone, reutiliza ou reativa o contato, registra a
+  identidade no canal, reutiliza uma conversa ativa ou cria outra e atribui o
+  operador antes de persistir a primeira tentativa.
+- Falha do fornecedor preserva conversa, mensagem e tentativa para abrir o
+  histórico e usar o retry existente.
+- O serviço de entrega foi separado do contrato de send/retry para permitir
+  reuso sem duplicar regra de credenciais, adapter ou finalização.
+
+### Banco E Verificacao
+
+- Migration local `20260726185154_start_support_conversation.sql`; aplicada no
+  remoto como `20260726190822_start_support_conversation`.
+- RPC pública é `SECURITY INVOKER`; implementação privilegiada fica em
+  `private`, valida `auth.uid()`, membro ativo, tenant, canal conectado,
+  credenciais, telefone e idempotência.
+- Probes transacionais local e remoto passaram para Evolution, Wuzapi, contato
+  canônico compartilhado, uma conversa por canal, atribuição, idempotência e
+  bloqueio cross-tenant. Ambos fizeram rollback e não chamaram fornecedor.
+- 19 testes focados e a suíte completa com 99 testes passaram; `bun run lint`
+  e `bun run build` também passaram.
+- Advisors local e remoto não apontaram regressão nova.
+- pgTAP local agora inicia, mas a suíte antiga para em 148/280 na policy
+  Realtime com `permission denied for table organization_members`. `db lint`
+  também mantém o erro legado de ambiguidade em
+  `public.finalize_support_message_send`; nenhum dos dois nasceu nesta feature.
+- QA visual não foi executado porque navegador integrado não estava disponível.
+
+### Retomada
+
+1. Abrir `/app/support`, clicar `Iniciar atendimento` e fazer smoke real com o
+   canal Wuzapi já conectado.
+2. Confirmar primeira mensagem no aparelho, resposta do contato na mesma
+   conversa e transição de entrega/leitura.
+3. Corrigir a policy local de Broadcast para liberar pgTAP completo.
+4. Depois subir Evolution API com outro número e repetir o smoke iniciado pelo
+   operador.
+
 ## 2026-07-26 - Wuzapi Local Validado De Ponta A Ponta
 
 ### Infraestrutura Adicional

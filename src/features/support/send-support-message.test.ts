@@ -3,7 +3,7 @@ import { describe, expect, test } from "bun:test";
 import {
   retrySupportMessageSchema,
   supportMessageRequestSchema,
-} from "@/features/support/send-support-message";
+} from "@/features/support/support-message-contracts";
 
 const requestId = "11111111-1111-4111-8111-111111111111";
 const messageId = "22222222-2222-4222-8222-222222222222";

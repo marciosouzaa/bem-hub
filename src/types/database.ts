@@ -1122,6 +1122,17 @@ export type Database = {
         }
         Returns: Json
       }
+      start_support_conversation: {
+        Args: {
+          contact_name: string
+          contact_phone: string
+          message_content: string
+          request_id: string
+          target_channel_connection_id: string
+          target_organization_id: string
+        }
+        Returns: Json
+      }
       get_support_message_delivery_attempt: {
         Args: {
           target_attempt_id: string

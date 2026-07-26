@@ -113,6 +113,12 @@ adapter sends externally before BSP selection and operational approval.
 `/app/support` owns only the attendance inbox and conversation detail. Channel
 configuration must never be embedded in the attendance workflow.
 
+Um atendimento pode começar por mensagem recebida ou pelo operador. No segundo
+caso, uma RPC tenant-scoped normaliza/reutiliza o contato, cria uma conversa por
+canal, atribui o operador e persiste mensagem/tentativa antes do adapter externo.
+Evolution API, Wuzapi e demais adapters com envio não criam caminhos de domínio
+separados.
+
 Each channel connection represents one independent number and declares
 `official` or `unofficial`. Connections never share credentials, provider IDs
 or webhook state. Choosing an unofficial adapter is an explicit organization

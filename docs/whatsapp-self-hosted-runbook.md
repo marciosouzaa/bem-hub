@@ -144,11 +144,14 @@ durante testes.
 Para cada provider:
 
 1. conectar e confirmar estado `Conectado`;
-2. enviar uma mensagem externa e confirmar que aparece uma unica vez;
-3. responder pelo BEM HUB;
-4. confirmar no aplicativo `Aceita -> Entregue -> Lida`;
-5. enviar manualmente pelo aparelho e confirmar a mesma conversa;
-6. desconectar e reconectar sem apagar o historico do BEM HUB.
+2. em `Atendimento`, usar `Iniciar atendimento` para enviar a primeira mensagem
+   a um numero que ainda nao escreveu;
+3. confirmar que o contato recebe a mensagem e que a conversa aparece uma unica
+   vez, atribuida ao operador;
+4. responder pelo contato e confirmar que a entrada volta para a mesma conversa;
+5. confirmar no aplicativo `Aceita -> Entregue -> Lida`;
+6. enviar manualmente pelo aparelho e confirmar a mesma conversa;
+7. desconectar e reconectar sem apagar o historico do BEM HUB.
 
 So promova um provider a principal depois desse fluxo e de uma janela real de
 estabilidade. Evolution e Wuzapi nao formam failover automatico de um mesmo

@@ -2,6 +2,31 @@
 
 Atualizado em 2026-07-26.
 
+## Handoff 2026-07-26 - Primeira Mensagem Pelo BEM HUB
+
+- `/app/support` agora possui `Iniciar atendimento`: escolhe canal conectado,
+  telefone, nome opcional e envia a primeira mensagem.
+- Evolution API, Wuzapi e adapters de envio existentes usam contrato comum.
+  Contato é normalizado/reutilizado, conversa é criada por canal, operador
+  assume automaticamente e tentativa fica auditável/idempotente.
+- Migration aplicada no remoto como
+  `20260726190822_start_support_conversation`.
+- Probes local e remoto passaram com rollback para Evolution, Wuzapi,
+  idempotência e isolamento cross-tenant, sem chamar fornecedor.
+- 19 testes focados e a suíte completa com 99 testes passaram; lint e build
+  também passaram, e advisors ficaram sem regressão.
+- pgTAP local foi destravado pelo Docker, mas para na policy Realtime antiga com
+  `permission denied for table organization_members`. QA visual continua
+  pendente porque navegador integrado não estava disponível.
+
+### Retomada Exata
+
+1. Retomar Wuzapi e BEM HUB/tunnels conforme o runbook.
+2. Em `/app/support`, iniciar uma conversa para outro número e confirmar saída,
+   resposta na mesma thread, entrega/leitura e retry.
+3. Corrigir a policy local Realtime para executar as 280 assertions.
+4. Subir Evolution API com outro número e repetir o mesmo smoke.
+
 ## Handoff 2026-07-26 - Wuzapi Local Operacional
 
 - Wuzapi foi clonado em `C:\repos\wuzapi` a partir de

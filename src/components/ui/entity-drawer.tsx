@@ -26,8 +26,10 @@ type EntityDrawerProps = {
   isSubmitting?: boolean;
   onClose: () => void;
   open: boolean;
+  saveDisabled?: boolean;
   saveLabel?: string;
   size?: "sm" | "md" | "lg";
+  submittingLabel?: string;
   title: string;
 };
 
@@ -39,8 +41,10 @@ export function EntityDrawer({
   isSubmitting = false,
   onClose,
   open,
+  saveDisabled = false,
   saveLabel = "Salvar",
   size = "md",
+  submittingLabel = "Salvando...",
   title,
 }: EntityDrawerProps) {
   const [showDiscardConfirmation, setShowDiscardConfirmation] = useState(false);
@@ -78,9 +82,13 @@ export function EntityDrawer({
             <Button disabled={isSubmitting} onClick={requestClose} type="button" variant="ghost">
               Cancelar
             </Button>
-            <Button disabled={isSubmitting} form={formId} type="submit">
+            <Button
+              disabled={isSubmitting || saveDisabled}
+              form={formId}
+              type="submit"
+            >
               {isSubmitting ? <Spinner /> : null}
-              {isSubmitting ? "Salvando..." : saveLabel}
+              {isSubmitting ? submittingLabel : saveLabel}
             </Button>
           </DrawerFooter>
         </DrawerContent>

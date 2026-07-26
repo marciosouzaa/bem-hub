@@ -103,6 +103,9 @@ e operar os hosts self-hosted com numeros de teste separados.
   operador segue diretamente para o endpoint HTTP.
 - [x] Reorganizar Atendimento como inbox master-detail com busca, filtros de
   status, conversa ativa e contexto do contato.
+- [x] Iniciar atendimento pela inbox com canal conectado, telefone, contato
+  canônico, atribuição automática e primeira mensagem provider-neutral;
+  Evolution API e Wuzapi foram validados por probes transacionais.
 - [ ] Fazer QA visual autenticado da inbox em desktop/mobile com dados reais.
 - [x] Adicionar envio de texto via adapter autenticado, persistencia anterior ao
   fornecedor e idempotencia por requisicao.

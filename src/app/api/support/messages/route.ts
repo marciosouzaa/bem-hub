@@ -3,9 +3,9 @@ import { z } from "zod";
 import {
   retrySupportMessage,
   sendSupportMessage,
-  SupportMessageSendError,
-  supportMessageRequestSchema,
 } from "@/features/support/send-support-message";
+import { supportMessageRequestSchema } from "@/features/support/support-message-contracts";
+import { SupportMessageSendError } from "@/features/support/support-message-delivery";
 
 export async function POST(request: Request) {
   try {
