@@ -82,6 +82,14 @@ e operar os hosts self-hosted com numeros de teste separados.
 - [x] Pausar novas configuracoes Z-API sem remover o adapter legado.
 - [x] Implementar Evolution API e Wuzapi para saude, QR, envio, webhook,
   entrega/leitura e autenticacao do callback.
+- [x] Implementar provisionamento gerenciado Wuzapi com nome, credenciais
+  internas, usuário por canal, HMAC, webhook, QR e descoberta do número.
+- [x] Reconciliar automaticamente o webhook de Wuzapi/Evolution ao atualizar a
+  saúde, validando antes que `APP_BASE_URL` alcance o ingresso do BEM HUB.
+- [x] Substituir exclusão física de canais por inativação tenant-scoped,
+  preservando atendimentos e bloqueando novas operações no canal excluído.
+- [ ] Repetir mensagem direta 1:1 no Wuzapi gerenciado após a troca do Quick
+  Tunnel e confirmar entrada única, Realtime e mesma conversa.
 - [x] Subir Wuzapi local com Docker/Postgres, HTTPS temporario, usuario isolado
   e fazer smoke de conexao, webhook, entrada, saida e reconciliacao de contatos.
 - [x] Preparar Evolution API `2.3.7` local com Postgres/Redis, volumes,
@@ -135,8 +143,6 @@ e operar os hosts self-hosted com numeros de teste separados.
   e estados de tela.
 - [x] Migrar Canais, Assistentes e Conexoes de IA para os novos contratos de
   cadastro sem alterar identidade visual ou regras server-side.
-- [x] Substituir exclusao fisica de canais por inativacao tenant-scoped,
-  preservando atendimentos e exibindo o estado do canal no historico.
 - [ ] Fazer QA visual autenticado dos novos drawers e tabelas em desktop/mobile.
 - [x] Implementar localmente o CRUD de contatos com DataTable, EntityDrawer,
   criacao manual, arquivamento e vinculo ao Atendimento.
@@ -199,9 +205,12 @@ Bloqueado pela auditoria da plataforma e disponibilidade dos dados.
   admin/tenant/papel/limite/owner validados dentro da RPC e anon revogado.
 - Uazapi comprovou o fluxo real inicial. Z-API foi pausada para novas
   configuracoes, preservando somente compatibilidade legada. Wuzapi completou o
-  smoke local com Docker/Postgres e tunnels HTTPS temporarios. Evolution API
-  continua implementada no adapter, mas falta subir Postgres/Redis, conectar
-  outro numero e executar o smoke comparativo.
+  smoke local original e o novo provisionamento gerenciado chegou até conexão,
+  envio e callback público verificado; falta repetir a entrada direta 1:1 após
+  o reparo do tunnel. Evolution API `2.3.7` já foi subida com Postgres/Redis,
+  pareada e validada na primeira saída; resposta na mesma conversa,
+  entrega/leitura, envio pelo aparelho e persistência após reinício continuam
+  pendentes no smoke comparativo.
 
 ## Concluido
 

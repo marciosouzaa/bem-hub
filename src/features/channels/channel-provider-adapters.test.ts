@@ -86,6 +86,40 @@ describe("Evolution API adapter", () => {
     });
   });
 
+  test("detecta webhook desativado ou apontando para URL antiga", async () => {
+    const responses = [
+      {
+        enabled: true,
+        url: "https://old.example.com/webhook",
+      },
+      {
+        webhook: {
+          enabled: false,
+          url: "https://app.example.com/webhook",
+        },
+      },
+    ];
+    const fetcher = (async () =>
+      jsonResponse(responses.shift())) as typeof fetch;
+    const adapter = createEvolutionAdapter(evolutionCredentials, fetcher);
+
+    const staleUrl = await adapter.getWebhookHealth?.({
+      url: "https://app.example.com/webhook",
+    });
+    const disabled = await adapter.getWebhookHealth?.({
+      url: "https://app.example.com/webhook",
+    });
+
+    expect(staleUrl).toEqual({
+      healthy: false,
+      reason: "O webhook aponta para um endereço diferente.",
+    });
+    expect(disabled).toEqual({
+      healthy: false,
+      reason: "O webhook está desativado no provedor.",
+    });
+  });
+
   test("envia texto e preserva o ID retornado pelo WhatsApp", async () => {
     let request: { init?: RequestInit; url?: string } = {};
     const fetcher = (async (input: string | URL | Request, init?: RequestInit) => {
@@ -248,7 +282,13 @@ describe("Wuzapi adapter", () => {
     const fetcher = (async (input: string | URL | Request, init?: RequestInit) => {
       requests.push({ init, url: input.toString() });
       if (init?.method === "GET") {
-        return jsonResponse({ data: { webhook: callbackUrl }, success: true });
+        return jsonResponse({
+          data: {
+            subscribe: "Message,ReadReceipt",
+            webhook: callbackUrl,
+          },
+          success: true,
+        });
       }
       return jsonResponse({ data: { Details: "ok" }, success: true });
     }) as typeof fetch;
@@ -271,6 +311,44 @@ describe("Wuzapi adapter", () => {
     });
     expect((requests[0].init?.headers as Record<string, string>).token)
       .toBe(wuzapiCredentials.userToken);
+  });
+
+  test("detecta URL antiga e assinatura incompleta do webhook", async () => {
+    const responses = [
+      {
+        data: {
+          subscribe: "Message,ReadReceipt",
+          webhook: "https://old.example.com/webhook",
+        },
+        success: true,
+      },
+      {
+        data: {
+          subscribe: "Message",
+          webhook: "https://app.example.com/webhook",
+        },
+        success: true,
+      },
+    ];
+    const fetcher = (async () =>
+      jsonResponse(responses.shift())) as typeof fetch;
+    const adapter = createWuzapiAdapter(wuzapiCredentials, fetcher);
+
+    const staleUrl = await adapter.getWebhookHealth?.({
+      url: "https://app.example.com/webhook",
+    });
+    const missingEvent = await adapter.getWebhookHealth?.({
+      url: "https://app.example.com/webhook",
+    });
+
+    expect(staleUrl).toEqual({
+      healthy: false,
+      reason: "O webhook aponta para um endereço diferente.",
+    });
+    expect(missingEvent).toEqual({
+      healthy: false,
+      reason: "O webhook não assina todos os eventos necessários.",
+    });
   });
 
   test("não reinicia uma sessão que já aguarda leitura do QR Code", async () => {

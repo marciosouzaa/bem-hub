@@ -68,11 +68,16 @@ tecnico recorrente.
 Status: fundação e adapters em validação operacional. Canal Uazapi real conecta,
 entrega callback e cria atendimento. Wuzapi completou smoke local com
 Docker/Postgres, HTTPS temporario, HMAC, entrada, saida e reconciliacao de
-contatos. Evolution API `2.3.7` roda localmente com Postgres/Redis e HTTPS
-temporario; foi pareada por QR na primeira tentativa e enviou a primeira
-mensagem iniciada pelo modulo de Atendimento sem erro. Resposta na mesma
-conversa, entrega/leitura, envio pelo aparelho e persistencia apos reinicio
-ainda precisam fechar o smoke. Z-API esta pausada para novas configuracoes.
+contatos. O novo fluxo gerenciado Wuzapi também concluiu nome, provisionamento
+interno, QR, conexão e primeira saída sem expor credenciais; o ingresso foi
+restaurado após detectar um Quick Tunnel obsoleto e agora possui verificação e
+reconciliação automática. Falta repetir uma mensagem direta 1:1 nesse canal
+para fechar a validação visual atual. Evolution API `2.3.7` roda localmente com
+Postgres/Redis e HTTPS temporario; foi pareada por QR na primeira tentativa e
+enviou a primeira mensagem iniciada pelo modulo de Atendimento sem erro.
+Resposta na mesma conversa, entrega/leitura, envio pelo aparelho e persistencia
+apos reinicio ainda precisam fechar o smoke. Z-API esta pausada para novas
+configuracoes.
 Broadcast privado foi aplicado no remoto. O ciclo de atribuicao,
 estados, leitura por operador, auditoria e metricas, junto do retry explicito
 com tentativas auditaveis e o eixo separado de entrega/leitura, foi aplicado e
@@ -88,11 +93,19 @@ principal. A integracao permanece atras do adapter de canal.
   idempotente e uma única conversa na inbox.
 - [x] Aplicar Broadcast privado multi-tenant no remoto e validar policy,
   triggers e isolamento no banco.
-- [ ] Validar pelo WebSocket que nova mensagem atualiza a inbox sem recarga.
+- [x] Validar pelo WebSocket que nova mensagem atualiza a inbox sem recarga.
 - [x] Modelar contatos e conversas externas com isolamento por organizacao.
 - [x] Permitir ao operador iniciar atendimento com primeira mensagem por
   Evolution API ou Wuzapi, preservando contato, conversa, atribuição,
   idempotência e retry.
+- [x] Provisionar Wuzapi gerenciado sem solicitar URL, tokens ou credenciais ao
+  usuário, com QR, HMAC, webhook e descoberta do número.
+- [x] Detectar ingresso público indisponível e reconciliar automaticamente
+  drift da URL do webhook em Wuzapi/Evolution.
+- [x] Preservar histórico ao excluir canal, ocultando-o da administração e
+  exibindo-o como inativo no Atendimento.
+- [ ] Repetir mensagem direta 1:1 no canal Wuzapi gerenciado após o reparo do
+  tunnel e confirmar atualização da mesma conversa.
 - [ ] Gerar rascunho usando catalogo, preco, disponibilidade e tom da marca.
 - [ ] Criar modo assistido: aprovar, editar ou escalar antes de enviar.
 - [ ] Escalar reclamacao, devolucao, pagamento e baixa confianca para humano.

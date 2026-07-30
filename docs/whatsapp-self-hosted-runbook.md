@@ -202,7 +202,14 @@ reiniciar:
 2. crie os dois tunnels;
 3. atualize `APP_BASE_URL` com o tunnel do BEM HUB;
 4. substitua a URL do servidor no canal pela URL do tunnel Wuzapi;
-5. clique `Reconfigurar recebimento` para gravar o novo callback.
+5. clique `Atualizar estado`; para Wuzapi e Evolution, o BEM HUB compara a URL
+   atual do provedor com `APP_BASE_URL` e corrige o callback automaticamente.
+
+Antes de aceitar um webhook como saudável, o backend consulta
+`/api/health/webhook-ingress` pelo próprio `APP_BASE_URL`. Um tunnel encerrado,
+DNS inválido ou endereço apontando para outro serviço deixa o canal
+`Instável`, em vez de mostrar uma conexão de entrada falsa. A sessão do
+WhatsApp e o recebimento são verificações distintas.
 
 O usuario `bem-hub-piloto` e a sessao WhatsApp permanecem no volume do banco.
 Nao recrie o usuario se ele ja existir. Para parar sem destruir dados:
@@ -217,9 +224,16 @@ durante testes.
 
 ## Smoke test obrigatorio
 
+Antes do smoke real, execute o gate de contratos:
+
+```powershell
+bun run test:whatsapp-contracts
+```
+
 Para cada provider:
 
-1. conectar e confirmar estado `Conectado`;
+1. conectar e confirmar estado `Conectado`, URL de webhook atual e ingresso
+   público saudável;
 2. em `Atendimento`, usar `Iniciar atendimento` para enviar a primeira mensagem
    a um numero que ainda nao escreveu;
 3. confirmar que o contato recebe a mensagem e que a conversa aparece uma unica
@@ -228,6 +242,11 @@ Para cada provider:
 5. confirmar no aplicativo `Aceita -> Entregue -> Lida`;
 6. enviar manualmente pelo aparelho e confirmar a mesma conversa;
 7. desconectar e reconectar sem apagar o historico do BEM HUB.
+
+Ao alterar adapter, provisioning, webhook, migrations de atendimento ou
+infraestrutura local, esses sete comportamentos formam um contrato indivisível.
+Não considerar apenas “mensagem saiu” como smoke aprovado: saída HTTP, entrada
+por webhook, idempotência, mesma conversa e recibos precisam passar juntos.
 
 So promova um provider a principal depois desse fluxo e de uma janela real de
 estabilidade. Evolution e Wuzapi nao formam failover automatico de um mesmo

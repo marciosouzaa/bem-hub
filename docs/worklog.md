@@ -4,6 +4,46 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-30 - Ingresso Wuzapi Restaurado E Protegido
+
+### Causa E Correção
+
+- A sessão Wuzapi estava conectada e o envio funcionava, mas o webhook ainda
+  apontava para um Quick Tunnel encerrado. A requisição de entrada não chegava
+  ao BEM HUB; migrations, RPC idempotente e Realtime não eram alcançados.
+- Um novo tunnel público foi iniciado, `APP_BASE_URL` foi atualizado e o
+  callback da instância gerenciada foi reconciliado sem expor credenciais.
+- Probe HMAC pelo endereço público e callbacks reais do Wuzapi retornaram HTTP
+  200. O banco confirmou endpoint `active`, verificado, recebimento recente e
+  nenhum erro.
+
+### Proteção Contra Regressão
+
+- O BEM HUB agora valida `/api/health/webhook-ingress` pelo próprio
+  `APP_BASE_URL` antes de considerar o recebimento saudável.
+- `Atualizar estado` separa saúde da sessão e saúde do webhook. Wuzapi e
+  Evolution consultam a URL configurada e corrigem automaticamente divergência;
+  ingresso inacessível deixa o canal `degraded`.
+- O token opaco do endpoint passa a permanecer dentro da credencial
+  criptografada de Wuzapi/Evolution para permitir reconciliação futura.
+- Criado `bun run test:whatsapp-contracts`, cobrindo adapters, HMAC,
+  normalização inbound, recibos, início de atendimento e drift de URL.
+- Runbook e plano de provisionamento agora tratam saída, entrada, idempotência,
+  mesma conversa e recibos como um único contrato de regressão.
+
+### Verificação
+
+- Gate WhatsApp passou com 35/35 testes.
+- Suite completa passou com 111/111 testes.
+- `bun run lint`, `bun run build` e `git diff --check` passaram.
+- Build confirmou a nova rota dinâmica `/api/health/webhook-ingress`.
+
+### Próximo Passo
+
+1. Enviar uma nova mensagem direta do WhatsApp para o número conectado.
+2. Confirmar atualização da mesma conversa em `/app/support`.
+3. Confirmar entrega/leitura da resposta seguinte.
+
 ## 2026-07-30 - Atendimento Com Canal Gerenciado Corrigido
 
 ### Feito

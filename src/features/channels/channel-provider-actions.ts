@@ -20,13 +20,16 @@ import { ChannelProviderRequestError } from "@/features/channels/providers/provi
 import { resolveChannelProvider } from "@/features/channels/providers/resolve-channel-provider";
 import { createManagedWuzapiProvisioner } from "@/features/channels/providers/wuzapi/wuzapi-managed-provisioner";
 import {
-  createWebhookEndpointToken,
-  hashWebhookEndpointToken,
-} from "@/features/channels/webhooks/endpoint-token";
+  ChannelWebhookIngressUnavailableError,
+} from "@/features/channels/webhooks/webhook-ingress-health";
+import {
+  configureNewChannelWebhook,
+  ChannelWebhookPersistenceError,
+  reconcileStoredChannelWebhook,
+} from "@/features/channels/webhooks/reconcile-stored-channel-webhook";
 import { getRequiredWorkspace } from "@/features/organizations/queries";
 import {
   AppBaseUrlConfigError,
-  getAppBaseUrl,
 } from "@/lib/app-url";
 import {
   decryptSecret,
@@ -111,6 +114,20 @@ export async function refreshChannelProviderHealthAction(
   try {
     const health = await loaded.adapter.getHealth();
     const phoneNumber = await resolveManagedPhoneNumber(loaded, health);
+    if (health.status === "connected") {
+      try {
+        await reconcileStoredChannelWebhook(toStoredWebhookInput(loaded));
+      } catch (error) {
+        await persistHealth(
+          loaded,
+          "degraded",
+          "Sessão conectada, mas o recebimento de mensagens está indisponível.",
+          health.externalInstanceId,
+          phoneNumber,
+        );
+        return providerErrorResult(error);
+      }
+    }
     const result = await persistHealth(
       loaded,
       health.status,
@@ -141,73 +158,14 @@ export async function configureChannelWebhookAction(
     };
   }
 
-  const endpointToken = createWebhookEndpointToken();
-  let endpointUrl: string;
   try {
-    endpointUrl = `${getAppBaseUrl()}/api/webhooks/channels/${loaded.credentials.provider}/${endpointToken}`;
-  } catch (error) {
-    return providerErrorResult(error);
-  }
-  const now = new Date().toISOString();
-  const { data: endpoint, error: endpointError } = await loaded.admin
-    .from("channel_webhook_endpoints")
-    .upsert({
-      channel_connection_id: loaded.channel.id,
-      created_by: loaded.workspace.user.id,
-      last_error_at: null,
-      last_error_code: null,
-      organization_id: loaded.workspace.organization.id,
-      provider: loaded.credentials.provider,
-      secret_hash: hashWebhookEndpointToken(endpointToken),
-      status: "provisioning",
-      updated_at: now,
-    }, { onConflict: "channel_connection_id" })
-    .select("id")
-    .single();
-
-  if (endpointError || !endpoint) {
-    return databaseErrorResult(endpointError ?? { message: "endpoint_not_created" });
-  }
-
-  try {
-    await loaded.adapter.configureWebhook({ url: endpointUrl });
-    const [{ error: activationError }, { error: channelError }] = await Promise.all([
-      loaded.admin
-        .from("channel_webhook_endpoints")
-        .update({
-          configured_at: now,
-          last_error_at: null,
-          last_error_code: null,
-          status: "active",
-          updated_at: now,
-        })
-        .eq("id", endpoint.id),
-      loaded.admin
-        .from("channel_connections")
-        .update({ webhook_configured_at: now })
-        .eq("id", loaded.channel.id)
-        .eq("organization_id", loaded.workspace.organization.id),
-    ]);
-    if (activationError || channelError) {
-      return databaseErrorResult(
-        activationError ?? channelError ?? { message: "webhook_not_activated" },
-      );
-    }
+    await configureNewChannelWebhook(toStoredWebhookInput(loaded));
     revalidatePath(channelsPath);
     return {
       ok: true,
       message: "Recebimento ativado. Envie uma mensagem para validar a entrada.",
     };
   } catch (error) {
-    await loaded.admin
-      .from("channel_webhook_endpoints")
-      .update({
-        last_error_at: new Date().toISOString(),
-        last_error_code: "provider_configuration_failed",
-        status: "failed",
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", endpoint.id);
     return providerErrorResult(error);
   }
 }
@@ -426,6 +384,19 @@ async function persistHealth(
   return { ok: true, message: "Estado atualizado.", status };
 }
 
+function toStoredWebhookInput(
+  loaded: Extract<Awaited<ReturnType<typeof loadStoredProvider>>, { ok: true }>,
+) {
+  return {
+    actorUserId: loaded.workspace.user.id,
+    adapter: loaded.adapter,
+    admin: loaded.admin,
+    channelId: loaded.channel.id,
+    credentials: loaded.credentials,
+    organizationId: loaded.workspace.organization.id,
+  };
+}
+
 function getProviderBaseUrl(credentials: ChannelProviderCredentials) {
   return credentials.provider === "z_api"
     ? "https://api.z-api.io"
@@ -449,6 +420,19 @@ function providerErrorResult(error: unknown): ChannelProviderActionResult {
     return {
       ok: false,
       message: "APP_BASE_URL não configurada para receber webhooks.",
+    };
+  }
+  if (error instanceof ChannelWebhookIngressUnavailableError) {
+    return {
+      ok: false,
+      message:
+        "O WhatsApp está conectado, mas o endereço público de recebimento não responde.",
+    };
+  }
+  if (error instanceof ChannelWebhookPersistenceError) {
+    return {
+      ok: false,
+      message: "Não foi possível salvar o estado do recebimento.",
     };
   }
   if (error instanceof z.ZodError || error instanceof SyntaxError) {

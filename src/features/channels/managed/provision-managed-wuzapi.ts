@@ -23,6 +23,7 @@ import {
   createManagedWuzapiInstanceName,
   createManagedWuzapiProvisioner,
 } from "@/features/channels/providers/wuzapi/wuzapi-managed-provisioner";
+import { assertWebhookIngressReachable } from "@/features/channels/webhooks/webhook-ingress-health";
 import { getAppBaseUrl } from "@/lib/app-url";
 import { encryptSecret } from "@/lib/security/encryption";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -70,6 +71,7 @@ async function runProvisioning(input: {
   });
   const webhookUrl =
     `${getAppBaseUrl()}/api/webhooks/channels/wuzapi/${credentials.webhookEndpointToken}`;
+  await assertWebhookIngressReachable();
   const endpointId = await ensureManagedWebhookEndpoint({
     actorUserId: input.actorUserId,
     admin: input.admin,

@@ -11,6 +11,7 @@
     "test": "bun test",
     "test:db": "supabase test db --local supabase/tests",
     "test:ci": "bun test && bun run lint && bun run build",
+    "test:whatsapp-contracts": "bun test src/features/channels/channel-provider-schema.test.ts src/features/channels/channel-provider-adapters.test.ts src/features/channels/providers/evolution/evolution-webhook.test.ts src/features/channels/providers/wuzapi/wuzapi-webhook.test.ts src/features/channels/webhooks/endpoint-token.test.ts src/features/channels/webhooks/webhook-ingress-health.test.ts src/features/support/start-support-conversation-contracts.test.ts",
     "benchmark:rag": "bun run scripts/benchmark-rag.ts",
     "build": "next build",
     "start": "next start",

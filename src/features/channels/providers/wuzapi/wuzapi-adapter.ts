@@ -30,7 +30,10 @@ const qrResponseSchema = z.object({
 });
 
 const webhookResponseSchema = z.object({
-  data: z.object({ webhook: z.string().url() }),
+  data: z.object({
+    subscribe: z.union([z.array(z.string()), z.string()]).optional(),
+    webhook: z.string().url(),
+  }),
 });
 
 const sentMessageSchema = z.object({
@@ -73,12 +76,8 @@ export function createWuzapiAdapter(
           method: "POST",
         },
       );
-      const payload = await fetchProviderJson(
-        fetcher,
-        `${credentials.baseUrl}/webhook`,
-        { headers, method: "GET" },
-      );
-      if (webhookResponseSchema.parse(payload).data.webhook !== input.url) {
+      const health = await getWebhookHealth(input.url);
+      if (!health.healthy) {
         throw new Error("Webhook não confirmado pelo provedor.");
       }
     },
@@ -89,6 +88,9 @@ export function createWuzapiAdapter(
         { headers, method: "GET" },
       );
       return mapHealth(statusResponseSchema.parse(payload));
+    },
+    async getWebhookHealth(input) {
+      return getWebhookHealth(input.url);
     },
     async requestPairing(): Promise<ChannelPairing> {
       let status = await getStatus();
@@ -192,6 +194,32 @@ export function createWuzapiAdapter(
     );
     return statusResponseSchema.parse(payload);
   }
+
+  async function getWebhookHealth(expectedUrl: string) {
+    const payload = await fetchProviderJson(
+      fetcher,
+      `${credentials.baseUrl}/webhook`,
+      { headers, method: "GET" },
+    );
+    const configured = webhookResponseSchema.parse(payload).data;
+    const subscribedEvents = normalizeSubscribedEvents(configured.subscribe);
+    const hasRequiredEvents = ["Message", "ReadReceipt"].every((event) =>
+      subscribedEvents.has(event)
+    );
+    if (configured.webhook !== expectedUrl) {
+      return {
+        healthy: false,
+        reason: "O webhook aponta para um endereço diferente.",
+      };
+    }
+    if (!hasRequiredEvents) {
+      return {
+        healthy: false,
+        reason: "O webhook não assina todos os eventos necessários.",
+      };
+    }
+    return { healthy: true, reason: null };
+  }
 }
 
 function mapHealth(
@@ -230,4 +258,11 @@ function getPhoneFromJid(jid: string | undefined) {
 
 function wait(milliseconds: number) {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
+function normalizeSubscribedEvents(
+  value: string[] | string | undefined,
+) {
+  const events = Array.isArray(value) ? value : value?.split(",") ?? [];
+  return new Set(events.map((event) => event.trim()).filter(Boolean));
 }

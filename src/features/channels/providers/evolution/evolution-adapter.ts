@@ -115,6 +115,27 @@ export function createEvolutionAdapter(
       );
       return mapHealth(connectionStateSchema.parse(payload), credentials.instanceName);
     },
+    async getWebhookHealth(input) {
+      const payload = await fetchProviderJson(
+        fetcher,
+        `${credentials.baseUrl}/webhook/find/${instancePath}`,
+        { headers, method: "GET" },
+      );
+      const configured = readConfiguredWebhook(payload);
+      if (configured.url !== input.url) {
+        return {
+          healthy: false,
+          reason: "O webhook aponta para um endereço diferente.",
+        };
+      }
+      if (configured.enabled === false) {
+        return {
+          healthy: false,
+          reason: "O webhook está desativado no provedor.",
+        };
+      }
+      return { healthy: true, reason: null };
+    },
     async requestPairing(input): Promise<ChannelPairing> {
       const query = input.method === "pin"
         ? `?number=${encodeURIComponent(onlyDigits(input.phoneNumber))}`
@@ -188,10 +209,29 @@ function mapHealth(
 }
 
 function readConfiguredWebhookUrl(payload: unknown) {
-  if (typeof payload !== "object" || payload === null) return null;
+  return readConfiguredWebhook(payload).url;
+}
+
+function readConfiguredWebhook(payload: unknown): {
+  enabled: boolean | null;
+  url: string | null;
+} {
+  if (typeof payload !== "object" || payload === null) {
+    return { enabled: null, url: null };
+  }
   const record = payload as Record<string, unknown>;
-  if (typeof record.url === "string") return record.url;
-  if (typeof record.webhook !== "object" || record.webhook === null) return null;
+  if (typeof record.url === "string") {
+    return {
+      enabled: typeof record.enabled === "boolean" ? record.enabled : null,
+      url: record.url,
+    };
+  }
+  if (typeof record.webhook !== "object" || record.webhook === null) {
+    return { enabled: null, url: null };
+  }
   const webhook = record.webhook as Record<string, unknown>;
-  return typeof webhook.url === "string" ? webhook.url : null;
+  return {
+    enabled: typeof webhook.enabled === "boolean" ? webhook.enabled : null,
+    url: typeof webhook.url === "string" ? webhook.url : null,
+  };
 }

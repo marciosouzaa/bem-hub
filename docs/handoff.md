@@ -1,6 +1,67 @@
 # Handoff Notes
 
-Atualizado em 2026-07-26.
+Atualizado em 2026-07-30.
+
+## Handoff 2026-07-30 - Wuzapi Gerenciado E Ingresso Protegido
+
+- O fluxo gerenciado Wuzapi está operacional: o usuário informa somente o nome
+  do canal, o backend cria credenciais internas, provisiona a instância,
+  configura HMAC/webhook, entrega QR Code e descobre o número conectado.
+- O canal gerenciado usado no smoke está conectado. Mensagens iniciadas pelo
+  Atendimento chegam ao WhatsApp e permanecem no histórico.
+- Canais com atendimento agora usam exclusão lógica (`is_deleted` e
+  `deleted_at`), somem da lista administrativa e continuam como `Inativo` no
+  histórico do Atendimento.
+- A queda de `/app/support` causada por `phone_number` ainda nulo foi corrigida;
+  o backend também tenta descobrir o telefone pelo usuário administrado no
+  Wuzapi.
+- A falha de entrada desta sessão não era migration nem RPC: o Wuzapi ainda
+  apontava para um Quick Tunnel encerrado. O callback não alcançava o backend.
+- `APP_BASE_URL` local e o webhook da instância foram atualizados. Probe HMAC e
+  callbacks reais retornaram HTTP 200; o Supabase confirmou endpoint `active`,
+  `webhook_verified_at`/`last_received_at` recentes e nenhum erro.
+- Eventos reais observados depois do reparo eram de grupo e foram ignorados
+  corretamente. Ainda falta repetir uma mensagem direta 1:1 para confirmar a
+  atualização visual da conversa atual.
+
+### Proteção Adicionada
+
+- `/api/health/webhook-ingress` permite ao backend comprovar que
+  `APP_BASE_URL` chega ao próprio BEM HUB antes de declarar recebimento saudável.
+- `Atualizar estado` verifica separadamente sessão e webhook. Wuzapi e Evolution
+  detectam URL divergente e reconciliam o callback automaticamente.
+- Ingresso público indisponível deixa o canal `degraded`, em vez de mostrar
+  conexão saudável somente porque a sessão consegue enviar.
+- O token do endpoint fica dentro da credencial criptografada de
+  Wuzapi/Evolution para permitir reconciliações futuras.
+- `bun run test:whatsapp-contracts` virou o gate explícito para adapters,
+  assinatura, entrada, recibos e início de atendimento.
+
+### Verificação E Estado Local
+
+- Gate WhatsApp: 35/35 testes.
+- Suite completa: 111/111 testes.
+- `bun run lint`, `bun run build` e `git diff --check` passaram.
+- Nenhuma migration nova foi necessária para o reparo do ingresso.
+- Quick Tunnel, BEM HUB e containers Wuzapi estavam ativos no encerramento, mas
+  o tunnel é efêmero e deve ser verificado na retomada.
+- O worktree contém mudanças intencionais ainda sem commit. Preservar o diff e
+  consultar `git status --short` antes de qualquer edição.
+
+### Retomada Exata
+
+1. Confirmar `localhost:3000`, Wuzapi em `localhost:8081` e o Quick Tunnel do
+   BEM HUB. Se o tunnel mudou, atualizar `APP_BASE_URL` e clicar
+   `Atualizar estado`; não editar tokens manualmente.
+2. Enviar uma nova mensagem direta do WhatsApp pessoal para o número conectado.
+   Não usar grupo, pois grupos são ignorados por contrato.
+3. Confirmar que a mensagem entra uma única vez na mesma conversa em
+   `/app/support`, sem recarga manual.
+4. Responder pelo Atendimento e confirmar entrega/leitura.
+5. Revisar e commitar o conjunto coerente de provisionamento gerenciado,
+   exclusão lógica, correções do suporte e proteção do ingresso.
+6. Depois fechar o smoke equivalente da Evolution antes de escolher o provider
+   principal.
 
 ## Handoff 2026-07-26 - Evolution Pareada E Primeira Saida Validada
 

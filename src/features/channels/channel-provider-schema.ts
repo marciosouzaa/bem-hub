@@ -61,6 +61,7 @@ export const evolutionCredentialsSchema = z.object({
     .min(3, "Informe o nome da instância.")
     .max(100, "Use no máximo 100 caracteres.")
     .regex(/^[a-zA-Z0-9_-]+$/, "Use apenas letras, números, hífen ou sublinhado."),
+  webhookEndpointToken: z.string().trim().min(40).max(100).optional(),
 });
 
 export const wuzapiCredentialsSchema = z.object({

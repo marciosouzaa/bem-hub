@@ -16,6 +16,11 @@ export type ChannelProviderHealth = {
   status: ChannelProviderStatus;
 };
 
+export type ChannelWebhookHealth = {
+  healthy: boolean;
+  reason: string | null;
+};
+
 export type ChannelPairing =
   | { kind: "code"; value: string }
   | { kind: "none"; value: null }
@@ -40,6 +45,9 @@ export interface ChannelProviderAdapter {
   configureWebhook?(input: ChannelWebhookConfiguration): Promise<void>;
   disconnect(): Promise<void>;
   getHealth(): Promise<ChannelProviderHealth>;
+  getWebhookHealth?(
+    input: ChannelWebhookConfiguration,
+  ): Promise<ChannelWebhookHealth>;
   provision?(): Promise<void>;
   provider: ChannelProvider;
   requestPairing(input: PairingInput): Promise<ChannelPairing>;

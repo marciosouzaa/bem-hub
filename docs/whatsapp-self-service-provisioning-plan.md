@@ -486,8 +486,11 @@ Implementar uma rotina reutilizável:
 - canal diz `connected`, mas saúde está ausente ou degradada;
 - recurso externo existe sem canal válido.
 
-No primeiro piloto, a reconciliação pode ser acionada por retry explícito e por
-um script operacional. Agendamento automático vem depois da validação.
+No primeiro piloto, a reconciliação é acionada por retry explícito e por
+`Atualizar estado`. Para Wuzapi e Evolution, ela também compara a URL do
+webhook no provedor com o `APP_BASE_URL` atual e a reconfigura quando divergir.
+Antes de confirmar saúde, o backend valida o ingresso público por um endpoint
+marcado do próprio BEM HUB. Agendamento automático vem depois da validação.
 
 ## Modelo De Dados
 
