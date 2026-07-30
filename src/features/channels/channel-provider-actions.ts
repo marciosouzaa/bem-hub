@@ -9,9 +9,16 @@ import {
   type ChannelProviderCredentials,
   type ChannelProviderStatus,
 } from "@/features/channels/channel-provider-schema";
-import type { ChannelPairing } from "@/features/channels/providers/channel-provider-adapter";
+import {
+  getManagedWuzapiConfig,
+} from "@/features/channels/managed/managed-channel-config";
+import type {
+  ChannelPairing,
+  ChannelProviderHealth,
+} from "@/features/channels/providers/channel-provider-adapter";
 import { ChannelProviderRequestError } from "@/features/channels/providers/provider-http";
 import { resolveChannelProvider } from "@/features/channels/providers/resolve-channel-provider";
+import { createManagedWuzapiProvisioner } from "@/features/channels/providers/wuzapi/wuzapi-managed-provisioner";
 import {
   createWebhookEndpointToken,
   hashWebhookEndpointToken,
@@ -103,7 +110,14 @@ export async function refreshChannelProviderHealthAction(
 
   try {
     const health = await loaded.adapter.getHealth();
-    const result = await persistHealth(loaded, health.status, health.reason, health.externalInstanceId);
+    const phoneNumber = await resolveManagedPhoneNumber(loaded, health);
+    const result = await persistHealth(
+      loaded,
+      health.status,
+      health.reason,
+      health.externalInstanceId,
+      phoneNumber,
+    );
     if (!result.ok) return result;
     return {
       ok: true,
@@ -207,9 +221,12 @@ export async function requestChannelPairingAction(
   try {
     const pairing = await loaded.adapter.requestPairing({
       method: loaded.channel.auth_method === "pin" ? "pin" : "qr",
-      phoneNumber: loaded.channel.phone_number,
+      phoneNumber: loaded.channel.phone_number ?? "",
     });
     const health = pairing.kind === "none" ? await loaded.adapter.getHealth() : null;
+    const phoneNumber = health
+      ? await resolveManagedPhoneNumber(loaded, health)
+      : null;
     const status = health?.status ?? "awaiting_pairing";
     const reason = health?.reason ?? "Aguardando autenticação no WhatsApp.";
     const result = await persistHealth(
@@ -217,6 +234,7 @@ export async function requestChannelPairingAction(
       status,
       reason,
       health?.externalInstanceId ?? null,
+      phoneNumber,
     );
     if (!result.ok) return result;
     return {
@@ -253,6 +271,31 @@ export async function disconnectChannelProviderAction(
   }
 }
 
+async function resolveManagedPhoneNumber(
+  loaded: Extract<Awaited<ReturnType<typeof loadStoredProvider>>, { ok: true }>,
+  health: ChannelProviderHealth,
+) {
+  if (health.phoneNumber) return health.phoneNumber;
+  if (
+    health.status !== "connected"
+    || loaded.channel.management_mode !== "managed"
+    || loaded.credentials.provider !== "wuzapi"
+  ) {
+    return null;
+  }
+
+  try {
+    return await createManagedWuzapiProvisioner(
+      getManagedWuzapiConfig(),
+    ).getPhoneNumber({
+      externalInstanceId: health.externalInstanceId,
+      token: loaded.credentials.userToken,
+    });
+  } catch {
+    return null;
+  }
+}
+
 async function getChannelAdminContext(connectionId: string) {
   const workspace = await getRequiredWorkspace();
   if (!canManage(workspace.membership.role)) {
@@ -265,7 +308,7 @@ async function getChannelAdminContext(connectionId: string) {
   const supabase = await createSupabaseServerClient();
   const { data: channel, error } = await supabase
     .from("channel_connections")
-    .select("id,auth_method,kind,phone_number,provider")
+    .select("id,auth_method,kind,management_mode,phone_number,provider")
     .eq("id", connectionId)
     .eq("organization_id", workspace.organization.id)
     .maybeSingle();
@@ -346,6 +389,7 @@ async function persistHealth(
   status: ChannelProviderStatus,
   reason: string | null,
   externalInstanceId: string | null,
+  phoneNumber: string | null = null,
 ): Promise<ChannelProviderActionResult> {
   const { error } = await loaded.admin.rpc("update_channel_provider_health", {
     configured_external_instance_id: externalInstanceId ?? "",
@@ -355,6 +399,29 @@ async function persistHealth(
     target_organization_id: loaded.workspace.organization.id,
   });
   if (error) return databaseErrorResult(error);
+  if (phoneNumber) {
+    const { error: phoneError } = await loaded.admin
+      .from("channel_connections")
+      .update({ phone_number: phoneNumber })
+      .eq("id", loaded.channel.id)
+      .eq("organization_id", loaded.workspace.organization.id);
+    if (phoneError) return databaseErrorResult(phoneError);
+  }
+  if (loaded.channel.management_mode === "managed" && status === "connected") {
+    const now = new Date().toISOString();
+    await loaded.admin
+      .from("channel_provisioning_runs")
+      .update({
+        finished_at: now,
+        lease_expires_at: null,
+        status: "succeeded",
+        step: "connected",
+        updated_at: now,
+      })
+      .eq("channel_connection_id", loaded.channel.id)
+      .eq("organization_id", loaded.workspace.organization.id)
+      .in("status", ["queued", "in_progress", "awaiting_pairing"]);
+  }
   revalidatePath(channelsPath);
   return { ok: true, message: "Estado atualizado.", status };
 }

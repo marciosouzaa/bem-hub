@@ -11,6 +11,7 @@ import type {
 
 export type ChannelProviderHealth = {
   externalInstanceId: string | null;
+  phoneNumber?: string | null;
   reason: string | null;
   status: ChannelProviderStatus;
 };

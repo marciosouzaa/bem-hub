@@ -27,7 +27,9 @@ export const channelColumns: DataTableColumn<ChannelConnection>[] = [
         </span>
         <div className="min-w-0">
           <p className="truncate font-medium">{row.original.name}</p>
-          <p className="mt-0.5 truncate text-xs text-muted">{row.original.phoneNumber}</p>
+          <p className="mt-0.5 truncate text-xs text-muted">
+            {row.original.phoneNumber ?? "Número ainda não identificado"}
+          </p>
         </div>
       </div>
     ),
@@ -63,9 +65,13 @@ export const channelColumns: DataTableColumn<ChannelConnection>[] = [
   {
     accessorKey: "provider",
     header: "Provedor",
-    cell: ({ getValue }) => (
+    cell: ({ getValue, row }) => (
       <span className="text-muted">
-        {getValue<string>() === "pending-selection" ? "A definir" : getValue<string>()}
+        {row.original.managementMode === "managed"
+          ? "Gerenciado"
+          : getValue<string>() === "pending-selection"
+            ? "A definir"
+            : getValue<string>()}
       </span>
     ),
     meta: { priority: "optional" },

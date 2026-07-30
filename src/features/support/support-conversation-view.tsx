@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SupportContactPanel } from "@/features/support/support-contact-panel";
+import { SupportChannelStatusBadge } from "@/features/support/support-channel-status-badge";
 import { SupportConversationActions } from "@/features/support/support-conversation-actions";
 import { SupportMessageComposer } from "@/features/support/support-message-composer";
 import { SupportMessageThread } from "@/features/support/support-message-thread";
@@ -53,8 +54,14 @@ export function SupportConversationView({
           <div className="mt-1 flex min-w-0 items-center gap-1.5 text-[11px] text-muted">
             <Radio className="size-3 shrink-0 text-primary" />
             <span className="truncate">{conversation.channel.name}</span>
+            <SupportChannelStatusBadge
+              compact
+              status={conversation.channel.operationalStatus}
+            />
             <span aria-hidden="true">·</span>
-            <span className="truncate">{conversation.channel.phoneNumber}</span>
+            <span className="truncate">
+              {conversation.channel.phoneNumber ?? "Número não identificado"}
+            </span>
           </div>
         </div>
 
@@ -80,6 +87,7 @@ export function SupportConversationView({
           <SupportMessageThread
             canRetry={
               conversation.status !== "resolved"
+              && conversation.channel.operationalStatus === "connected"
               && (
                 viewerCanAdmin
                 || conversation.assignedTo === viewerId
@@ -92,6 +100,7 @@ export function SupportConversationView({
             canSend={
               viewerCanAdmin || conversation.assignedTo === viewerId
             }
+            channelStatus={conversation.channel.operationalStatus}
             conversationId={conversation.id}
             status={conversation.status}
           />

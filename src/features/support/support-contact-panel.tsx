@@ -10,6 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { formatContactPhone } from "@/features/contacts/phone-normalization";
 import type { SupportConversation } from "@/features/support/queries";
+import { SupportChannelStatusBadge } from "@/features/support/support-channel-status-badge";
 import {
   getContactInitials,
   getSupportContactName,
@@ -75,7 +76,17 @@ export function SupportContactPanel({
           <Badge className="border-panel-border bg-panel-elevated normal-case tracking-normal text-muted-strong">
             {supportPriorityLabels[conversation.priority]}
           </Badge>
+          <SupportChannelStatusBadge
+            status={conversation.channel.operationalStatus}
+          />
         </div>
+        {conversation.channel.deletedAt ? (
+          <p className="mt-3 text-xs leading-5 text-muted">
+            Canal inativado em{" "}
+            {formatSupportDate(conversation.channel.deletedAt)}. O histórico
+            permanece disponível.
+          </p>
+        ) : null}
       </section>
 
       <section className="mt-7 border-t border-panel-border pt-6">

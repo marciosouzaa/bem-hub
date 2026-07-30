@@ -7,20 +7,26 @@ import type {
   ChannelProviderHealth,
 } from "@/features/channels/providers/channel-provider-adapter";
 import {
+  ChannelProviderRequestError,
   fetchProviderJson,
   onlyDigits,
 } from "@/features/channels/providers/provider-http";
 import { verifyAndNormalizeWuzapiWebhook } from "@/features/channels/providers/wuzapi/wuzapi-webhook";
 
+const pairingPollAttempts = 20;
+const pairingPollIntervalMs = 250;
+
 const statusResponseSchema = z.object({
   data: z.object({
     connected: z.boolean(),
+    id: z.string().trim().min(1).optional(),
+    jid: z.string().optional(),
     loggedIn: z.boolean(),
   }),
 });
 
 const qrResponseSchema = z.object({
-  data: z.object({ QRCode: z.string().min(1) }),
+  data: z.object({ QRCode: z.string().nullish() }),
 });
 
 const webhookResponseSchema = z.object({
@@ -85,35 +91,67 @@ export function createWuzapiAdapter(
       return mapHealth(statusResponseSchema.parse(payload));
     },
     async requestPairing(): Promise<ChannelPairing> {
-      await fetchProviderJson(
-        fetcher,
-        `${credentials.baseUrl}/session/connect`,
-        {
-          body: JSON.stringify({
-            Immediate: true,
-            Subscribe: ["Message", "ReadReceipt"],
-          }),
-          headers,
-          method: "POST",
-        },
-      );
-      const statusPayload = await fetchProviderJson(
-        fetcher,
-        `${credentials.baseUrl}/session/status`,
-        { headers, method: "GET" },
-      );
-      const status = statusResponseSchema.parse(statusPayload);
+      let status = await getStatus();
       if (status.data.loggedIn) return { kind: "none", value: null };
 
-      const qrPayload = await fetchProviderJson(
-        fetcher,
-        `${credentials.baseUrl}/session/qr`,
-        { headers, method: "GET" },
+      if (!status.data.connected) {
+        try {
+          await fetchProviderJson(
+            fetcher,
+            `${credentials.baseUrl}/session/connect`,
+            {
+              body: JSON.stringify({
+                Immediate: true,
+                Subscribe: ["Message", "ReadReceipt"],
+              }),
+              headers,
+              method: "POST",
+            },
+          );
+        } catch (error) {
+          if (
+            !(error instanceof ChannelProviderRequestError)
+            || error.status !== 500
+          ) {
+            throw error;
+          }
+
+          status = await getStatus();
+          if (!status.data.connected && !status.data.loggedIn) throw error;
+        }
+      }
+
+      for (let attempt = 0; attempt < pairingPollAttempts; attempt += 1) {
+        status = await getStatus();
+        if (status.data.loggedIn) return { kind: "none", value: null };
+
+        try {
+          const qrPayload = await fetchProviderJson(
+            fetcher,
+            `${credentials.baseUrl}/session/qr`,
+            { headers, method: "GET" },
+          );
+          const parsedQr = qrResponseSchema.safeParse(qrPayload);
+          const qrCode = parsedQr.success ? parsedQr.data.data.QRCode?.trim() : "";
+          if (qrCode) return { kind: "qr", value: qrCode };
+        } catch (error) {
+          if (
+            !(error instanceof ChannelProviderRequestError)
+            || error.status !== 500
+            || attempt === pairingPollAttempts - 1
+          ) {
+            throw error;
+          }
+        }
+
+        if (attempt < pairingPollAttempts - 1) {
+          await wait(pairingPollIntervalMs);
+        }
+      }
+
+      throw new ChannelProviderRequestError(
+        "O QR Code ainda está sendo preparado. Tente novamente.",
       );
-      return {
-        kind: "qr",
-        value: qrResponseSchema.parse(qrPayload).data.QRCode,
-      };
     },
     async disconnect() {
       await fetchProviderJson(
@@ -145,24 +183,51 @@ export function createWuzapiAdapter(
       return verifyAndNormalizeWuzapiWebhook(input, credentials.webhookHmacKey);
     },
   };
+
+  async function getStatus() {
+    const payload = await fetchProviderJson(
+      fetcher,
+      `${credentials.baseUrl}/session/status`,
+      { headers, method: "GET" },
+    );
+    return statusResponseSchema.parse(payload);
+  }
 }
 
 function mapHealth(
   payload: z.infer<typeof statusResponseSchema>,
 ): ChannelProviderHealth {
+  const identity = getPhoneFromJid(payload.data.jid);
   if (payload.data.connected && payload.data.loggedIn) {
-    return { externalInstanceId: null, reason: null, status: "connected" };
+    return {
+      externalInstanceId: payload.data.id ?? null,
+      ...(identity ? { phoneNumber: identity } : {}),
+      reason: null,
+      status: "connected",
+    };
   }
   if (payload.data.connected) {
     return {
-      externalInstanceId: null,
+      externalInstanceId: payload.data.id ?? null,
+      ...(identity ? { phoneNumber: identity } : {}),
       reason: "Aguardando leitura do QR Code.",
       status: "connecting",
     };
   }
   return {
-    externalInstanceId: null,
+    externalInstanceId: payload.data.id ?? null,
+    ...(identity ? { phoneNumber: identity } : {}),
     reason: "Sessão Wuzapi ainda não conectada.",
     status: "disconnected",
   };
+}
+
+function getPhoneFromJid(jid: string | undefined) {
+  if (!jid) return null;
+  const phone = jid.split("@", 1)[0].split(":", 1)[0].replace(/\D/g, "");
+  return phone.length >= 10 && phone.length <= 15 ? phone : null;
+}
+
+function wait(milliseconds: number) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }

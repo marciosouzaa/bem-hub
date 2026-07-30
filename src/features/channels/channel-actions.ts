@@ -87,10 +87,11 @@ export async function deleteChannelAction(connectionId: string): Promise<Channel
   if (error) {
     return {
       ok: false,
-      message: "Não foi possível excluir. O canal pode estar vinculado a atendimentos.",
+      message: "Não foi possível inativar o canal.",
     };
   }
 
   revalidatePath("/app/channels");
+  revalidatePath("/app/support");
   return { ok: true };
 }

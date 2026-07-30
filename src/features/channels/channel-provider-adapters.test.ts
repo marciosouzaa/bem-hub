@@ -222,7 +222,12 @@ describe("Wuzapi adapter", () => {
     const fetcher = (async (input: string | URL | Request, init?: RequestInit) => {
       request = { init, url: input.toString() };
       return jsonResponse({
-        data: { connected: true, loggedIn: true },
+        data: {
+          connected: true,
+          id: "wuzapi-user-001",
+          jid: "5511999999999:42@s.whatsapp.net",
+          loggedIn: true,
+        },
         success: true,
       });
     }) as typeof fetch;
@@ -233,6 +238,8 @@ describe("Wuzapi adapter", () => {
     expect((request.init?.headers as Record<string, string>).token)
       .toBe(wuzapiCredentials.userToken);
     expect(health.status).toBe("connected");
+    expect(health.externalInstanceId).toBe("wuzapi-user-001");
+    expect(health.phoneNumber).toBe("5511999999999");
   });
 
   test("configura HMAC antes do webhook e confirma a URL", async () => {
@@ -264,6 +271,106 @@ describe("Wuzapi adapter", () => {
     });
     expect((requests[0].init?.headers as Record<string, string>).token)
       .toBe(wuzapiCredentials.userToken);
+  });
+
+  test("não reinicia uma sessão que já aguarda leitura do QR Code", async () => {
+    const requests: Array<{ method: string; url: string }> = [];
+    const fetcher = (async (input: string | URL | Request, init?: RequestInit) => {
+      const url = input.toString();
+      requests.push({ method: init?.method ?? "GET", url });
+      if (url.endsWith("/session/status")) {
+        return jsonResponse({
+          data: { connected: true, loggedIn: false },
+          success: true,
+        });
+      }
+      if (url.endsWith("/session/qr")) {
+        return jsonResponse({
+          data: { QRCode: "data:image/png;base64,dGVzdGU=" },
+          success: true,
+        });
+      }
+      throw new Error(`Requisição inesperada: ${url}`);
+    }) as typeof fetch;
+
+    const pairing = await createWuzapiAdapter(
+      wuzapiCredentials,
+      fetcher,
+    ).requestPairing({
+      method: "qr",
+      phoneNumber: "",
+    });
+
+    expect(pairing).toEqual({
+      kind: "qr",
+      value: "data:image/png;base64,dGVzdGU=",
+    });
+    expect(requests).toEqual([
+      {
+        method: "GET",
+        url: "https://wuzapi.example.com/session/status",
+      },
+      {
+        method: "GET",
+        url: "https://wuzapi.example.com/session/status",
+      },
+      {
+        method: "GET",
+        url: "https://wuzapi.example.com/session/qr",
+      },
+    ]);
+  });
+
+  test("aguarda o QR Code gerado de forma assíncrona", async () => {
+    const requests: Array<{ method: string; url: string }> = [];
+    let statusReads = 0;
+    let qrReads = 0;
+    const fetcher = (async (input: string | URL | Request, init?: RequestInit) => {
+      const url = input.toString();
+      requests.push({ method: init?.method ?? "GET", url });
+      if (url.endsWith("/session/status")) {
+        statusReads += 1;
+        return jsonResponse({
+          data: {
+            connected: statusReads > 1,
+            loggedIn: false,
+          },
+          success: true,
+        });
+      }
+      if (url.endsWith("/session/connect")) {
+        return jsonResponse({ data: { Details: "Connected" }, success: true });
+      }
+      if (url.endsWith("/session/qr")) {
+        qrReads += 1;
+        return jsonResponse({
+          data: {
+            QRCode: qrReads > 1
+              ? "data:image/png;base64,dGVzdGU="
+              : "",
+          },
+          success: true,
+        });
+      }
+      throw new Error(`Requisição inesperada: ${url}`);
+    }) as typeof fetch;
+
+    const pairing = await createWuzapiAdapter(
+      wuzapiCredentials,
+      fetcher,
+    ).requestPairing({
+      method: "qr",
+      phoneNumber: "",
+    });
+
+    expect(pairing).toEqual({
+      kind: "qr",
+      value: "data:image/png;base64,dGVzdGU=",
+    });
+    expect(requests.filter((request) =>
+      request.url.endsWith("/session/connect")
+    )).toHaveLength(1);
+    expect(qrReads).toBe(2);
   });
 
   test("usa um ID determinístico ao enviar texto", async () => {

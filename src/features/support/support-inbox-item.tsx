@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
 import type { SupportInboxItem as SupportInboxItemData } from "@/features/support/queries";
+import { SupportChannelStatusBadge } from "@/features/support/support-channel-status-badge";
 import {
   formatSupportDate,
   getContactInitials,
@@ -85,6 +86,10 @@ export function SupportInboxItem({
           <div className="mt-1 flex min-w-0 items-center gap-1.5 text-xs text-muted">
             <Radio className="size-3 shrink-0" />
             <span className="truncate">{item.channel.name}</span>
+            <SupportChannelStatusBadge
+              compact
+              status={item.channel.operationalStatus}
+            />
             <span aria-hidden="true">·</span>
             <span className="truncate">{item.contact.phone ?? "Sem telefone"}</span>
           </div>

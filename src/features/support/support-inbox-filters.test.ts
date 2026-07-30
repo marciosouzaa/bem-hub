@@ -1,6 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
-import type { SupportInboxItem } from "@/features/support/queries";
+import {
+  supportInboxItemSchema,
+  type SupportInboxItem,
+} from "@/features/support/queries";
 import { filterSupportInbox } from "@/features/support/support-inbox-filters";
 
 const items = [
@@ -19,6 +22,37 @@ describe("support inbox filters", () => {
   test("searches names and tags without accents or case", () => {
     expect(filterSupportInbox(items, "clinica", "all")).toHaveLength(1);
     expect(filterSupportInbox(items, "revenda", "all")).toHaveLength(1);
+  });
+
+  test("accepts a managed channel whose own number is not identified", () => {
+    const item = supportInboxItemSchema.parse({
+      assignedTo: null,
+      assignee: null,
+      channel: {
+        deletedAt: null,
+        id: crypto.randomUUID(),
+        kind: "unofficial",
+        name: "WhatsApp gerenciado",
+        operationalStatus: "connected",
+        phoneNumber: null,
+        provider: "wuzapi",
+      },
+      contact: {
+        email: null,
+        id: crypto.randomUUID(),
+        name: "Cliente teste",
+        phone: "+55 11 99999-9999",
+        tags: [],
+      },
+      id: crypto.randomUUID(),
+      lastMessageAt: "2026-07-30T03:15:31.000Z",
+      priority: "normal",
+      status: "open",
+      unreadCount: 0,
+    });
+
+    expect(item.channel.phoneNumber).toBeNull();
+    expect(filterSupportInbox([item], "cliente", "all")).toHaveLength(1);
   });
 });
 

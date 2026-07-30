@@ -146,7 +146,7 @@ export function SupportStartDrawer({
               {availableChannels.map((channel) => (
                 <option key={channel.id} value={channel.id}>
                   {channel.name} · {providerLabel(channel.provider)} ·{" "}
-                  {channel.phoneNumber}
+                  {channel.phoneNumber ?? "Número não identificado"}
                 </option>
               ))}
             </Select>

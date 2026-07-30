@@ -12,6 +12,7 @@ import { DataTableControlBar } from "@/components/ui/data-table/data-table-contr
 import { deleteChannelAction } from "@/features/channels/channel-actions";
 import { channelColumns } from "@/features/channels/channel-columns";
 import { ChannelEditorDrawer } from "@/features/channels/channel-editor-drawer";
+import { ManagedChannelDrawer } from "@/features/channels/managed/managed-channel-drawer";
 import { ChannelProviderDrawer } from "@/features/channels/channel-provider-drawer";
 import type { ChannelConnection } from "@/features/channels/channel-schema";
 
@@ -25,6 +26,8 @@ export function ChannelsWorkspace({ canManage, channels }: ChannelsWorkspaceProp
   const [search, setSearch] = useState("");
   const [editorOpen, setEditorOpen] = useState(false);
   const [selectedChannel, setSelectedChannel] = useState<ChannelConnection | null>(null);
+  const [managedChannel, setManagedChannel] = useState<ChannelConnection | null>(null);
+  const [managedDrawerOpen, setManagedDrawerOpen] = useState(false);
   const [providerChannel, setProviderChannel] = useState<ChannelConnection | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ChannelConnection | null>(null);
   const [operationError, setOperationError] = useState<string | null>(null);
@@ -42,8 +45,8 @@ export function ChannelsWorkspace({ canManage, channels }: ChannelsWorkspaceProp
 
   function openNewChannel() {
     setOperationError(null);
-    setSelectedChannel(null);
-    setEditorOpen(true);
+    setManagedChannel(null);
+    setManagedDrawerOpen(true);
   }
 
   function openChannel(channel: ChannelConnection) {
@@ -55,6 +58,12 @@ export function ChannelsWorkspace({ canManage, channels }: ChannelsWorkspaceProp
   function openProvider(channel: ChannelConnection) {
     setOperationError(null);
     setProviderChannel(channel);
+  }
+
+  function openManagedChannel(channel: ChannelConnection) {
+    setOperationError(null);
+    setManagedChannel(channel);
+    setManagedDrawerOpen(true);
   }
 
   async function deleteChannel() {
@@ -75,7 +84,7 @@ export function ChannelsWorkspace({ canManage, channels }: ChannelsWorkspaceProp
             Novo canal
           </Button>
         ) : null}
-        description="Organize os números de WhatsApp da operação. Cada canal mantém modalidade, autenticação e estado próprios."
+        description="Conecte números de WhatsApp por QR Code. Credenciais e infraestrutura são preparadas internamente."
         eyebrow="Infraestrutura de atendimento"
         title="Canais"
       />
@@ -101,11 +110,28 @@ export function ChannelsWorkspace({ canManage, channels }: ChannelsWorkspaceProp
         emptyTitle={search ? "Nenhum canal corresponde à busca" : "Nenhum canal cadastrado"}
         getRowId={(channel) => channel.id}
         getRowSignal={(channel) => channel.status === "connected" ? "success" : channel.status === "failed" ? "danger" : channel.status === "draft" || channel.status === "awaiting_pairing" ? "warning" : "neutral"}
-        onRowClick={canManage ? (channel) => channel.kind === "unofficial" ? openProvider(channel) : openChannel(channel) : undefined}
+        onRowClick={canManage ? (channel) =>
+          channel.managementMode === "managed"
+            ? openManagedChannel(channel)
+            : channel.kind === "unofficial"
+              ? openProvider(channel)
+              : openChannel(channel) : undefined}
         rowActions={canManage ? (channel) => [
-          ...(channel.kind === "unofficial" ? [{ icon: Cable, label: "Conectar", onSelect: openProvider }] : []),
-          { icon: Pencil, label: "Editar cadastro", onSelect: openChannel },
-          { danger: true, icon: Trash2, label: "Excluir", onSelect: setDeleteTarget, separatorBefore: true },
+          ...(channel.managementMode === "managed"
+            ? [{ icon: Cable, label: "Conectar", onSelect: openManagedChannel }]
+            : channel.kind === "unofficial"
+              ? [{ icon: Cable, label: "Conectar", onSelect: openProvider }]
+              : []),
+          ...(channel.managementMode !== "managed"
+            ? [{ icon: Pencil, label: "Editar cadastro", onSelect: openChannel }]
+            : []),
+          {
+            danger: true,
+            icon: Trash2,
+            label: "Excluir",
+            onSelect: setDeleteTarget,
+            separatorBefore: true,
+          },
         ] : undefined}
       />
 
@@ -121,9 +147,16 @@ export function ChannelsWorkspace({ canManage, channels }: ChannelsWorkspaceProp
         onSaved={() => router.refresh()}
         open={providerChannel !== null}
       />
+      <ManagedChannelDrawer
+        channel={managedChannel}
+        key={managedDrawerOpen ? managedChannel?.id ?? "new" : "closed"}
+        onClose={() => setManagedDrawerOpen(false)}
+        onSaved={() => router.refresh()}
+        open={managedDrawerOpen}
+      />
       <ConfirmDialog
         confirmLabel="Excluir canal"
-        description={`O canal ${deleteTarget?.name ?? "selecionado"} será removido. Canais vinculados a atendimentos não podem ser excluídos.`}
+        description={`O canal ${deleteTarget?.name ?? "selecionado"} ficará inativo e sairá desta lista. O histórico de atendimentos será preservado.`}
         onConfirm={deleteChannel}
         onOpenChange={(open) => !open && setDeleteTarget(null)}
         open={deleteTarget !== null}

@@ -61,7 +61,7 @@ export async function processChannelWebhook(
     await Promise.all([
       admin
         .from("channel_connections")
-        .select("external_instance_id,id,organization_id,provider")
+        .select("external_instance_id,id,is_deleted,organization_id,provider")
         .eq("id", endpoint.channel_connection_id)
         .eq("organization_id", endpoint.organization_id)
         .eq("provider", provider)
@@ -77,7 +77,9 @@ export async function processChannelWebhook(
 
   if (channelError) throw channelError;
   if (storedError) throw storedError;
-  if (!channel || !stored) throw new ChannelWebhookEndpointNotFoundError();
+  if (!channel || channel.is_deleted || !stored) {
+    throw new ChannelWebhookEndpointNotFoundError();
+  }
 
   const credentials = channelProviderCredentialsSchema.parse(
     JSON.parse(decryptSecret(stored.encrypted_credentials)),

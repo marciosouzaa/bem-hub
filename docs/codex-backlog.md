@@ -135,6 +135,8 @@ e operar os hosts self-hosted com numeros de teste separados.
   e estados de tela.
 - [x] Migrar Canais, Assistentes e Conexoes de IA para os novos contratos de
   cadastro sem alterar identidade visual ou regras server-side.
+- [x] Substituir exclusao fisica de canais por inativacao tenant-scoped,
+  preservando atendimentos e exibindo o estado do canal no historico.
 - [ ] Fazer QA visual autenticado dos novos drawers e tabelas em desktop/mobile.
 - [x] Implementar localmente o CRUD de contatos com DataTable, EntityDrawer,
   criacao manual, arquivamento e vinculo ao Atendimento.

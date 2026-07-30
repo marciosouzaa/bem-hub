@@ -234,14 +234,20 @@ export type Database = {
           config: Json
           created_at: string
           credential_updated_at: string | null
+          deleted_at: string | null
+          deprovisioned_at: string | null
           display_name: string
           external_instance_id: string | null
           id: string
+          is_deleted: boolean
           kind: string
           last_connected_at: string | null
           last_health_at: string | null
+          managed_request_id: string | null
+          management_mode: string
           organization_id: string
-          phone_number: string
+          phone_number: string | null
+          provisioned_at: string | null
           provider: string
           provider_base_url: string | null
           status: string
@@ -254,14 +260,20 @@ export type Database = {
           config?: Json
           created_at?: string
           credential_updated_at?: string | null
+          deleted_at?: string | null
+          deprovisioned_at?: string | null
           display_name: string
           external_instance_id?: string | null
           id?: string
+          is_deleted?: boolean
           kind: string
           last_connected_at?: string | null
           last_health_at?: string | null
+          managed_request_id?: string | null
+          management_mode?: string
           organization_id: string
-          phone_number: string
+          phone_number?: string | null
+          provisioned_at?: string | null
           provider: string
           provider_base_url?: string | null
           status?: string
@@ -274,14 +286,20 @@ export type Database = {
           config?: Json
           created_at?: string
           credential_updated_at?: string | null
+          deleted_at?: string | null
+          deprovisioned_at?: string | null
           display_name?: string
           external_instance_id?: string | null
           id?: string
+          is_deleted?: boolean
           kind?: string
           last_connected_at?: string | null
           last_health_at?: string | null
+          managed_request_id?: string | null
+          management_mode?: string
           organization_id?: string
-          phone_number?: string
+          phone_number?: string | null
+          provisioned_at?: string | null
           provider?: string
           provider_base_url?: string | null
           status?: string
@@ -340,6 +358,81 @@ export type Database = {
           },
           {
             foreignKeyName: "channel_credentials_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      channel_provisioning_runs: {
+        Row: {
+          attempt_count: number
+          channel_connection_id: string
+          created_at: string
+          created_by: string
+          error_code: string | null
+          error_message: string | null
+          finished_at: string | null
+          id: string
+          lease_expires_at: string | null
+          operation: string
+          organization_id: string
+          provider: string
+          request_id: string
+          started_at: string | null
+          status: string
+          step: string
+          updated_at: string
+        }
+        Insert: {
+          attempt_count?: number
+          channel_connection_id: string
+          created_at?: string
+          created_by: string
+          error_code?: string | null
+          error_message?: string | null
+          finished_at?: string | null
+          id?: string
+          lease_expires_at?: string | null
+          operation?: string
+          organization_id: string
+          provider: string
+          request_id: string
+          started_at?: string | null
+          status?: string
+          step?: string
+          updated_at?: string
+        }
+        Update: {
+          attempt_count?: number
+          channel_connection_id?: string
+          created_at?: string
+          created_by?: string
+          error_code?: string | null
+          error_message?: string | null
+          finished_at?: string | null
+          id?: string
+          lease_expires_at?: string | null
+          operation?: string
+          organization_id?: string
+          provider?: string
+          request_id?: string
+          started_at?: string | null
+          status?: string
+          step?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "channel_provisioning_runs_channel_connection_id_fkey"
+            columns: ["channel_connection_id"]
+            isOneToOne: false
+            referencedRelation: "channel_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "channel_provisioning_runs_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -1228,6 +1321,13 @@ export type Database = {
       review_support_draft: { Args: { review_decision: string; target_message_id: string; target_organization_id: string }; Returns: undefined }
       update_support_draft: { Args: { draft_content: string; target_message_id: string; target_organization_id: string }; Returns: undefined }
       list_channel_connections: { Args: { target_organization_id: string }; Returns: Json }
+      claim_managed_channel_provisioning: {
+        Args: {
+          target_organization_id: string
+          target_run_id: string
+        }
+        Returns: boolean
+      }
       list_contacts: {
         Args: { target_organization_id: string }
         Returns: Json
@@ -1290,6 +1390,15 @@ export type Database = {
         Returns: undefined
       }
       register_channel_connection: { Args: { connection_auth_method: string; connection_kind: string; connection_name: string; connection_phone: string; target_organization_id: string }; Returns: string }
+      register_managed_channel_provisioning: {
+        Args: {
+          connection_name: string
+          managed_provider: string
+          provisioning_request_id: string
+          target_organization_id: string
+        }
+        Returns: Json
+      }
       update_channel_connection: { Args: { connection_auth_method: string; connection_name: string; connection_phone: string; target_connection_id: string; target_organization_id: string }; Returns: undefined }
       delete_channel_connection: { Args: { target_connection_id: string; target_organization_id: string }; Returns: undefined }
       is_org_admin: {

@@ -6,7 +6,22 @@ import {
 } from "@/features/contacts/contact-schema";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-const supportInboxItemSchema = z.object({
+export const supportChannelOperationalStatusSchema = z.enum([
+  "connected",
+  "disconnected",
+  "inactive",
+]);
+
+const supportChannelSchema = z.object({
+  id: z.string().uuid(),
+  kind: z.enum(["official", "unofficial"]),
+  name: z.string(),
+  phoneNumber: z.string().nullable(),
+  operationalStatus: supportChannelOperationalStatusSchema,
+  deletedAt: z.string().nullable(),
+});
+
+export const supportInboxItemSchema = z.object({
   id: z.string().uuid(),
   status: z.enum(["open", "pending", "resolved", "escalated"]),
   priority: z.enum(["low", "normal", "high", "urgent"]),
@@ -27,12 +42,8 @@ const supportInboxItemSchema = z.object({
     phoneStatus: contactPhoneStatusSchema.default("invalid"),
     phoneReason: contactPhoneReasonSchema.nullable().default(null),
   }),
-  channel: z.object({
-    id: z.string().uuid(),
-    kind: z.enum(["official", "unofficial"]),
+  channel: supportChannelSchema.extend({
     provider: z.string(),
-    name: z.string(),
-    phoneNumber: z.string(),
   }),
 });
 
@@ -106,12 +117,7 @@ const supportConversationSchema = z.object({
     phoneStatus: contactPhoneStatusSchema.default("invalid"),
     phoneReason: contactPhoneReasonSchema.nullable().default(null),
   }),
-  channel: z.object({
-    id: z.string().uuid(),
-    name: z.string(),
-    phoneNumber: z.string(),
-    kind: z.enum(["official", "unofficial"]),
-  }),
+  channel: supportChannelSchema,
   messages: z.array(supportMessageSchema),
   events: z.array(z.object({
     id: z.string().uuid(),
@@ -152,6 +158,9 @@ const supportMetricsSchema = z.object({
 
 export type SupportInboxItem = z.infer<typeof supportInboxItemSchema>;
 export type SupportConversation = z.infer<typeof supportConversationSchema>;
+export type SupportChannelOperationalStatus = z.infer<
+  typeof supportChannelOperationalStatusSchema
+>;
 export type SupportMessage = z.infer<typeof supportMessageSchema>;
 export type SupportMetrics = z.infer<typeof supportMetricsSchema>;
 

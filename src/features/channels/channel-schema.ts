@@ -4,6 +4,7 @@ import { channelProviderStatusSchema } from "@/features/channels/channel-provide
 
 export const channelKindSchema = z.enum(["official", "unofficial"]);
 export const channelAuthMethodSchema = z.enum(["qr", "pin"]);
+export const channelManagementModeSchema = z.enum(["legacy", "managed", "external"]);
 export const channelStatusSchema = z
   .union([channelProviderStatusSchema, z.enum(["active", "pending"])])
   .transform((status) => status === "active" ? "connected" : status === "pending" ? "draft" : status);
@@ -24,8 +25,12 @@ export const channelConnectionSchema = z.object({
   kind: channelKindSchema,
   lastConnectedAt: z.string().nullable().default(null),
   lastHealthAt: z.string().nullable().default(null),
+  managedRequestId: z.string().uuid().nullable().default(null),
+  managementMode: channelManagementModeSchema.default("legacy"),
   name: z.string(),
-  phoneNumber: z.string(),
+  phoneNumber: z.string().nullable(),
+  provisionedAt: z.string().nullable().default(null),
+  deprovisionedAt: z.string().nullable().default(null),
   provider: z.string(),
   providerBaseUrl: z.string().nullable().default(null),
   status: channelStatusSchema,

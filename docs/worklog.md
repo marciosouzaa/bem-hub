@@ -4,6 +4,141 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-30 - Atendimento Com Canal Gerenciado Corrigido
+
+### Feito
+
+- Corrigida a queda de `/app/support` quando um canal gerenciado conectado
+  ainda não possui `phone_number`.
+- Inbox e detalhe agora tratam o número próprio do canal como opcional e usam
+  `Número não identificado` como fallback.
+- O backend gerenciado consulta `/admin/users` para descobrir o telefone pelo
+  JID quando o `/session/status` do Wuzapi não o informa.
+- O canal `wuzp` foi reconciliado no banco sem expor telefone ou credenciais.
+- A conversa e a mensagem do smoke foram preservadas; a mensagem chegou ao
+  destinatário antes da falha de renderização.
+
+### Verificação
+
+- Banco remoto confirmou canal conectado, telefone preenchido, uma conversa e
+  uma mensagem.
+- Suite passou com 106/106 testes.
+- `bun run lint`, `bun run build` e `git diff --check` passaram.
+- O servidor de desenvolvimento recompilou os arquivos alterados e permanece
+  ativo; o navegador autenticado não estava disponível para automação.
+
+### Próximo Passo
+
+1. Em `/app/support`, usar `Tentar novamente` e abrir a conversa criada.
+2. Responder pelo Atendimento e confirmar a segunda mensagem no celular.
+3. Atualizar o túnel público antes do smoke de mensagem recebida.
+
+## 2026-07-29 - Corrida De Geração Do QR Wuzapi Corrigida
+
+### Feito
+
+- O pareamento agora consulta o estado antes de iniciar a sessão e não repete
+  `/session/connect` quando o Wuzapi já aguarda a leitura do QR.
+- A leitura do QR tolera a janela assíncrona entre a conexão e a geração da
+  imagem, com polling curto e limitado.
+- Uma resposta HTTP 500 de conexão é reconciliada pelo estado real somente
+  quando a sessão já ficou conectada; outros erros continuam sendo propagados.
+
+### Verificação
+
+- O canal gerenciado real `wuzp` retornou um QR válido pelo adapter corrigido.
+- Testes cobrem sessão já iniciada e QR disponibilizado com atraso.
+- Suite passou com 104/104 testes.
+- `bun run lint`, `bun run build` e `git diff --check` passaram.
+
+### Próximo Passo
+
+1. No drawer do canal `wuzp`, usar `Retomar conexão` e ler o QR.
+2. Confirmar a transição para `Conectado` e o telefone descoberto.
+3. Atualizar o túnel público do webhook antes do smoke de mensagem recebida.
+
+## 2026-07-29 - Exclusão Lógica De Canais Com Histórico
+
+### Feito
+
+- `channel_connections` ganhou `is_deleted` e `deleted_at`; a exclusão agora
+  preserva canal, conversas, mensagens e auditoria mesmo quando já existe
+  atendimento.
+- O RPC de exclusão passou a marcar o canal como `disabled`; a listagem de
+  Canais omite registros excluídos e permite reutilizar o mesmo número.
+- Exclusão física foi removida das permissões e policies de
+  `channel_connections`; somente owner/admin executa a inativação tenant-scoped.
+- Atendimento mantém conversas antigas e apresenta o canal como `Conectado`,
+  `Desconectado` ou `Inativo`. Composer, retry e webhook não operam sobre canal
+  excluído.
+- Exclusão também ficou disponível para canais gerenciados. O recurso externo
+  permanece para descomissionamento posterior; esta ação somente o retira da
+  operação do BEM HUB.
+- Migrations de provisionamento gerenciado, exclusão lógica e índice da FK de
+  criação foram aplicadas no Supabase remoto.
+
+### Verificação
+
+- pgTAP específico passou com 24/24 asserções.
+- Suite passou com 102/102 testes.
+- `bun run lint`, `bun run build` e `git diff --check` passaram.
+- Banco remoto confirmou três canais existentes preservados, zero excluídos,
+  filtro da listagem ativo, exclusão física revogada e status inativo presente
+  no contrato de Atendimento.
+- Advisors não registraram regressão de segurança desta mudança. Permanecem os
+  avisos conhecidos sobre funções administrativas intencionais e proteção de
+  senha vazada desativada.
+
+### Próximo Passo
+
+1. Fazer smoke autenticado: excluir um canal com conversa, confirmar que some
+   em Canais e aparece como `Inativo` no Atendimento.
+2. Conectar um novo canal Wuzapi pelo fluxo gerenciado.
+3. Implementar descomissionamento externo separado para liberar recursos do
+   host sem misturar essa operação com a preservação do histórico.
+
+## 2026-07-29 - Provisionamento Gerenciado Wuzapi Implementado Localmente
+
+### Feito
+
+- O cadastro padrão de canal agora pede somente um nome e abre um drawer único
+  com preparo, QR Code, polling de estado e confirmação da conexão.
+- O provedor fica interno e configurável por ambiente; a primeira fatia usa
+  Wuzapi sem expor URL, admin token, token de usuário, HMAC ou token do webhook.
+- O backend gera e criptografa credenciais exclusivas antes da chamada externa,
+  cria o usuário em `/admin/users`, configura webhook/HMAC e solicita o QR.
+- Retry usa `request_id`, lease curta e reconciliação por token após HTTP 409,
+  evitando duplicar o usuário Wuzapi em falha parcial.
+- `channel_provisioning_runs` registra somente estado operacional sanitizado,
+  com RLS e acesso exclusivo do `service_role`.
+- Canais gerenciados podem nascer sem telefone; após o pareamento, o adapter
+  extrai o número do JID retornado pela Wuzapi.
+- O fluxo manual anterior continua disponível para canais legados. Exclusão de
+  canal gerenciado ficou oculta até existir descomissionamento externo seguro.
+- Plano completo registrado em
+  `docs/whatsapp-self-service-provisioning-plan.md`.
+
+### Verificação
+
+- Duas migrations aplicadas com sucesso no Supabase local.
+- pgTAP isolado passou com 25/25 asserções de RLS, grants, isolamento,
+  idempotência, lease e referência sanitizada.
+- Suite completa passou com 102 testes.
+- `bun run lint` passou.
+- `bun run build` passou com Next.js 16.2.9.
+- `git diff --check` passou.
+- `db lint` global mantém somente o erro legado de ambiguidade em
+  `public.finalize_support_message_send`.
+- QA visual não executou porque nenhum navegador estava conectado à sessão.
+
+### Pendente
+
+1. Configurar as variáveis gerenciadas e subir Wuzapi para o smoke real.
+2. Validar nome → usuário Wuzapi → QR → telefone descoberto → webhook.
+3. Implementar descomissionamento seguro antes de reativar exclusão.
+4. Aplicar migrations no remoto somente após o smoke local.
+5. Implementar Evolution usando o mesmo contrato após estabilizar Wuzapi.
+
 ## 2026-07-26 - Evolution Pareada E Primeira Saida Validada
 
 ### Feito

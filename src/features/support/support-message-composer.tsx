@@ -11,11 +11,13 @@ import type { SupportConversation } from "@/features/support/queries";
 export function SupportMessageComposer({
   assigned,
   canSend,
+  channelStatus,
   conversationId,
   status,
 }: {
   assigned: boolean;
   canSend: boolean;
+  channelStatus: SupportConversation["channel"]["operationalStatus"];
   conversationId: string;
   status: SupportConversation["status"];
 }) {
@@ -32,6 +34,18 @@ export function SupportMessageComposer({
         <div className="mx-auto flex max-w-3xl items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-muted-strong">
           <CheckCircle2 className="size-4 text-primary" />
           Atendimento resolvido. Histórico preservado para consulta.
+        </div>
+      </div>
+    );
+  }
+
+  if (channelStatus !== "connected") {
+    return (
+      <div className="border-t border-panel-border bg-panel-subtle px-4 py-4 sm:px-6">
+        <div className="mx-auto max-w-3xl rounded-xl border border-warning/20 bg-warning/5 px-4 py-3 text-center text-sm text-muted-strong">
+          {channelStatus === "inactive"
+            ? "Canal inativo. O histórico está preservado, mas novas mensagens não podem ser enviadas."
+            : "Canal desconectado. Reconecte-o em Canais antes de responder."}
         </div>
       </div>
     );

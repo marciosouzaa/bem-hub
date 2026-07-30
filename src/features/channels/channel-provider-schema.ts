@@ -29,7 +29,13 @@ const httpsBaseUrlSchema = z
   .string()
   .trim()
   .url("Informe uma URL válida.")
-  .refine((value) => new URL(value).protocol === "https:", "Use uma URL HTTPS.")
+  .refine((value) => {
+    const url = new URL(value);
+    if (url.protocol === "https:") return true;
+    return process.env.NODE_ENV !== "production"
+      && url.protocol === "http:"
+      && ["localhost", "127.0.0.1", "::1"].includes(url.hostname);
+  }, "Use uma URL HTTPS.")
   .transform((value) => value.replace(/\/+$/, ""));
 
 export const uazapiCredentialsSchema = z.object({
@@ -61,6 +67,7 @@ export const wuzapiCredentialsSchema = z.object({
   provider: z.literal("wuzapi"),
   baseUrl: httpsBaseUrlSchema,
   userToken: z.string().trim().min(16, "Informe o token do usuário Wuzapi."),
+  webhookEndpointToken: z.string().trim().min(40).max(100).optional(),
   webhookHmacKey: z
     .string()
     .min(32, "A chave HMAC precisa ter ao menos 32 caracteres.")
