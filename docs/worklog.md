@@ -16,12 +16,27 @@ do marco ativo.
 - Testes de adapter congelam URL, headers e payloads de reply, reação, áudio e
   documento. Nenhuma mensagem foi disparada automaticamente.
 
-### Próximo Passo
+### Estado Da Entrega
 
-1. Criar migration privada para anexos, Storage/RLS e referências/citações.
-2. Normalizar mídia/reação recebidas, transferir o binário pelo servidor e
-   manter o histórico idempotente.
-3. Ligar composer/thread e executar smoke humano por Wuzapi e Evolution.
+- Esta fundação **não é testável no app ainda**: `/app/support` só aceita e
+  exibe texto; mídia recebida é ignorada pelo normalizador atual.
+- O contrato de adapters permite envio, mas ainda não há upload, autorização,
+  persistência de tentativa nem chamada server-side para `sendMediaMessage`.
+- Reply e reação também não possuem rota/RPC/UI. Não usar o celular como smoke
+  de mídia até a entrega ponta a ponta existir.
+
+### Retomada Exata
+
+1. Estender o contrato de webhook para anexo, citação e reação, com fixtures
+   reais dos dois provedores; manter texto puro sem regressão.
+2. Criar RPCs tenant-scoped/idempotentes para reservar mensagem/anexo, fazer
+   transferência server-side ao bucket privado e finalizar a tentativa.
+3. Criar rota de upload validada por MIME/tamanho e ligar o composer a envio de
+   arquivo/imagem/áudio; somente ação explícita do operador envia ao WhatsApp.
+4. Renderizar anexo, áudio, reply e reação na thread; gerar URL assinada no
+   servidor, nunca expor URL/credencial do fornecedor.
+5. Fazer smoke bidirecional Wuzapi/Evolution com dois tenants e validar RLS,
+   limites, duplicidade e reinício.
 
 ### Verificação
 

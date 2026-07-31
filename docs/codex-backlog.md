@@ -87,6 +87,10 @@ e operar os hosts self-hosted com numeros de teste separados.
   payload.
 - [ ] Criar armazenamento privado tenant-scoped para anexos, com retenção,
   auditoria e URLs assinadas de leitura.
+  - [x] Base remota aplicada: bucket privado de 25 MB, tabelas de anexos e
+    reações, RLS e FK tenant-scoped para reply.
+  - [ ] Implementar retenção, auditoria operacional e emissão server-side de
+    URL assinada; Storage ainda não é acessível pelo composer/thread.
 - [ ] Normalizar anexos, citações e reações recebidos em ambos os webhooks;
   baixar mídia no servidor, nunca no navegador ou por URL do fornecedor.
 - [ ] Entregar composer com anexo, gravação/envio de áudio, reply e reação,

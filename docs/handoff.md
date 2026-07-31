@@ -2,6 +2,53 @@
 
 Atualizado em 2026-07-30.
 
+## Handoff 2026-07-30 - Midia WhatsApp: Fundacao Aplicada, Feature Pendente
+
+### Estado Real
+
+- O fluxo de texto do Atendimento segue operacional para Wuzapi e Evolution.
+- O BEM HUB **não envia nem recebe mídia pelo app ainda**. Não pedir smoke de
+  áudio, arquivo, imagem, vídeo, reply ou reação nesta etapa: o composer e a
+  thread continuam textuais, e os webhooks ainda normalizam apenas texto.
+- Foram adicionados contratos provider-neutral e implementações de adapter
+  para reply, reação e mídia. Evolution usa `sendMedia`/`sendReaction`; Wuzapi
+  usa endpoints por tipo de mídia, `ContextInfo` e `me:` para reação própria.
+  Isto foi testado por mocks de URL/payload, sem mensagens automáticas.
+- A migration remota `20260731005056_support_message_media` foi aplicada no
+  projeto Supabase BEM HUB `lzqugeqtcisgaztggcxq`.
+
+### Banco Remoto
+
+- `support_messages.reply_to_message_id` possui FK composta por organização.
+- Existem `support_message_attachments` e `support_message_reactions`, ambas
+  com `organization_id`, RLS e leitura limitada a membro da organização.
+- Bucket privado `support-message-media`: 25 MB; policy de leitura valida a
+  pasta da organização. Não há upload direto do browser.
+- Verificação pós-migration confirmou RLS, bucket privado, FK e três policies.
+  Advisors só repetiram avisos preexistentes: funções `SECURITY DEFINER`
+  revisadas e proteção de senha vazada desativada.
+
+### Commits E Verificação
+
+- `375d65e feat(channels): add WhatsApp media operations`
+- `eae5efb feat(support): add private media schema`
+- `1fc7780 docs(worklog): record media migration rollout`
+- `bun test src/features/channels/channel-provider-adapters.test.ts`: 20/20.
+- `bun run lint` e `bun run build` ficaram pendentes: ambos não produziram
+  saída dentro do limite operacional nesta máquina; repetir antes de merge.
+
+### Retomada Exata
+
+1. Não recriar nem reaplicar a migration já remota.
+2. Expandir os eventos provider-neutral e fixtures para mídia, citação e
+   reação recebidas, preservando HMAC, idempotência e ignorando grupos.
+3. Criar RPCs/serviços server-side para upload ao Storage, download do
+   fornecedor, criação idempotente de mensagens/anexos e URLs assinadas.
+4. Ligar API multipart, composer e thread para envio/visualização; regras de
+   MIME/tamanho/tenant ficam no servidor.
+5. Só então testar áudio, arquivo, mídia, reply e reação em Wuzapi e Evolution
+   com dois tenants.
+
 ## Handoff 2026-07-30 - Wuzapi Gerenciado E Ingresso Protegido
 
 - O fluxo gerenciado Wuzapi está operacional: o usuário informa somente o nome
