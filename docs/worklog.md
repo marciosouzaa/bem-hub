@@ -29,6 +29,17 @@ do marco ativo.
 - `bun run lint` iniciou, mas não produziu saída antes do limite operacional;
   repetir junto do build após a próxima fatia.
 
+### Aplicação Remota
+
+- Aplicada em `lzqugeqtcisgaztggcxq` a migration
+  `20260731005056_support_message_media`.
+- Confirmados: RLS nas tabelas de anexos e reações, bucket
+  `support-message-media` privado com limite de 25 MB, FK tenant-scoped de
+  reply e policies de leitura por membro para tabelas e Storage.
+- Advisors não apontaram alerta novo desta migration. Permanecem os avisos
+  conhecidos de funções `SECURITY DEFINER` revisadas e de proteção contra
+  senha vazada desativada.
+
 ## 2026-07-30 - Ingresso Wuzapi Restaurado E Protegido
 
 ### Causa E Correção
