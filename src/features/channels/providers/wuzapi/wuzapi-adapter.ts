@@ -172,6 +172,73 @@ export function createWuzapiAdapter(
             Body: input.text,
             Id: messageId,
             Phone: onlyDigits(input.recipient),
+            ...(input.replyTo
+              ? {
+                ContextInfo: {
+                  Participant: `${onlyDigits(input.recipient)}@s.whatsapp.net`,
+                  StanzaId: input.replyTo.externalMessageId,
+                },
+              }
+              : {}),
+          }),
+          headers,
+          method: "POST",
+        },
+      );
+      return {
+        externalMessageId: sentMessageSchema.parse(payload).data.Id,
+      };
+    },
+    async sendReaction(input) {
+      const targetId = input.target.direction === "outbound"
+        ? `me:${input.target.externalMessageId}`
+        : input.target.externalMessageId;
+      await fetchProviderJson(
+        fetcher,
+        `${credentials.baseUrl}/chat/react`,
+        {
+          body: JSON.stringify({
+            Body: input.emoji,
+            Id: targetId,
+            Phone: onlyDigits(input.recipient),
+          }),
+          headers,
+          method: "POST",
+        },
+      );
+    },
+    async sendMediaMessage(input) {
+      const messageId = input.trackingId.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+      const endpoint = {
+        audio: "audio",
+        document: "document",
+        image: "image",
+        video: "video",
+      }[input.mediaType];
+      const mediaField = {
+        audio: "Audio",
+        document: "Document",
+        image: "Image",
+        video: "Video",
+      }[input.mediaType];
+      const payload = await fetchProviderJson(
+        fetcher,
+        `${credentials.baseUrl}/chat/send/${endpoint}`,
+        {
+          body: JSON.stringify({
+            ...(input.caption ? { Caption: input.caption } : {}),
+            ...(input.fileName ? { FileName: input.fileName } : {}),
+            ...(input.replyTo
+              ? {
+                ContextInfo: {
+                  Participant: `${onlyDigits(input.recipient)}@s.whatsapp.net`,
+                  StanzaId: input.replyTo.externalMessageId,
+                },
+              }
+              : {}),
+            [mediaField]: input.dataUrl,
+            Id: messageId,
+            Phone: onlyDigits(input.recipient),
           }),
           headers,
           method: "POST",

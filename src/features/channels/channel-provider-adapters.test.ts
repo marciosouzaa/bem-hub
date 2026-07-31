@@ -145,6 +145,94 @@ describe("Evolution API adapter", () => {
     });
     expect(result).toEqual({ externalMessageId: "evolution-message-001" });
   });
+
+  test("responde e reage preservando a referência WhatsApp", async () => {
+    const requests: Array<{ init?: RequestInit; url: string }> = [];
+    const fetcher = (async (input: string | URL | Request, init?: RequestInit) => {
+      requests.push({ init, url: input.toString() });
+      return jsonResponse({ key: { id: "evolution-message-002" } });
+    }) as typeof fetch;
+    const adapter = createEvolutionAdapter(evolutionCredentials, fetcher);
+
+    await adapter.sendTextMessage?.({
+      recipient: "5511999999999",
+      replyTo: { direction: "inbound", externalMessageId: "incoming-001" },
+      text: "Respondendo",
+      trackingId: "internal-id",
+    });
+    await adapter.sendReaction?.({
+      emoji: "👍",
+      recipient: "5511999999999",
+      target: { direction: "outbound", externalMessageId: "outgoing-001" },
+    });
+
+    expect(JSON.parse(String(requests[0].init?.body))).toEqual({
+      number: "5511999999999",
+      quoted: {
+        key: {
+          fromMe: false,
+          id: "incoming-001",
+          remoteJid: "5511999999999@s.whatsapp.net",
+        },
+        message: { conversation: "" },
+      },
+      text: "Respondendo",
+    });
+    expect(requests[1].url).toBe(
+      "https://evolution.example.com/message/sendReaction/bem-hub-test",
+    );
+    expect(JSON.parse(String(requests[1].init?.body))).toEqual({
+      key: {
+        fromMe: true,
+        id: "outgoing-001",
+        remoteJid: "5511999999999@s.whatsapp.net",
+      },
+      reaction: "👍",
+    });
+  });
+
+  test("envia mídia com metadados e citação", async () => {
+    let request: { init?: RequestInit; url?: string } = {};
+    const fetcher = (async (input: string | URL | Request, init?: RequestInit) => {
+      request = { init, url: input.toString() };
+      return jsonResponse({ key: { id: "evolution-media-001" } });
+    }) as typeof fetch;
+
+    const result = await createEvolutionAdapter(
+      evolutionCredentials,
+      fetcher,
+    ).sendMediaMessage?.({
+      caption: "Contrato",
+      dataUrl: "data:application/pdf;base64,dGVzdGU=",
+      fileName: "contrato.pdf",
+      mediaType: "document",
+      mimeType: "application/pdf",
+      recipient: "5511999999999",
+      replyTo: { direction: "inbound", externalMessageId: "incoming-001" },
+      trackingId: "internal-id",
+    });
+
+    expect(request.url).toBe(
+      "https://evolution.example.com/message/sendMedia/bem-hub-test",
+    );
+    expect(JSON.parse(String(request.init?.body))).toEqual({
+      caption: "Contrato",
+      fileName: "contrato.pdf",
+      media: "data:application/pdf;base64,dGVzdGU=",
+      mediatype: "document",
+      mimetype: "application/pdf",
+      number: "5511999999999",
+      quoted: {
+        key: {
+          fromMe: false,
+          id: "incoming-001",
+          remoteJid: "5511999999999@s.whatsapp.net",
+        },
+        message: { conversation: "" },
+      },
+    });
+    expect(result).toEqual({ externalMessageId: "evolution-media-001" });
+  });
 });
 
 describe("Uazapi adapter", () => {
@@ -476,6 +564,70 @@ describe("Wuzapi adapter", () => {
       Phone: "5521999999999",
     });
     expect(result).toEqual({ externalMessageId: "ABC123" });
+  });
+
+  test("responde e reage usando os formatos próprios do Wuzapi", async () => {
+    const requests: Array<{ init?: RequestInit; url: string }> = [];
+    const fetcher = (async (input: string | URL | Request, init?: RequestInit) => {
+      requests.push({ init, url: input.toString() });
+      return jsonResponse({ data: { Id: "ABC123" }, success: true });
+    }) as typeof fetch;
+    const adapter = createWuzapiAdapter(wuzapiCredentials, fetcher);
+
+    await adapter.sendTextMessage?.({
+      recipient: "5521999999999",
+      replyTo: { direction: "inbound", externalMessageId: "incoming-001" },
+      text: "Respondendo",
+      trackingId: "reply-001",
+    });
+    await adapter.sendReaction?.({
+      emoji: "❤️",
+      recipient: "5521999999999",
+      target: { direction: "outbound", externalMessageId: "outgoing-001" },
+    });
+
+    expect(JSON.parse(String(requests[0].init?.body))).toEqual({
+      Body: "Respondendo",
+      ContextInfo: {
+        Participant: "5521999999999@s.whatsapp.net",
+        StanzaId: "incoming-001",
+      },
+      Id: "REPLY001",
+      Phone: "5521999999999",
+    });
+    expect(requests[1].url).toBe("https://wuzapi.example.com/chat/react");
+    expect(JSON.parse(String(requests[1].init?.body))).toEqual({
+      Body: "❤️",
+      Id: "me:outgoing-001",
+      Phone: "5521999999999",
+    });
+  });
+
+  test("envia áudio pelo endpoint e envelope próprios do Wuzapi", async () => {
+    let request: { init?: RequestInit; url?: string } = {};
+    const fetcher = (async (input: string | URL | Request, init?: RequestInit) => {
+      request = { init, url: input.toString() };
+      return jsonResponse({ data: { Id: "AUDIO001" }, success: true });
+    }) as typeof fetch;
+
+    const result = await createWuzapiAdapter(
+      wuzapiCredentials,
+      fetcher,
+    ).sendMediaMessage?.({
+      dataUrl: "data:audio/ogg;base64,dGVzdGU=",
+      mediaType: "audio",
+      mimeType: "audio/ogg",
+      recipient: "5521999999999",
+      trackingId: "audio-001",
+    });
+
+    expect(request.url).toBe("https://wuzapi.example.com/chat/send/audio");
+    expect(JSON.parse(String(request.init?.body))).toEqual({
+      Audio: "data:audio/ogg;base64,dGVzdGU=",
+      Id: "AUDIO001",
+      Phone: "5521999999999",
+    });
+    expect(result).toEqual({ externalMessageId: "AUDIO001" });
   });
 });
 

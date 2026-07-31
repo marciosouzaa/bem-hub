@@ -167,6 +167,69 @@ export function createEvolutionAdapter(
           body: JSON.stringify({
             number: onlyDigits(input.recipient),
             text: input.text,
+            ...(input.replyTo
+              ? {
+                quoted: {
+                  key: {
+                    fromMe: input.replyTo.direction === "outbound",
+                    id: input.replyTo.externalMessageId,
+                    remoteJid: `${onlyDigits(input.recipient)}@s.whatsapp.net`,
+                  },
+                  message: { conversation: "" },
+                },
+              }
+              : {}),
+          }),
+          headers,
+          method: "POST",
+        },
+      );
+      return {
+        externalMessageId: sentMessageSchema.parse(payload).key.id,
+      };
+    },
+    async sendReaction(input) {
+      await fetchProviderJson(
+        fetcher,
+        `${credentials.baseUrl}/message/sendReaction/${instancePath}`,
+        {
+          body: JSON.stringify({
+            key: {
+              fromMe: input.target.direction === "outbound",
+              id: input.target.externalMessageId,
+              remoteJid: `${onlyDigits(input.recipient)}@s.whatsapp.net`,
+            },
+            reaction: input.emoji,
+          }),
+          headers,
+          method: "POST",
+        },
+      );
+    },
+    async sendMediaMessage(input) {
+      const payload = await fetchProviderJson(
+        fetcher,
+        `${credentials.baseUrl}/message/sendMedia/${instancePath}`,
+        {
+          body: JSON.stringify({
+            ...(input.caption ? { caption: input.caption } : {}),
+            ...(input.fileName ? { fileName: input.fileName } : {}),
+            media: input.dataUrl,
+            mediatype: input.mediaType,
+            mimetype: input.mimeType,
+            number: onlyDigits(input.recipient),
+            ...(input.replyTo
+              ? {
+                quoted: {
+                  key: {
+                    fromMe: input.replyTo.direction === "outbound",
+                    id: input.replyTo.externalMessageId,
+                    remoteJid: `${onlyDigits(input.recipient)}@s.whatsapp.net`,
+                  },
+                  message: { conversation: "" },
+                },
+              }
+              : {}),
           }),
           headers,
           method: "POST",

@@ -82,6 +82,19 @@ e operar os hosts self-hosted com numeros de teste separados.
 - [x] Pausar novas configuracoes Z-API sem remover o adapter legado.
 - [x] Implementar Evolution API e Wuzapi para saude, QR, envio, webhook,
   entrega/leitura e autenticacao do callback.
+- [x] Definir contrato provider-neutral para resposta citada, reação e envio de
+  áudio, imagem, vídeo e documento; Evolution e Wuzapi cobertos por testes de
+  payload.
+- [ ] Criar armazenamento privado tenant-scoped para anexos, com retenção,
+  auditoria e URLs assinadas de leitura.
+- [ ] Normalizar anexos, citações e reações recebidos em ambos os webhooks;
+  baixar mídia no servidor, nunca no navegador ou por URL do fornecedor.
+- [ ] Entregar composer com anexo, gravação/envio de áudio, reply e reação,
+  persistindo antes do envio e preservando idempotência.
+- [ ] Renderizar mídia, arquivo, mensagem citada e reação na thread, inclusive
+  para entradas enviadas pelo aparelho.
+- [ ] Executar smoke bidirecional por Wuzapi/Evolution com dois tenants e
+  validar limites, MIME, tamanho, exclusão e isolamento de Storage.
 - [x] Implementar provisionamento gerenciado Wuzapi com nome, credenciais
   internas, usuário por canal, HMAC, webhook, QR e descoberta do número.
 - [x] Reconciliar automaticamente o webhook de Wuzapi/Evolution ao atualizar a
@@ -211,6 +224,9 @@ Bloqueado pela auditoria da plataforma e disponibilidade dos dados.
   pareada e validada na primeira saída; resposta na mesma conversa,
   entrega/leitura, envio pelo aparelho e persistência após reinício continuam
   pendentes no smoke comparativo.
+- O contrato novo de multimídia usa data URL apenas na fronteira interna de
+  entrega. O browser não recebe credenciais do fornecedor e a persistência
+  definitiva de binários continua bloqueada até a migration de Storage/RLS.
 
 ## Concluido
 

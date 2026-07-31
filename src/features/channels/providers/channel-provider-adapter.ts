@@ -35,10 +35,41 @@ export type ChannelTextMessageInput = {
   recipient: string;
   text: string;
   trackingId: string;
+  replyTo?: ChannelMessageReference;
 };
 
 export type ChannelTextMessageResult = {
   externalMessageId: string;
+};
+
+/**
+ * Provider-neutral reference to a WhatsApp message in the current contact
+ * conversation. The delivery layer owns authorization before exposing this
+ * reference to a provider adapter.
+ */
+export type ChannelMessageReference = {
+  direction: "inbound" | "outbound";
+  externalMessageId: string;
+};
+
+export type ChannelMessageReactionInput = {
+  emoji: string;
+  recipient: string;
+  target: ChannelMessageReference;
+};
+
+export type ChannelMediaType = "audio" | "document" | "image" | "video";
+
+/** Binary content is accepted only inside the server delivery boundary. */
+export type ChannelMediaMessageInput = {
+  caption?: string;
+  dataUrl: string;
+  fileName?: string;
+  mediaType: ChannelMediaType;
+  mimeType: string;
+  recipient: string;
+  replyTo?: ChannelMessageReference;
+  trackingId: string;
 };
 
 export interface ChannelProviderAdapter {
@@ -53,6 +84,10 @@ export interface ChannelProviderAdapter {
   requestPairing(input: PairingInput): Promise<ChannelPairing>;
   sendTextMessage?(
     input: ChannelTextMessageInput,
+  ): Promise<ChannelTextMessageResult>;
+  sendReaction?(input: ChannelMessageReactionInput): Promise<void>;
+  sendMediaMessage?(
+    input: ChannelMediaMessageInput,
   ): Promise<ChannelTextMessageResult>;
   verifyAndNormalizeWebhook?(
     input: ChannelWebhookRequest,

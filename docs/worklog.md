@@ -4,6 +4,31 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-07-30 - Fundacao De Midia, Resposta E Reacao WhatsApp
+
+### Feito
+
+- Definido contrato provider-neutral para referência de mensagem, reply,
+  reação e mídia (`audio`, `image`, `video`, `document`).
+- Evolution envia texto/mídia citados e reações pelo contrato real da versão
+  local; Wuzapi usa `ContextInfo`, endpoints específicos de mídia e o prefixo
+  `me:` para reação sobre mensagem própria.
+- Testes de adapter congelam URL, headers e payloads de reply, reação, áudio e
+  documento. Nenhuma mensagem foi disparada automaticamente.
+
+### Próximo Passo
+
+1. Criar migration privada para anexos, Storage/RLS e referências/citações.
+2. Normalizar mídia/reação recebidas, transferir o binário pelo servidor e
+   manter o histórico idempotente.
+3. Ligar composer/thread e executar smoke humano por Wuzapi e Evolution.
+
+### Verificação
+
+- `bun test src/features/channels/channel-provider-adapters.test.ts`: 20/20.
+- `bun run lint` iniciou, mas não produziu saída antes do limite operacional;
+  repetir junto do build após a próxima fatia.
+
 ## 2026-07-30 - Ingresso Wuzapi Restaurado E Protegido
 
 ### Causa E Correção
