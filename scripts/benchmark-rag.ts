@@ -55,6 +55,7 @@ type BenchmarkCaseResult = {
   retrievedDocuments: string[];
   knowledgeStatus: string | null;
   expectedDocumentsFound: boolean | null;
+  expectedSectionsFound: boolean | null;
   citationPresent: boolean | null;
   exactAnswerPresent: boolean | null;
   uncertaintyPresent: boolean | null;
@@ -149,6 +150,7 @@ async function main() {
         rag.knowledge.sources.map((source) => source.documentName),
         rag.knowledge.status,
         performance.now() - startedAt,
+        rag.systemContext,
       );
 
       results.push(result);
@@ -170,6 +172,7 @@ async function main() {
         retrievedDocuments: [],
         knowledgeStatus: null,
         expectedDocumentsFound: null,
+        expectedSectionsFound: null,
         citationPresent: null,
         exactAnswerPresent: null,
         uncertaintyPresent: null,
@@ -213,6 +216,7 @@ export function evaluateCase(
   retrievedDocuments: string[],
   knowledgeStatus: string,
   latencyMs: number,
+  retrievedEvidence = "",
 ): BenchmarkCaseResult {
   const normalizedRetrieved = new Set(retrievedDocuments.map(normalizeText));
   const expectedDocumentsFound = testCase.evaluation.must_find_documents
@@ -223,12 +227,21 @@ export function evaluateCase(
   const citationPresent = testCase.evaluation.must_cite_sections
     ? /\[Fonte\s+\d+\]/iu.test(answer)
     : null;
+  const expectedSectionsFound =
+    testCase.evaluation.must_cite_sections && testCase.expected.sections.length
+    ? testCase.expected.sections[
+        testCase.evaluation.allow_partial ? "some" : "every"
+      ]((section) =>
+        normalizeText(retrievedEvidence).includes(normalizeText(section)),
+      )
+    : null;
   const exactAnswerPresent = testCase.evaluation.allow_paraphrase
     ? null
     : normalizeText(answer).includes(normalizeText(testCase.expected.answer));
   const uncertaintyPresent = hasUncertaintySignal(answer);
   const hardCriteriaPass =
     (expectedDocumentsFound ?? true) &&
+    (expectedSectionsFound ?? true) &&
     (citationPresent ?? true) &&
     exactAnswerPresent !== false;
   const requiresSemanticReview =
@@ -251,6 +264,7 @@ export function evaluateCase(
     retrievedDocuments,
     knowledgeStatus,
     expectedDocumentsFound,
+    expectedSectionsFound,
     citationPresent,
     exactAnswerPresent,
     uncertaintyPresent,

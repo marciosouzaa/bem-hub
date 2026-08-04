@@ -13,9 +13,9 @@ describe("selectChatKnowledge", () => {
   test("filters weak matches and groups chunks by document", () => {
     const result = selectChatKnowledge(
       [
-        searchResult("chunk-a1", DOCUMENT_A, "Catalogo.pdf", 0.82, "Base matte"),
-        searchResult("chunk-a2", DOCUMENT_A, "Catalogo.pdf", 0.76, "Pele oleosa"),
-        searchResult("chunk-b1", DOCUMENT_B, "Precos.csv", 0.71, "R$ 89,90"),
+        searchResult("chunk-a1", DOCUMENT_A, "Catalogo.pdf", 0.82, "Base matte", 0),
+        searchResult("chunk-a2", DOCUMENT_A, "Catalogo.pdf", 0.76, "Pele oleosa", 4),
+        searchResult("chunk-b1", DOCUMENT_B, "Precos.csv", 0.71, "R$ 89,90", 2),
         searchResult("weak", DOCUMENT_B, "Precos.csv", 0.2, "Ignorar"),
       ],
       "text-embedding-3-small",
@@ -28,12 +28,14 @@ describe("selectChatKnowledge", () => {
         documentName: "Catalogo.pdf",
         relevance: 0.82,
         chunkCount: 2,
+        chunkIndexes: [0, 4],
       },
       {
         documentId: DOCUMENT_B,
         documentName: "Precos.csv",
         relevance: 0.71,
         chunkCount: 1,
+        chunkIndexes: [2],
       },
     ]);
     expect(result.systemContext).toContain("[Fonte 1] Catalogo.pdf");
@@ -62,12 +64,14 @@ describe("selectChatKnowledge", () => {
         "Catalogo.pdf",
         0.9 - index * 0.01,
         `Conteudo ${index}`,
+        index,
       ),
     );
 
     const result = selectChatKnowledge(results, "text-embedding-3-small");
 
     expect(result.knowledge.sources[0]?.chunkCount).toBe(3);
+    expect(result.knowledge.sources[0]?.chunkIndexes).toEqual([0, 1, 2]);
     expect(result.systemContext).toContain("Conteudo 2");
     expect(result.systemContext).not.toContain("Conteudo 3");
   });
@@ -75,9 +79,9 @@ describe("selectChatKnowledge", () => {
   test("keeps ordered evidence across multiple documents", () => {
     const result = selectChatKnowledge(
       [
-        searchResult("a1", DOCUMENT_A, "Politica.md", 0.91, "Prazo de 43 dias"),
-        searchResult("b1", DOCUMENT_B, "Manual.md", 0.87, "Pagamento em 17 dias"),
-        searchResult("a2", DOCUMENT_A, "Politica.md", 0.83, "Minimo de 7 dias"),
+        searchResult("a1", DOCUMENT_A, "Politica.md", 0.91, "Prazo de 43 dias", 3),
+        searchResult("b1", DOCUMENT_B, "Manual.md", 0.87, "Pagamento em 17 dias", 0),
+        searchResult("a2", DOCUMENT_A, "Politica.md", 0.83, "Minimo de 7 dias", 8),
       ],
       "text-embedding-3-small",
     );
@@ -87,7 +91,7 @@ describe("selectChatKnowledge", () => {
       "Manual.md",
     ]);
     expect(result.systemContext).toContain("[Fonte 1] Politica.md");
-    expect(result.systemContext).toContain("Trecho 2:\nMinimo de 7 dias");
+    expect(result.systemContext).toContain("Trecho 9:\nMinimo de 7 dias");
     expect(result.systemContext).toContain("[Fonte 2] Manual.md");
   });
 });
@@ -102,6 +106,7 @@ describe("knowledge context header", () => {
           documentName: "Catálogo verão.pdf",
           relevance: 0.8123,
           chunkCount: 2,
+          chunkIndexes: [0, 0],
         },
       ],
       embeddingModel: "text-embedding-3-small",
@@ -111,6 +116,29 @@ describe("knowledge context header", () => {
       context,
     );
     expect(decodeKnowledgeContextHeader("%not-json")).toBeNull();
+  });
+
+  test("keeps sources persisted before chunk references", () => {
+    expect(
+      decodeKnowledgeContextHeader(
+        encodeURIComponent(
+          JSON.stringify({
+            status: "grounded",
+            sources: [
+              {
+                documentId: DOCUMENT_A,
+                documentName: "Catalogo.pdf",
+                relevance: 0.8,
+                chunkCount: 1,
+              },
+            ],
+            embeddingModel: "text-embedding-3-small",
+          }),
+        ),
+      ),
+    ).toMatchObject({
+      sources: [{ chunkIndexes: [] }],
+    });
   });
 });
 
@@ -134,11 +162,13 @@ function searchResult(
   documentName: string,
   similarity: number,
   content: string,
+  chunkIndex = 0,
 ): KnowledgeSearchResult {
   return {
     id,
     documentId,
     documentName,
+    chunkIndex,
     similarity,
     content,
   };

@@ -29,6 +29,7 @@ export type KnowledgeSearchResult = {
   id: string;
   documentId: string;
   documentName: string;
+  chunkIndex: number;
   content: string;
   similarity: number;
 };
@@ -93,6 +94,17 @@ export async function searchKnowledgeDocuments(
     return [];
   }
 
+  const chunkIds = data.map((item) => item.id);
+  const { data: chunks, error: chunksError } = await supabase
+    .from("document_chunks")
+    .select("id,chunk_index")
+    .eq("organization_id", organizationId)
+    .in("id", chunkIds);
+
+  if (chunksError) {
+    throw new Error(`Falha ao buscar referencias dos trechos: ${chunksError.message}`);
+  }
+
   const { data: documents, error: documentsError } = await supabase
     .from("documents")
     .select("id,name")
@@ -106,14 +118,25 @@ export async function searchKnowledgeDocuments(
   const namesById = new Map(
     documents.map((document) => [document.id, document.name]),
   );
+  const chunkIndexesById = new Map(
+    chunks.map((chunk) => [chunk.id, chunk.chunk_index]),
+  );
 
-  return data.map((item) => ({
-    id: item.id,
-    documentId: item.document_id,
-    documentName: namesById.get(item.document_id) ?? "Documento",
-    content: item.content,
-    similarity: item.similarity,
-  }));
+  return data.map((item) => {
+    const chunkIndex = chunkIndexesById.get(item.id);
+    if (chunkIndex === undefined) {
+      throw new Error("Falha ao validar referencias dos trechos recuperados.");
+    }
+
+    return {
+      id: item.id,
+      documentId: item.document_id,
+      documentName: namesById.get(item.document_id) ?? "Documento",
+      chunkIndex,
+      content: item.content,
+      similarity: item.similarity,
+    };
+  });
 }
 
 export function getKnowledgeStats(documents: KnowledgeDocumentListItem[]) {

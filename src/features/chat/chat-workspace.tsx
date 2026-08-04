@@ -459,7 +459,7 @@ function KnowledgeSources({
             >
               <span className="truncate">{source.documentName}</span>
               <span className="shrink-0 text-muted">
-                {source.chunkCount} {source.chunkCount === 1 ? "trecho" : "trechos"}
+                {formatChunkReference(source.chunkIndexes, source.chunkCount)}
               </span>
             </a>
           </li>
@@ -467,6 +467,15 @@ function KnowledgeSources({
       </ul>
     </div>
   );
+}
+
+function formatChunkReference(chunkIndexes: number[], chunkCount: number) {
+  if (!chunkIndexes.length) {
+    return `${chunkCount} ${chunkCount === 1 ? "trecho" : "trechos"}`;
+  }
+
+  const references = chunkIndexes.map((chunkIndex) => chunkIndex + 1).join(", ");
+  return `${chunkIndexes.length === 1 ? "Trecho" : "Trechos"} ${references}`;
 }
 
 function EmptyChat({

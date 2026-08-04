@@ -4,6 +4,35 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-08-03 - RAG Com Referencias De Trecho E Benchmark De Evidencia
+
+### Feito
+
+- Fontes novas do chat agora preservam e mostram os indices humanos dos trechos
+  recuperados. A referencia fica ao lado do documento, inclusive apos recarregar
+  a conversa.
+- Metadados de mensagens antigas, sem indices de trecho, continuam compativeis
+  e exibem a contagem original.
+- O runner RAG passou a registrar `expectedSectionsFound` e reprova uma resposta
+  citada quando o contexto recuperado nao contem a secao esperada. Isto evita
+  aprovar recuperacao de documento certo com trecho errado.
+- A busca adicional por indices usa o mesmo `organization_id` e RLS da consulta
+  vetorial; ausencia de referencia falha em vez de inventar um indice.
+
+### Verificacao
+
+- `bun test src/features/chat/rag.test.ts scripts/benchmark-rag.test.ts`: 17/17.
+- `bun run benchmark:rag -- --validate-only`: corpus valido com 21 casos.
+- `bun run lint`, `bun run build` e `git diff --check` passaram.
+
+### Pendente E Proximo Passo
+
+- Benchmark externo permanece bloqueado sem token dedicado, organizacao do
+  corpus e credenciais de IA. Antes de roda-lo, confirmar que nenhum roteiro ou
+  arquivo de respostas esperadas esta indexado.
+- Executar benchmark autenticado, revisar todos os casos `REVIEW` e fazer smoke
+  RAG com conversa recarregada em duas organizacoes.
+
 ## 2026-07-30 - Fundacao De Midia, Resposta E Reacao WhatsApp
 
 ### Feito

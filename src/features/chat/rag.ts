@@ -85,6 +85,7 @@ export function selectChatKnowledge(
   }
 
   const documents = new Map<string, SelectedDocument>();
+  const selectedChunkIds = new Set<string>();
   let selectedChunks = 0;
   let selectedCharacters = 0;
 
@@ -94,7 +95,7 @@ export function selectChatKnowledge(
     }
 
     const chunk = normalizeChunk(result.content);
-    if (!chunk) {
+    if (!chunk || selectedChunkIds.has(result.id)) {
       continue;
     }
 
@@ -117,6 +118,7 @@ export function selectChatKnowledge(
       documentName: result.documentName,
       relevance: roundRelevance(result.similarity),
       chunkCount: 0,
+      chunkIndexes: [],
       chunks: [],
     };
 
@@ -125,8 +127,10 @@ export function selectChatKnowledge(
       roundRelevance(result.similarity),
     );
     document.chunks.push(selectedChunk);
+    document.chunkIndexes.push(result.chunkIndex);
     document.chunkCount = document.chunks.length;
     documents.set(result.documentId, document);
+    selectedChunkIds.add(result.id);
     selectedChunks += 1;
     selectedCharacters += selectedChunk.length;
   }
@@ -141,6 +145,7 @@ export function selectChatKnowledge(
     documentName: document.documentName,
     relevance: document.relevance,
     chunkCount: document.chunkCount,
+    chunkIndexes: [...document.chunkIndexes].sort((left, right) => left - right),
   }));
 
   return {
@@ -193,7 +198,10 @@ function formatSystemContext(documents: SelectedDocument[]) {
   return documents
     .map((document, index) => {
       const chunks = document.chunks
-        .map((chunk, chunkIndex) => `Trecho ${chunkIndex + 1}:\n${chunk}`)
+        .map(
+          (chunk, chunkIndex) =>
+            `Trecho ${(document.chunkIndexes[chunkIndex] ?? chunkIndex) + 1}:\n${chunk}`,
+        )
         .join("\n\n");
 
       return `[Fonte ${index + 1}] ${document.documentName}\n${chunks}`;

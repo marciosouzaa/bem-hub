@@ -139,6 +139,28 @@ describe("evaluateCase", () => {
     expect(result.citationPresent).toBe(false);
   });
 
+  test("fails a cited answer when retrieved evidence misses required section", () => {
+    const testCase = benchmarkCase({
+      answer: "17 dias corridos.",
+      documents: ["manual.md"],
+      shouldHaveAnswer: true,
+      allowParaphrase: false,
+    });
+    testCase.expected.sections = ["Prazo de pagamento"] as string[];
+
+    const result = evaluateCase(
+      testCase,
+      "O prazo e de 17 dias corridos. [Fonte 1]",
+      ["manual.md"],
+      "grounded",
+      10,
+      "Canal oficial",
+    );
+
+    expect(result.automaticPass).toBe(false);
+    expect(result.expectedSectionsFound).toBe(false);
+  });
+
   test("passes an ambiguous case only with an explicit clarification signal", () => {
     const testCase = benchmarkCase({
       answer: "A pergunta e ambigua.",
@@ -199,7 +221,7 @@ function benchmarkCase({
     expected: {
       answer,
       documents,
-      sections: [],
+      sections: [] as string[],
       policy_codes: [],
     },
     evaluation: {

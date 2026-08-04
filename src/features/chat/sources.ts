@@ -8,6 +8,8 @@ const chatKnowledgeSourceSchema = z.object({
   documentName: z.string().trim().min(1).max(255),
   relevance: z.number().min(-1).max(1),
   chunkCount: z.number().int().min(1).max(8),
+  // Messages persisted before chunk references remain readable.
+  chunkIndexes: z.array(z.number().int().nonnegative()).max(8).default([]),
 });
 
 export const chatKnowledgeContextSchema = z.object({
