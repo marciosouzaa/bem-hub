@@ -1,6 +1,31 @@
 # Handoff Notes
 
-Atualizado em 2026-07-30.
+Atualizado em 2026-08-04.
+
+## Handoff 2026-08-04 - RAG: Referencias E Preflight Do Benchmark
+
+- Fontes de respostas RAG novas persistem indices de trecho e os exibem como
+  referencia humana ao lado do documento. Mensagens antigas sem este campo
+  continuam legiveis pela contagem de trechos.
+- O runner valida documentos esperados e bloqueia nomes de gabarito/roteiro de
+  validacao antes de resolver assistente ou chamar provider/IA. O relatorio
+  agora registra `expectedSectionsFound`, evitando aprovar fonte certa com
+  trecho errado.
+- Commits: `cd03a66 feat(rag): add chunk references` e
+  `880eae2 fix(rag): validate benchmark corpus`.
+- Verificado: 119/119 testes, `bun run lint`, `bun run build`,
+  `bun run benchmark:rag -- --validate-only` (21 casos) e `git diff --check`.
+
+### Retomada Exata
+
+1. Para fechar M1, definir token curto de usuario, organizacao do corpus e
+   credenciais de IA; executar `bun run benchmark:rag`.
+2. Revisar todos os casos `REVIEW`, somente entao calibrar retrieval ou prompt.
+3. Fazer smoke com conversa recarregada e duas organizacoes; M0 tambem exige
+   verificacao real de RLS, RPC, Storage e URL assinada com dois usuarios.
+4. M2 midia continua bloqueada por entrega server-side completa: nao expandir
+   webhook para midia antes de RPC/Storage idempotentes, para nao descartar
+   eventos recebidos silenciosamente.
 
 ## Handoff 2026-07-30 - Midia WhatsApp: Fundacao Aplicada, Feature Pendente
 

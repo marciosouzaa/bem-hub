@@ -25,7 +25,10 @@ do marco ativo.
 
 - `bun test src/features/chat/rag.test.ts scripts/benchmark-rag.test.ts`: 17/17.
 - `bun run benchmark:rag -- --validate-only`: corpus valido com 21 casos.
+- Suite completa: 119/119 testes.
 - `bun run lint`, `bun run build` e `git diff --check` passaram.
+- Commits: `cd03a66 feat(rag): add chunk references` e
+  `880eae2 fix(rag): validate benchmark corpus`.
 
 ### Pendente E Proximo Passo
 
