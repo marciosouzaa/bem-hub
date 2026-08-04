@@ -115,6 +115,7 @@ async function main() {
     supabase,
     config.organizationId,
   );
+  await verifyBenchmarkCorpus(supabase, organization.id, benchmark);
   const assistant = await resolveBenchmarkAssistant(
     supabase,
     organization.id,
@@ -424,6 +425,63 @@ async function resolveBenchmarkAssistant(
   return data;
 }
 
+async function verifyBenchmarkCorpus(
+  supabase: ReturnType<typeof createClient<Database>>,
+  organizationId: string,
+  benchmark: Benchmark,
+) {
+  const { data, error } = await supabase
+    .from("documents")
+    .select("name,source_kind,superseded_at")
+    .eq("organization_id", organizationId)
+    .eq("status", "ready");
+
+  if (error) {
+    throw new Error(`Falha ao validar documentos do benchmark: ${error.message}`);
+  }
+
+  const searchableDocumentNames = data
+    .filter(
+      (document) =>
+        document.source_kind !== "catalog" || document.superseded_at === null,
+    )
+    .map((document) => document.name);
+  const validation = validateBenchmarkDocuments(
+    benchmark.knowledge_base_documents,
+    searchableDocumentNames,
+  );
+
+  if (validation.missingDocumentNames.length || validation.blockedDocumentNames.length) {
+    const details = [
+      validation.missingDocumentNames.length
+        ? `Documentos esperados ausentes: ${validation.missingDocumentNames.join(", ")}.`
+        : null,
+      validation.blockedDocumentNames.length
+        ? `Arquivos de gabarito detectados: ${validation.blockedDocumentNames.join(", ")}. Remova-os da base antes de executar.`
+        : null,
+    ]
+      .filter(Boolean)
+      .join(" ");
+
+    throw new Error(`Corpus do benchmark invalido. ${details}`);
+  }
+}
+
+export function validateBenchmarkDocuments(
+  expectedDocumentNames: string[],
+  searchableDocumentNames: string[],
+) {
+  const normalizedAvailable = new Set(searchableDocumentNames.map(normalizeText));
+  const missingDocumentNames = expectedDocumentNames.filter(
+    (documentName) => !normalizedAvailable.has(normalizeText(documentName)),
+  );
+  const blockedDocumentNames = searchableDocumentNames.filter((documentName) =>
+    isBenchmarkAnswerKey(documentName),
+  );
+
+  return { missingDocumentNames, blockedDocumentNames };
+}
+
 function parseOptions(args: string[]): CliOptions {
   if (args.includes("--help")) {
     console.log(`Uso: bun run benchmark:rag -- [opcoes]
@@ -478,4 +536,17 @@ function hasUncertaintySignal(answer: string) {
     "preciso de mais contexto",
     "poderia especificar",
   ].some((signal) => normalized.includes(signal));
+}
+
+function isBenchmarkAnswerKey(documentName: string) {
+  const normalized = normalizeText(documentName)
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+  return [
+    "benchmark rag",
+    "roteiro de validacao rag",
+    "gabarito",
+    "resposta esperada",
+    "respostas esperadas",
+  ].some((marker) => normalized.includes(marker));
 }

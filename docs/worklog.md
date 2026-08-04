@@ -16,6 +16,8 @@ do marco ativo.
 - O runner RAG passou a registrar `expectedSectionsFound` e reprova uma resposta
   citada quando o contexto recuperado nao contem a secao esperada. Isto evita
   aprovar recuperacao de documento certo com trecho errado.
+- Antes de chamar provider ou IA, o runner valida corpus pronto, documentos
+  esperados e bloqueia nomes de gabarito/roteiro de validacao indexados.
 - A busca adicional por indices usa o mesmo `organization_id` e RLS da consulta
   vetorial; ausencia de referencia falha em vez de inventar um indice.
 
@@ -28,8 +30,8 @@ do marco ativo.
 ### Pendente E Proximo Passo
 
 - Benchmark externo permanece bloqueado sem token dedicado, organizacao do
-  corpus e credenciais de IA. Antes de roda-lo, confirmar que nenhum roteiro ou
-  arquivo de respostas esperadas esta indexado.
+  corpus e credenciais de IA. O runner agora bloqueia automaticamente roteiro
+  ou arquivo de respostas esperadas indexado.
 - Executar benchmark autenticado, revisar todos os casos `REVIEW` e fazer smoke
   RAG com conversa recarregada em duas organizacoes.
 

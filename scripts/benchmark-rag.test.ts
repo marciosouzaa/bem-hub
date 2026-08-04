@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { evaluateCase } from "./benchmark-rag";
+import { evaluateCase, validateBenchmarkDocuments } from "./benchmark-rag";
 
 describe("evaluateCase", () => {
   test("passes a literal answer with expected document and citation", () => {
@@ -198,6 +198,29 @@ describe("evaluateCase", () => {
 
     expect(result.automaticPass).toBe(false);
     expect(result.uncertaintyPresent).toBe(false);
+  });
+});
+
+describe("validateBenchmarkDocuments", () => {
+  test("accepts complete corpus without answer keys", () => {
+    expect(
+      validateBenchmarkDocuments(
+        ["manual.md", "politica.md"],
+        ["Manual.md", "POLITICA.md"],
+      ),
+    ).toEqual({ missingDocumentNames: [], blockedDocumentNames: [] });
+  });
+
+  test("flags missing expected documents and indexed answer keys", () => {
+    expect(
+      validateBenchmarkDocuments(
+        ["manual.md", "politica.md"],
+        ["manual.md", "roteiro-de-validacao-rag.md", "gabarito.csv"],
+      ),
+    ).toEqual({
+      missingDocumentNames: ["politica.md"],
+      blockedDocumentNames: ["roteiro-de-validacao-rag.md", "gabarito.csv"],
+    });
   });
 });
 
