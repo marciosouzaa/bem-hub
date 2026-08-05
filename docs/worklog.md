@@ -4,6 +4,45 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-08-04 - Preflight Remoto Do Benchmark RAG
+
+### Feito
+
+- MCP Supabase confirmou que o corpus ainda contem um unico
+  `roteiro-de-validacao-rag.md` pronto, com seis chunks e objeto privado
+  correspondente. O runner deve continuar recusando essa condicao.
+- Tentativa deliberadamente restrita de excluir banco e objeto em uma unica
+  operacao foi bloqueada pelo proprio Storage: tabelas `storage.*` nao aceitam
+  exclusao direta, evitando objeto orfao. Nenhum registro, chunk ou objeto foi
+  removido.
+- `bun run benchmark:rag -- --validate-only` confirmou 21 casos validos;
+  testes focados RAG/runner passaram 19/19.
+- Auditoria remota das funcoes avisadas pelo advisor confirmou `search_path`
+  vazio e verificacao de usuario/organizacao antes de elevar privilegios. Os
+  avisos continuam esperados para os RPCs autenticados de bootstrap, membros e
+  provisionamento gerenciado.
+
+### Bloqueios Reais
+
+- Ambiente local nao possui URL/chave publica Supabase, token de benchmark,
+  organizacao de benchmark ou credenciais de IA.
+- MCP conectado nao oferece API de Storage; navegador autenticado tambem nao
+  esta disponivel nesta sessao. A exclusao do gabarito deve ocorrer pelo DELETE
+  autenticado do BEM HUB ou por uma credencial server-side de Storage, para
+  remover banco e objeto juntos.
+- Advisor ainda aponta `auth_leaked_password_protection`; a ativacao depende
+  do painel Supabase.
+
+### Proximo Passo Exato
+
+1. Excluir `roteiro-de-validacao-rag.md` em `/app/knowledge` com uma sessao de
+   admin da organizacao do corpus.
+2. Definir temporariamente as quatro variaveis `NEXT_PUBLIC_SUPABASE_URL`,
+   chave publica, `BEM_HUB_BENCHMARK_ACCESS_TOKEN` e
+   `BEM_HUB_BENCHMARK_ORGANIZATION_ID`, alem da credencial de IA do assistente.
+3. Rodar `bun run benchmark:rag`, revisar cada `REVIEW` e so entao calibrar
+   retrieval ou prompt.
+
 ## 2026-08-03 - RAG Com Referencias De Trecho E Benchmark De Evidencia
 
 ### Feito

@@ -2,6 +2,30 @@
 
 Atualizado em 2026-08-04.
 
+## Handoff 2026-08-04 - Preflight Remoto RAG, Sem Mutacao
+
+- O MCP confirmou que `roteiro-de-validacao-rag.md` continua `ready` no corpus
+  remoto, com seis chunks e objeto privado. O benchmark real permanece
+  corretamente bloqueado ate remove-lo.
+- Nao houve mutacao remota: o Storage recusou a tentativa de exclusao direta
+  de tabela, protegendo contra objeto orfao. MCP nao expoe operacao Storage e
+  navegador autenticado nao estava disponivel.
+- Ambiente local nao tem configuracao do benchmark nem credencial de IA.
+  `bun run benchmark:rag -- --validate-only` confirmou 21 casos; testes RAG e
+  runner passaram 19/19.
+- Advisor mantem os avisos autenticados conhecidos para tres RPCs
+  `SECURITY DEFINER`; auditoria confirmou `search_path` vazio e guardas de
+  usuario/tenant. Protecao contra senha vazada continua desativada no painel.
+
+### Retomada Exata
+
+1. Excluir o roteiro pelo fluxo autenticado `/app/knowledge`, que remove
+   registro e objeto privado juntos.
+2. Preencher configuracao temporaria do benchmark e executar
+   `bun run benchmark:rag`.
+3. Revisar casos `REVIEW`, fazer smoke de conversa recarregada em duas
+   organizacoes e concluir o gate manual M0.
+
 ## Handoff 2026-08-04 - RAG: Referencias E Preflight Do Benchmark
 
 - Fontes de respostas RAG novas persistem indices de trecho e os exibem como

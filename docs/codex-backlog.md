@@ -202,6 +202,9 @@ Bloqueado pela auditoria da plataforma e disponibilidade dos dados.
   providers/status textuais agora sao validados nas fronteiras de dominio.
 - `roteiro-de-validacao-rag.md`, se ainda indexado no ambiente remoto, deve ser
   removido antes do benchmark porque contem respostas esperadas.
+- O MCP Supabase conectado nao expoe Storage API: nao excluir documentos por
+  SQL direto, pois o banco bloqueia essa operacao para evitar objeto orfao.
+  Usar DELETE autenticado do BEM HUB ou credencial server-side de Storage.
 - A migration `20260712160034_harden_tenant_security_functions.sql` foi
   aplicada remotamente; o proximo passo e validar isolamento com dois usuarios
   reais e registrar os advisories que ainda permanecerem.
