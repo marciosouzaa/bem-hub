@@ -200,8 +200,8 @@ Bloqueado pela auditoria da plataforma e disponibilidade dos dados.
 - O download e a exclusao completa de documentos precisam de novo smoke test.
 - Tipos Supabase oficiais foram regenerados apos estabilizacao do schema;
   providers/status textuais agora sao validados nas fronteiras de dominio.
-- `roteiro-de-validacao-rag.md`, se ainda indexado no ambiente remoto, deve ser
-  removido antes do benchmark porque contem respostas esperadas.
+- `roteiro-de-validacao-rag.md` foi removido do corpus remoto antes do
+  benchmark; manter gabaritos e artefatos de avaliacao fora da base indexada.
 - O MCP Supabase conectado nao expoe Storage API: nao excluir documentos por
   SQL direto, pois o banco bloqueia essa operacao para evitar objeto orfao.
   Usar DELETE autenticado do BEM HUB ou credencial server-side de Storage.

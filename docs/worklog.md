@@ -4,17 +4,16 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
-## 2026-08-04 - Preflight Remoto Do Benchmark RAG
+## 2026-08-04 - Corpus RAG Limpo, Benchmark Aguarda JWT
 
 ### Feito
 
-- MCP Supabase confirmou que o corpus ainda contem um unico
-  `roteiro-de-validacao-rag.md` pronto, com seis chunks e objeto privado
-  correspondente. O runner deve continuar recusando essa condicao.
-- Tentativa deliberadamente restrita de excluir banco e objeto em uma unica
-  operacao foi bloqueada pelo proprio Storage: tabelas `storage.*` nao aceitam
-  exclusao direta, evitando objeto orfao. Nenhum registro, chunk ou objeto foi
-  removido.
+- O `roteiro-de-validacao-rag.md` foi removido pela Storage API oficial. A
+  verificacao posterior confirmou ausencia do objeto privado, documento e seis
+  chunks; os tres documentos esperados continuam prontos, com 43 chunks.
+- A tentativa SQL inicial foi corretamente bloqueada pelo Storage, que protege
+  contra objetos orfaos. A exclusao final usou a mesma API de Storage adotada
+  pela rota autenticada do BEM HUB.
 - `bun run benchmark:rag -- --validate-only` confirmou 21 casos validos;
   testes focados RAG/runner passaram 19/19.
 - Auditoria remota das funcoes avisadas pelo advisor confirmou `search_path`
@@ -24,23 +23,19 @@ do marco ativo.
 
 ### Bloqueios Reais
 
-- Ambiente local nao possui URL/chave publica Supabase, token de benchmark,
-  organizacao de benchmark ou credenciais de IA.
-- MCP conectado nao oferece API de Storage; navegador autenticado tambem nao
-  esta disponivel nesta sessao. A exclusao do gabarito deve ocorrer pelo DELETE
-  autenticado do BEM HUB ou por uma credencial server-side de Storage, para
-  remover banco e objeto juntos.
+- URL, chave publica, credencial server-side, IA e organizacao do corpus estao
+  configuradas localmente. `bun run benchmark:rag` para antes de chamar IA,
+  pois falta `BEM_HUB_BENCHMARK_ACCESS_TOKEN` valido de um membro.
+- A organizacao esta no limite de tres membros ativos. Nao criar usuario de
+  benchmark temporario nem ultrapassar o limite e uma alternativa segura.
 - Advisor ainda aponta `auth_leaked_password_protection`; a ativacao depende
   do painel Supabase.
 
 ### Proximo Passo Exato
 
-1. Excluir `roteiro-de-validacao-rag.md` em `/app/knowledge` com uma sessao de
-   admin da organizacao do corpus.
-2. Definir temporariamente as quatro variaveis `NEXT_PUBLIC_SUPABASE_URL`,
-   chave publica, `BEM_HUB_BENCHMARK_ACCESS_TOKEN` e
-   `BEM_HUB_BENCHMARK_ORGANIZATION_ID`, alem da credencial de IA do assistente.
-3. Rodar `bun run benchmark:rag`, revisar cada `REVIEW` e so entao calibrar
+1. Definir `BEM_HUB_BENCHMARK_ACCESS_TOKEN` temporario de um membro existente
+   da organizacao do corpus.
+2. Rodar `bun run benchmark:rag`, revisar cada `REVIEW` e so entao calibrar
    retrieval ou prompt.
 
 ## 2026-08-03 - RAG Com Referencias De Trecho E Benchmark De Evidencia

@@ -2,28 +2,27 @@
 
 Atualizado em 2026-08-04.
 
-## Handoff 2026-08-04 - Preflight Remoto RAG, Sem Mutacao
+## Handoff 2026-08-04 - Corpus RAG Limpo, Benchmark Aguarda JWT
 
-- O MCP confirmou que `roteiro-de-validacao-rag.md` continua `ready` no corpus
-  remoto, com seis chunks e objeto privado. O benchmark real permanece
-  corretamente bloqueado ate remove-lo.
-- Nao houve mutacao remota: o Storage recusou a tentativa de exclusao direta
-  de tabela, protegendo contra objeto orfao. MCP nao expoe operacao Storage e
-  navegador autenticado nao estava disponivel.
-- Ambiente local nao tem configuracao do benchmark nem credencial de IA.
-  `bun run benchmark:rag -- --validate-only` confirmou 21 casos; testes RAG e
-  runner passaram 19/19.
+- `roteiro-de-validacao-rag.md` foi removido pela Storage API oficial. Depois
+  da operacao, objeto, documento e seis chunks nao existiam mais; tres
+  documentos esperados permanecem prontos, com 43 chunks.
+- A tentativa SQL anterior foi bloqueada pelo Storage contra objetos orfaos.
+  A exclusao final usou credencial server-side local e a API oficial.
+- URL, chave publica, IA e organizacao do benchmark estao configuradas.
+  `bun run benchmark:rag` ainda para antes de chamar IA porque falta um JWT de
+  membro em `BEM_HUB_BENCHMARK_ACCESS_TOKEN`.
+- A organizacao tem tres membros ativos e limite tres; nao criar usuario de
+  teste temporario para contornar esse limite.
 - Advisor mantem os avisos autenticados conhecidos para tres RPCs
   `SECURITY DEFINER`; auditoria confirmou `search_path` vazio e guardas de
   usuario/tenant. Protecao contra senha vazada continua desativada no painel.
 
 ### Retomada Exata
 
-1. Excluir o roteiro pelo fluxo autenticado `/app/knowledge`, que remove
-   registro e objeto privado juntos.
-2. Preencher configuracao temporaria do benchmark e executar
-   `bun run benchmark:rag`.
-3. Revisar casos `REVIEW`, fazer smoke de conversa recarregada em duas
+1. Definir token curto de um membro existente em
+   `BEM_HUB_BENCHMARK_ACCESS_TOKEN` e executar `bun run benchmark:rag`.
+2. Revisar casos `REVIEW`, fazer smoke de conversa recarregada em duas
    organizacoes e concluir o gate manual M0.
 
 ## Handoff 2026-08-04 - RAG: Referencias E Preflight Do Benchmark
