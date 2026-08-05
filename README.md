@@ -65,3 +65,13 @@ See [docs/codex-backlog.md](docs/codex-backlog.md) for task-level scope, accepta
 Use [docs/deployment-vercel.md](docs/deployment-vercel.md) for the Vercel
 production checklist, including Bun, Node.js version, Supabase publishable key,
 Auth redirect URLs, and post-deploy checks.
+
+## Licença
+
+O código deste repositório é disponibilizado sob a
+[PolyForm Noncommercial License 1.0.0](LICENSE). Ela permite uso,
+modificação e distribuição apenas para finalidades não comerciais.
+
+O BEM HUB não é software open source. Uso comercial, oferta de serviço, ou
+qualquer outra exploração comercial do código requer uma licença comercial
+separada e autorização prévia do titular dos direitos autorais, Marcio Souza.
