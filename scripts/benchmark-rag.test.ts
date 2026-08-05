@@ -22,6 +22,24 @@ describe("evaluateCase", () => {
     expect(result.latencyMs).toBe(123);
   });
 
+  test("ignores Markdown and terminal punctuation in literal evaluation", () => {
+    const result = evaluateCase(
+      benchmarkCase({
+        answer: "17 dias corridos.",
+        documents: ["manual-de-reembolsos.md"],
+        shouldHaveAnswer: true,
+        allowParaphrase: false,
+      }),
+      "O prazo é de **17 dias corridos**, após aprovação. [Fonte 1]",
+      ["manual-de-reembolsos.md"],
+      "grounded",
+      20,
+    );
+
+    expect(result.automaticPass).toBe(true);
+    expect(result.exactAnswerPresent).toBe(true);
+  });
+
   test("fails when an answerable question misses its source", () => {
     const result = evaluateCase(
       benchmarkCase({
@@ -57,6 +75,23 @@ describe("evaluateCase", () => {
     expect(result.automaticPass).toBe(true);
     expect(result.uncertaintyPresent).toBe(true);
     expect(result.needsHumanReview).toBe(false);
+  });
+
+  test("accepts explicit absence after a subject prefix", () => {
+    const result = evaluateCase(
+      benchmarkCase({
+        answer: "Não existe essa informação no corpus.",
+        documents: [],
+        shouldHaveAnswer: false,
+        allowParaphrase: true,
+      }),
+      "A informação sobre o telefone não foi encontrada na base.",
+      [],
+      "grounded",
+      20,
+    );
+
+    expect(result.automaticPass).toBe(true);
   });
 
   test("sends paraphrased answers to review after hard criteria pass", () => {
@@ -180,6 +215,26 @@ describe("evaluateCase", () => {
 
     expect(result.automaticPass).toBe(true);
     expect(result.uncertaintyPresent).toBe(true);
+  });
+
+  test("accepts a process-dependent ambiguity signal", () => {
+    const testCase = benchmarkCase({
+      answer: "A pergunta e ambigua.",
+      documents: [],
+      shouldHaveAnswer: false,
+      allowParaphrase: true,
+    });
+    testCase.category = "ambiguous";
+
+    const result = evaluateCase(
+      testCase,
+      "Depende do processo a que você se refere.",
+      ["manual.md", "politica.md"],
+      "grounded",
+      10,
+    );
+
+    expect(result.automaticPass).toBe(true);
   });
 
   test("fails an unanswerable case when the model invents a confident answer", () => {

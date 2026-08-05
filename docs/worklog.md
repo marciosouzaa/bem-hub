@@ -4,6 +4,41 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-08-04 - Benchmark RAG Externo Executado
+
+### Feito
+
+- Corpus remoto foi limpo antes da execucao: somente os tres documentos
+  esperados, com 43 chunks, participaram do benchmark.
+- `bun run benchmark:rag` executou 21 casos autenticados sem erros de provider
+  ou pipeline, media de 3,78 s por caso, usando o assistente configurado.
+- O primeiro relatorio marcou 5 PASS, 12 FAIL e 4 REVIEW. Revisao mostrou que
+  oito FAIL literais eram falsos negativos por Markdown/pontuacao e tres eram
+  respostas explicitas de ausencia/ambiguidade nao reconhecidas pelo runner.
+- O avaliador agora normaliza Markdown e pontuacao, e reconhece ausencia de
+  informacao e ambiguidade por processo. A reavaliacao do mesmo relatorio fica
+  em 16 PASS, 1 FAIL e 4 REVIEW.
+- As cinco respostas multi-chunk foram revisadas manualmente: corretas,
+  fundamentadas e citadas. `RAG-MC-002` havia recuperado um FAQ com ambas as
+  evidencias, mas nao os titulos originais; o baseline passou a usar ancoras
+  factuais presentes no chunk para continuar detectando trecho incorreto.
+- Nenhum ajuste de threshold ou prompt foi necessario com esta evidencia.
+
+### Verificacao
+
+- `bun test`: 122/122.
+- `bun run lint` e `bun run build` passaram.
+- O provider alertou que `gpt-5.5` nao suporta `temperature`; a resposta foi
+  gerada normalmente. O MCP de docs OpenAI foi instalado globalmente para
+  confirmar a correcao adequada apos reiniciar a sessao.
+
+### Pendente E Proximo Passo
+
+- Fazer smoke RAG com conversa recarregada e duas organizacoes, cobrindo fontes
+  persistidas, busca isolada e download autenticado.
+- Fechar M0 com dois usuarios reais e ativar a protecao contra senha vazada no
+  painel Supabase.
+
 ## 2026-08-04 - Corpus RAG Limpo, Benchmark Aguarda JWT
 
 ### Feito

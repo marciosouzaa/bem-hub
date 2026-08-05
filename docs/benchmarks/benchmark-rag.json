@@ -238,7 +238,7 @@
       "expected": {
         "answer": "As férias em dezembro exigem aprovação do Comitê Safira e qualquer alteração deve ser registrada no sistema Órbita RH.",
         "documents": ["politica-de-ferias.md"],
-        "sections": ["Férias em dezembro", "Registro das alterações"],
+        "sections": ["Comitê Safira", "registrada novamente no Órbita RH"],
         "policy_codes": ["AUR-RH-118"]
       },
       "evaluation": {

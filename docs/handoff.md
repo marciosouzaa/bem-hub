@@ -2,6 +2,30 @@
 
 Atualizado em 2026-08-04.
 
+## Handoff 2026-08-04 - Benchmark RAG Externo Concluido
+
+- Corpus limpo: tres documentos esperados e 43 chunks; roteiro/gabarito foi
+  removido pela Storage API e permaneceu fora da execucao.
+- Benchmark autenticado executou 21 casos sem erro, media de 3,78 s. A primeira
+  leitura 5 PASS / 12 FAIL / 4 REVIEW revelou falsos negativos do avaliador,
+  nao falhas de resposta: Markdown/pontuacao e sinais claros de ausencia ou
+  ambiguidade nao eram normalizados.
+- Corrigido o runner e revisado o mesmo relatorio: 16 PASS, 1 FAIL, 4 REVIEW.
+  Todas as cinco respostas multi-chunk foram revisadas e estao corretas,
+  fundamentadas e citadas. `RAG-MC-002` usa agora ancoras factuais do chunk FAQ
+  em vez de titulos ausentes da recuperacao.
+- `bun test` 122/122, lint e build passaram. `gpt-5.5` alertou que
+  `temperature` nao e suportado; resposta continua funcional. MCP oficial de
+  docs OpenAI foi instalado e requer reinicio para orientar essa correcao.
+
+### Retomada Exata
+
+1. Fazer smoke com conversa RAG recarregada em duas organizacoes e confirmar
+   fontes persistidas, isolamento e download autenticado.
+2. Encerrar gate M0: teste com dois usuarios e protecao contra senha vazada.
+3. Apos reiniciar Codex, consultar docs OpenAI e retirar `temperature` apenas
+   de modelos/provider que nao o suportam.
+
 ## Handoff 2026-08-04 - Corpus RAG Limpo, Benchmark Aguarda JWT
 
 - `roteiro-de-validacao-rag.md` foi removido pela Storage API oficial. Depois

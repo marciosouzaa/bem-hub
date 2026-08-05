@@ -520,22 +520,28 @@ function normalizeText(value: string) {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLocaleLowerCase("pt-BR")
+    .replace(/[\`*_~#[\]()]/g, " ")
+    .replace(/[.,;:!?]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 }
 
 function hasUncertaintySignal(answer: string) {
   const normalized = normalizeText(answer);
-  return [
-    "nao encontrei",
-    "nao ha contexto",
-    "nao consta",
-    "informacao nao foi encontrada",
-    "pergunta e ambigua",
-    "pergunta esta ambigua",
-    "preciso de mais contexto",
-    "poderia especificar",
-  ].some((signal) => normalized.includes(signal));
+  return (
+    [
+      "nao encontrei",
+      "nao ha contexto",
+      "nao consta",
+      "informacao nao foi encontrada",
+      "pergunta e ambigua",
+      "pergunta esta ambigua",
+      "preciso de mais contexto",
+      "poderia especificar",
+      "depende do processo",
+    ].some((signal) => normalized.includes(signal)) ||
+    /\bnao foi encontrad[oa]s?\b/u.test(normalized)
+  );
 }
 
 function isBenchmarkAnswerKey(documentName: string) {
