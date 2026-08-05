@@ -10,6 +10,7 @@ import {
 } from "@/features/billing/entitlements";
 import { getOrCreateWorkspace } from "@/features/organizations/bootstrap";
 import { AiRuntimeError, resolveAssistantRuntime } from "@/lib/ai/runtime";
+import { getGenerationTemperatureOptions } from "@/lib/ai/generation-options";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   automationTemplateIdSchema,
@@ -128,7 +129,7 @@ export async function runAutomationAction(
       model: runtime.languageModel,
       system: template.system,
       prompt: parsed.data.input,
-      temperature: 0.3,
+      ...getGenerationTemperatureOptions(runtime.provider, runtime.model, 0.3),
     });
     const { data: updatedRun, error: updateError } = await supabase
       .from("automation_runs")

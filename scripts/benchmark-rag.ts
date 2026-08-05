@@ -10,6 +10,7 @@ import {
   retrieveChatKnowledge,
 } from "@/features/chat/rag";
 import { resolveAssistantRuntime } from "@/lib/ai/runtime";
+import { getGenerationTemperatureOptions } from "@/lib/ai/generation-options";
 import type { Database } from "@/types/database";
 
 const benchmarkCaseSchema = z.object({
@@ -143,7 +144,11 @@ async function main() {
         model: runtime.languageModel,
         system: buildChatSystemPrompt(assistant.instructions, rag.systemContext),
         prompt: testCase.question,
-        temperature: assistant.temperature,
+        ...getGenerationTemperatureOptions(
+          runtime.provider,
+          runtime.model,
+          assistant.temperature,
+        ),
       });
       const result = evaluateCase(
         testCase,

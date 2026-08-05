@@ -2,6 +2,20 @@
 
 Atualizado em 2026-08-04.
 
+## Handoff 2026-08-04 - GPT-5 Sem Temperatura Incompativel
+
+- `gpt-5.5` no Responses API nao recebe mais `temperature`. Helper central
+  omite essa opcao apenas para familia OpenAI `gpt-5`; outros modelos/providers
+  preservam temperatura.
+- Chat, benchmark e automacoes usam a mesma regra. Um benchmark autenticado de
+  um caso passou sem warning; testes focados 17/17, lint e build passaram.
+- Referencia oficial: https://developers.openai.com/api/docs/models/gpt-5.5
+
+### Retomada Exata
+
+1. Fazer smoke RAG com conversa recarregada em duas organizacoes.
+2. Fechar gate M0 com dois usuarios e protecao contra senha vazada.
+
 ## Handoff 2026-08-04 - Benchmark RAG Externo Concluido
 
 - Corpus limpo: tres documentos esperados e 43 chunks; roteiro/gabarito foi
@@ -14,17 +28,14 @@ Atualizado em 2026-08-04.
   Todas as cinco respostas multi-chunk foram revisadas e estao corretas,
   fundamentadas e citadas. `RAG-MC-002` usa agora ancoras factuais do chunk FAQ
   em vez de titulos ausentes da recuperacao.
-- `bun test` 122/122, lint e build passaram. `gpt-5.5` alertou que
-  `temperature` nao e suportado; resposta continua funcional. MCP oficial de
-  docs OpenAI foi instalado e requer reinicio para orientar essa correcao.
+- `bun test` 122/122, lint e build passaram. O warning de `temperature` de
+  `gpt-5.5` foi tratado no checkpoint seguinte.
 
 ### Retomada Exata
 
 1. Fazer smoke com conversa RAG recarregada em duas organizacoes e confirmar
    fontes persistidas, isolamento e download autenticado.
 2. Encerrar gate M0: teste com dois usuarios e protecao contra senha vazada.
-3. Apos reiniciar Codex, consultar docs OpenAI e retirar `temperature` apenas
-   de modelos/provider que nao o suportam.
 
 ## Handoff 2026-08-04 - Corpus RAG Limpo, Benchmark Aguarda JWT
 

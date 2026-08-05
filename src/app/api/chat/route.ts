@@ -23,6 +23,7 @@ import {
 } from "@/lib/ai/runtime";
 import { EmbeddingRuntimeError } from "@/lib/ai/embeddings";
 import { getErrorDetails, logServerError } from "@/lib/observability/server";
+import { getGenerationTemperatureOptions } from "@/lib/ai/generation-options";
 import { isMissingColumnError } from "@/lib/supabase/schema-errors";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -191,7 +192,11 @@ export async function POST(request: Request) {
       model: runtime.languageModel,
       system: buildChatSystemPrompt(assistant.instructions, rag.systemContext),
       messages,
-      temperature: assistant.temperature,
+      ...getGenerationTemperatureOptions(
+        runtime.provider,
+        runtime.model,
+        assistant.temperature,
+      ),
       onEnd: async ({ text, usage, finishReason }) => {
         const { error: completionError } = await supabase.rpc(
           "finalize_chat_completion",

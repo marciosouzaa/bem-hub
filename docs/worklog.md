@@ -4,6 +4,24 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-08-04 - Temperatura Compativel Com GPT-5
+
+### Feito
+
+- Docs oficiais e warning do AI SDK confirmaram que o fluxo Responses de
+  `gpt-5.5` nao aceita `temperature`; o modelo usa configuracao de reasoning
+  propria.
+- Criado helper central que omite `temperature` somente para modelos OpenAI da
+  familia `gpt-5`. Chat, benchmark RAG e automacoes manuais o utilizam; GPT-4,
+  Anthropic e Gemini preservam o valor configurado.
+- Um caso autenticado do benchmark passou com `gpt-5.5`, sem warning de
+  parametro nao suportado.
+
+### Verificacao
+
+- Testes focados 17/17, lint e build passaram.
+- Referencia: https://developers.openai.com/api/docs/models/gpt-5.5
+
 ## 2026-08-04 - Benchmark RAG Externo Executado
 
 ### Feito
