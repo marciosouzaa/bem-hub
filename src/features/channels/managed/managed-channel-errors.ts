@@ -24,7 +24,7 @@ export function managedProvisioningErrorResult(
   }
   if (error instanceof ChannelProviderRequestError) {
     return {
-      message: "A Wuzapi não concluiu a preparação. Tente novamente.",
+      message: "O provedor não concluiu a preparação. Tente novamente.",
       ok: false,
     };
   }

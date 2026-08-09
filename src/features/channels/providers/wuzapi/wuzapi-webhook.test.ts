@@ -73,6 +73,29 @@ describe("Wuzapi webhook", () => {
     });
   });
 
+  test("normaliza mídia Base64 entregue pelo webhook", () => {
+    const [event] = verifyAndNormalizeWuzapiWebhook(signedInput({
+      base64: "aGVsbG8=",
+      event: {
+        Info: {
+          Chat: "5521999999999@s.whatsapp.net", ID: "media-001", IsFromMe: false,
+          IsGroup: false, Sender: "5521999999999@s.whatsapp.net", Timestamp: "2026-07-25T10:00:00Z",
+        },
+        Message: { ImageMessage: { Caption: "Imagem", Mimetype: "image/png" } },
+      },
+      fileName: "imagem.png",
+      mimeType: "image/png",
+      type: "Message",
+    }), hmacKey);
+
+    expect(event).toMatchObject({
+      media: { dataBase64: "aGVsbG8=", fileName: "imagem.png", mediaType: "image", mimeType: "image/png" },
+      providerMessageId: "media-001",
+      text: "Imagem",
+      type: "message.received",
+    });
+  });
+
   test("usa telefone do destinatário em mensagem enviada pelo aparelho", () => {
     const payload = {
       event: {

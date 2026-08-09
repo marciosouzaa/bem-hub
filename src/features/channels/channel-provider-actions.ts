@@ -10,6 +10,7 @@ import {
   type ChannelProviderStatus,
 } from "@/features/channels/channel-provider-schema";
 import {
+  getManagedEvolutionConfig,
   getManagedWuzapiConfig,
 } from "@/features/channels/managed/managed-channel-config";
 import type {
@@ -328,7 +329,8 @@ async function loadStoredProvider(connectionId: string) {
   }
 
   try {
-    const credentials = channelProviderCredentialsSchema.parse(
+    const credentials = resolveStoredManagedCredentials(
+      context.channel.management_mode,
       JSON.parse(decryptSecret(stored.encrypted_credentials)),
     );
     return {
@@ -340,6 +342,27 @@ async function loadStoredProvider(connectionId: string) {
   } catch (error) {
     return { ok: false as const, result: providerErrorResult(error) };
   }
+}
+
+function resolveStoredManagedCredentials(
+  managementMode: string,
+  rawCredentials: unknown,
+): ChannelProviderCredentials {
+  const credentials = channelProviderCredentialsSchema.parse(rawCredentials);
+  if (managementMode !== "managed") return credentials;
+
+  if (credentials.provider === "wuzapi") {
+    return { ...credentials, baseUrl: getManagedWuzapiConfig().baseUrl };
+  }
+  if (credentials.provider === "evolution") {
+    const config = getManagedEvolutionConfig();
+    return {
+      ...credentials,
+      apiKey: config.apiKey,
+      baseUrl: config.baseUrl,
+    };
+  }
+  return credentials;
 }
 
 async function persistHealth(

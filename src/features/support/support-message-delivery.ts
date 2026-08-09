@@ -8,6 +8,7 @@ import { ChannelProviderRequestError } from "@/features/channels/providers/provi
 import { resolveChannelProvider } from "@/features/channels/providers/resolve-channel-provider";
 import { getOrCreateWorkspace } from "@/features/organizations/bootstrap";
 import type { DirectSupportMessageResult } from "@/features/support/support-message-contracts";
+import type { ChannelMediaMessageInput } from "@/features/channels/providers/channel-provider-adapter";
 import { decryptSecret, EncryptionConfigError } from "@/lib/security/encryption";
 import {
   createSupabaseAdminClient,
@@ -174,6 +175,60 @@ export async function deliverSupportMessageAttempt(
     ) {
       throw error;
     }
+    await markFailed(admin, organizationId, begin.messageId, begin.attemptId, {
+      errorCode: getDeliveryErrorCode(error),
+      failedAt: new Date().toISOString(),
+    });
+    throw mapDeliveryError(error);
+  }
+}
+
+export async function deliverSupportMediaAttempt(
+  admin: ReturnType<typeof createSupabaseAdminClient>,
+  organizationId: string,
+  begin: z.infer<typeof supportMessageBeginResultSchema>,
+  media: ChannelMediaMessageInput,
+): Promise<DirectSupportMessageResult> {
+  if (!begin.created) {
+    return { duplicate: true, messageId: begin.messageId, status: begin.status === "sending" ? "sending" : "sent" };
+  }
+
+  const { data, error } = await admin.rpc("get_support_message_delivery_attempt", {
+    target_attempt_id: begin.attemptId,
+    target_message_id: begin.messageId,
+    target_organization_id: organizationId,
+  });
+  if (error || !data) {
+    await markFailed(admin, organizationId, begin.messageId, begin.attemptId, { errorCode: "delivery_context_unavailable" });
+    throw new SupportMessageSendError("Não foi possível preparar o envio deste atendimento.", 422);
+  }
+
+  try {
+    const delivery = deliverySchema.parse(data);
+    if (delivery.connectionStatus !== "connected") {
+      throw new SupportMessageSendError("O WhatsApp deste canal não está conectado.", 422);
+    }
+    const credentials = channelProviderCredentialsSchema.parse(
+      JSON.parse(decryptSecret(delivery.encryptedCredentials)),
+    );
+    const adapter = resolveChannelProvider(credentials);
+    if (!adapter.sendMediaMessage) {
+      throw new SupportMessageSendError("Este provedor ainda não permite enviar mídia.", 422);
+    }
+    const sent = await adapter.sendMediaMessage({ ...media, recipient: delivery.recipient, trackingId: delivery.messageId });
+    const { error: finalizeError } = await admin.rpc("finalize_support_message_send_attempt", {
+      delivery_metadata: { acceptedAt: new Date().toISOString(), provider: delivery.provider },
+      delivery_status: "sent",
+      provider_message_id: sent.externalMessageId,
+      target_attempt_id: delivery.attemptId,
+      target_message_id: delivery.messageId,
+      target_organization_id: organizationId,
+    });
+    if (finalizeError) throw new SupportMessageSendError("A mídia saiu, mas o histórico não confirmou o envio. Não reenvie antes de conferir o WhatsApp.", 500);
+    revalidatePath(`/app/support/${delivery.conversationId}`);
+    revalidatePath("/app/support");
+    return { duplicate: false, messageId: delivery.messageId, status: "sent" };
+  } catch (error) {
     await markFailed(admin, organizationId, begin.messageId, begin.attemptId, {
       errorCode: getDeliveryErrorCode(error),
       failedAt: new Date().toISOString(),

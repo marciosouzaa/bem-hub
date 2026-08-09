@@ -78,6 +78,31 @@ describe("Evolution API webhook", () => {
     ]);
   });
 
+  test("normaliza imagem recebida e preserva contexto só para download server-side", () => {
+    const [event] = verifyAndNormalizeEvolutionWebhook({
+      expectedInstanceId: "bem-hub-test",
+      headers: webhookHeaders(),
+      payload: {
+        data: {
+          key: { fromMe: false, id: "media-001", remoteJid: "5511999999999@s.whatsapp.net" },
+          message: { imageMessage: { caption: "Confira", mimetype: "image/png" } },
+          messageTimestamp: 1_750_000_000,
+        },
+        event: "messages.upsert",
+        instance: "bem-hub-test",
+      },
+      rawBody: "{}",
+    }, apiKey, "bem-hub-test");
+
+    expect(event).toMatchObject({
+      media: { fileName: null, mediaType: "image", mimeType: "image/png" },
+      providerMessageId: "media-001",
+      text: "Confira",
+      type: "message.received",
+    });
+    expect(event && "media" in event && event.media?.downloadContext).toBeDefined();
+  });
+
   test("rejeita API key ou instância divergente", () => {
     expect(() => verifyAndNormalizeEvolutionWebhook({
       expectedInstanceId: "bem-hub-test",

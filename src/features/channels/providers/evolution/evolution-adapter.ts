@@ -33,6 +33,13 @@ const sentMessageSchema = z.object({
   key: z.object({ id: z.string().trim().min(1) }),
 });
 
+const inboundMediaSchema = z.object({
+  base64: z.string().trim().min(1),
+  fileName: z.string().trim().min(1).nullable().optional(),
+  mediaType: z.enum(["audio", "document", "image", "video"]),
+  mimetype: z.string().trim().min(3),
+});
+
 type EvolutionCredentials = z.infer<typeof evolutionCredentialsSchema>;
 
 export function createEvolutionAdapter(
@@ -206,6 +213,24 @@ export function createEvolutionAdapter(
         },
       );
     },
+    async downloadInboundMedia(input) {
+      const payload = await fetchProviderJson(
+        fetcher,
+        `${credentials.baseUrl}/chat/getBase64FromMediaMessage/${instancePath}`,
+        {
+          body: JSON.stringify({ message: input.downloadContext }),
+          headers,
+          method: "POST",
+        },
+      );
+      const media = inboundMediaSchema.parse(payload);
+      return {
+        dataBase64: media.base64,
+        fileName: media.fileName ?? null,
+        mediaType: media.mediaType,
+        mimeType: media.mimetype,
+      };
+    },
     async sendMediaMessage(input) {
       const payload = await fetchProviderJson(
         fetcher,
@@ -214,7 +239,9 @@ export function createEvolutionAdapter(
           body: JSON.stringify({
             ...(input.caption ? { caption: input.caption } : {}),
             ...(input.fileName ? { fileName: input.fileName } : {}),
-            media: input.dataUrl,
+            // Evolution 2.3 validates pure Base64 with class-validator; unlike
+            // Wuzapi it rejects the browser's data: URI prefix.
+            media: input.dataUrl.replace(/^data:[^;]+;base64,/i, ""),
             mediatype: input.mediaType,
             mimetype: input.mimeType,
             number: onlyDigits(input.recipient),

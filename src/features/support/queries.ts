@@ -85,6 +85,9 @@ const supportMessageDeliveryStateSchema = z.object({
 });
 
 const supportMessageSchema = supportMessageBaseSchema.extend({
+  attachments: z.array(z.object({
+    id: z.string().uuid(), fileName: z.string().nullable(), mediaType: z.enum(["audio", "document", "image", "video"]), mimeType: z.string(), byteSize: z.number().int().nonnegative(), status: z.enum(["pending", "available", "failed"]),
+  })),
   deliveryStatus: supportDeliveryStatusSchema,
   deliveryUpdatedAt: z.string().nullable(),
   acceptedAt: z.string().nullable(),
@@ -231,6 +234,7 @@ export async function getSupportConversation(
       const delivery = deliveryByMessage.get(message.id);
       return {
         ...message,
+        attachments: [],
         acceptedAt: delivery?.acceptedAt ?? null,
         deliveredAt: delivery?.deliveredAt ?? null,
         deliveryFailedAt: delivery?.failedAt ?? null,
@@ -241,11 +245,28 @@ export async function getSupportConversation(
       };
     });
 
+  const messageIds = messages.map((message) => message.id);
+  const { data: attachmentData, error: attachmentError } = messageIds.length
+    ? await supabase
+      .from("support_message_attachments")
+      .select("id,message_id,media_type,mime_type,file_name,byte_size,status")
+      .eq("organization_id", organizationId)
+      .in("message_id", messageIds)
+      .order("created_at", { ascending: true })
+    : { data: [], error: null };
+  if (attachmentError) throw new Error(`Falha ao carregar anexos: ${attachmentError.message}`);
+  const attachmentsByMessage = new Map<string, Array<{ id: string; fileName: string | null; mediaType: "audio" | "document" | "image" | "video"; mimeType: string; byteSize: number; status: "pending" | "available" | "failed" }>>();
+  for (const attachment of attachmentData ?? []) {
+    const items = attachmentsByMessage.get(attachment.message_id) ?? [];
+    items.push({ id: attachment.id, fileName: attachment.file_name, mediaType: attachment.media_type as "audio" | "document" | "image" | "video", mimeType: attachment.mime_type, byteSize: attachment.byte_size, status: attachment.status as "pending" | "available" | "failed" });
+    attachmentsByMessage.set(attachment.message_id, items);
+  }
+
   return supportConversationSchema.parse({
     ...conversationData,
     ...supportConversationStateSchema.parse(stateResult.data),
     events: supportEventsSchema.parse(eventsResult.data),
-    messages,
+    messages: messages.map((message) => ({ ...message, attachments: attachmentsByMessage.get(message.id) ?? [] })),
   });
 }
 

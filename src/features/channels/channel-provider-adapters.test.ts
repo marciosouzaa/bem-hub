@@ -218,7 +218,7 @@ describe("Evolution API adapter", () => {
     expect(JSON.parse(String(request.init?.body))).toEqual({
       caption: "Contrato",
       fileName: "contrato.pdf",
-      media: "data:application/pdf;base64,dGVzdGU=",
+      media: "dGVzdGU=",
       mediatype: "document",
       mimetype: "application/pdf",
       number: "5511999999999",

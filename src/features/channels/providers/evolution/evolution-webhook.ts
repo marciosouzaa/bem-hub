@@ -100,11 +100,12 @@ function normalizeMessage(message: UnknownRecord): ChannelMessageEvent | null {
   }
 
   const providerMessageId = firstString(message, ["key.id", "keyId", "id"]);
+  const media = extractEvolutionMedia(message);
   const text = firstString(message, [
     "message.conversation",
     "message.extendedTextMessage.text",
     "message.text",
-  ]);
+  ]) ?? media?.caption ?? "Mídia recebida";
   if (!providerMessageId || !text) return null;
 
   const participant = firstString(message, [
@@ -124,8 +125,40 @@ function normalizeMessage(message: UnknownRecord): ChannelMessageEvent | null {
     senderName: fromMe ? null : firstString(message, ["pushName"]),
     senderPhone: normalizePhone(identitySource),
     text,
+    ...(media ? { media: { ...media, downloadContext: message } } : {}),
     type: fromMe ? "message.sent_by_phone" : "message.received",
   });
+}
+
+function extractEvolutionMedia(message: UnknownRecord): {
+  caption: string | null;
+  fileName: string | null;
+  mediaType: "audio" | "document" | "image" | "video";
+  mimeType: string;
+} | null {
+  const content = firstRecord(message, ["message"]);
+  if (!content) return null;
+  const candidates: Array<{
+    key: string;
+    mediaType: "audio" | "document" | "image" | "video";
+    fallbackMimeType: string;
+  }> = [
+    { key: "imageMessage", mediaType: "image", fallbackMimeType: "image/jpeg" },
+    { key: "videoMessage", mediaType: "video", fallbackMimeType: "video/mp4" },
+    { key: "audioMessage", mediaType: "audio", fallbackMimeType: "audio/ogg" },
+    { key: "documentMessage", mediaType: "document", fallbackMimeType: "application/octet-stream" },
+  ];
+  for (const candidate of candidates) {
+    const media = firstRecord(content, [candidate.key]);
+    if (!media) continue;
+    return {
+      caption: firstString(media, ["caption"]),
+      fileName: firstString(media, ["fileName", "file_name"]),
+      mediaType: candidate.mediaType,
+      mimeType: firstString(media, ["mimetype", "mimeType"]) ?? candidate.fallbackMimeType,
+    };
+  }
+  return null;
 }
 
 function collectCandidates(value: unknown) {
@@ -170,6 +203,14 @@ function firstString(record: UnknownRecord, paths: string[]) {
   for (const path of paths) {
     const value = readPath(record, path);
     if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return null;
+}
+
+function firstRecord(record: UnknownRecord, paths: string[]) {
+  for (const path of paths) {
+    const value = readPath(record, path);
+    if (isRecord(value)) return value;
   }
   return null;
 }

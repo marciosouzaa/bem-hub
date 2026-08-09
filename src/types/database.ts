@@ -858,6 +858,60 @@ export type Database = {
           },
         ]
       }
+      support_message_attachments: {
+        Row: {
+          available_at: string | null
+          byte_size: number
+          created_at: string
+          duration_seconds: number | null
+          failed_at: string | null
+          file_name: string | null
+          id: string
+          media_type: string
+          message_id: string
+          metadata: Json
+          mime_type: string
+          organization_id: string
+          status: string
+          storage_bucket: string
+          storage_object_path: string
+        }
+        Insert: {
+          available_at?: string | null
+          byte_size: number
+          created_at?: string
+          duration_seconds?: number | null
+          failed_at?: string | null
+          file_name?: string | null
+          id?: string
+          media_type: string
+          message_id: string
+          metadata?: Json
+          mime_type: string
+          organization_id: string
+          status?: string
+          storage_bucket?: string
+          storage_object_path: string
+        }
+        Update: {
+          available_at?: string | null
+          byte_size?: number
+          created_at?: string
+          duration_seconds?: number | null
+          failed_at?: string | null
+          file_name?: string | null
+          id?: string
+          media_type?: string
+          message_id?: string
+          metadata?: Json
+          mime_type?: string
+          organization_id?: string
+          status?: string
+          storage_bucket?: string
+          storage_object_path?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           request_id: string | null

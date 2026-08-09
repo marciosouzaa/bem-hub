@@ -21,7 +21,7 @@ export function verifyAndNormalizeWuzapiWebhook(
   if (type !== "Message") return [];
 
   const event = isRecord(input.payload.event) ? input.payload.event : null;
-  return event ? normalizeMessage(event) : [];
+  return event ? normalizeMessage(event, input.payload) : [];
 }
 
 function verifySignature(input: ChannelWebhookRequest, hmacKey: string) {
@@ -57,7 +57,7 @@ function normalizeReceipts(payload: UnknownRecord): ChannelMessageEvent[] {
   }));
 }
 
-function normalizeMessage(event: UnknownRecord): ChannelMessageEvent[] {
+function normalizeMessage(event: UnknownRecord, payload: UnknownRecord): ChannelMessageEvent[] {
   const info = firstRecord(event, ["Info", "info"]);
   if (!info) return [];
 
@@ -73,6 +73,7 @@ function normalizeMessage(event: UnknownRecord): ChannelMessageEvent[] {
   );
   const providerMessageId = firstString(info, ["ID", "id"]);
   const message = firstRecord(event, ["Message", "message"]);
+  const media = message ? extractWuzapiMedia(message, payload) : null;
   const text = message ? firstString(message, [
     "conversation",
     "Conversation",
@@ -80,7 +81,7 @@ function normalizeMessage(event: UnknownRecord): ChannelMessageEvent[] {
     "ExtendedTextMessage.text",
     "extendedTextMessage.Text",
     "ExtendedTextMessage.Text",
-  ]) : null;
+  ]) ?? media?.caption ?? "Mídia recebida" : null;
   if (!chatId || !providerMessageId || !text) return [];
 
   const identitySource = fromMe
@@ -97,8 +98,42 @@ function normalizeMessage(event: UnknownRecord): ChannelMessageEvent[] {
     senderName: fromMe ? null : firstString(info, ["PushName", "pushName"]),
     senderPhone: normalizePhone(identitySource),
     text,
+    ...(media ? { media } : {}),
     type: fromMe ? "message.sent_by_phone" : "message.received",
   })];
+}
+
+function extractWuzapiMedia(message: UnknownRecord, payload: UnknownRecord): {
+  caption: string | null;
+  dataBase64: string;
+  fileName: string | null;
+  mediaType: "audio" | "document" | "image" | "video";
+  mimeType: string;
+} | null {
+  const dataBase64 = firstString(payload, ["base64"]);
+  if (!dataBase64) return null;
+  const candidates: Array<{
+    key: string;
+    mediaType: "audio" | "document" | "image" | "video";
+    fallbackMimeType: string;
+  }> = [
+    { key: "imageMessage", mediaType: "image", fallbackMimeType: "image/jpeg" },
+    { key: "videoMessage", mediaType: "video", fallbackMimeType: "video/mp4" },
+    { key: "audioMessage", mediaType: "audio", fallbackMimeType: "audio/ogg" },
+    { key: "documentMessage", mediaType: "document", fallbackMimeType: "application/octet-stream" },
+  ];
+  for (const candidate of candidates) {
+    const item = firstRecord(message, [candidate.key, candidate.key[0].toUpperCase() + candidate.key.slice(1)]);
+    if (!item) continue;
+    return {
+      caption: firstString(item, ["caption", "Caption"]),
+      dataBase64,
+      fileName: firstString(payload, ["fileName"]) ?? firstString(item, ["fileName", "FileName"]),
+      mediaType: candidate.mediaType,
+      mimeType: firstString(payload, ["mimeType"]) ?? firstString(item, ["mimetype", "Mimetype"]) ?? candidate.fallbackMimeType,
+    };
+  }
+  return null;
 }
 
 function jidToString(value: unknown): string | null {

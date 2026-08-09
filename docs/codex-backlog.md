@@ -30,12 +30,12 @@ clientes reais com seguranca.
 - [x] Adicionar testes ou verificacoes reproduziveis para acesso cruzado por RPC.
 - [x] Revisar policies do bucket `knowledge-documents` e downloads assinados.
 - [x] Rodar advisors Supabase e registrar alertas remanescentes.
-- [ ] Verificar com dois usuarios reais: tabelas, RPC, Storage e URL assinada.
-- [ ] Ativar protecao contra senha vazada no Supabase Auth ou registrar o bloqueio
-  operacional caso a configuracao dependa do painel.
-
-Aceite: usuario A nao le, busca, baixa, altera ou remove dados da organizacao B;
-roles anonimas nao executam funcoes internas; lint e build passam.
+- [x] Verificar com dois usuarios reais: tabelas, RPC, Storage e URL assinada.
+  Em 2026-08-08, 20 verificacoes remotas passaram com duas organizacoes reais;
+  documento, chunk e objeto sinteticos foram removidos ao final.
+Aceite tecnico: usuario A nao le, busca, baixa, altera ou remove dados da
+organizacao B; roles anonimas nao executam funcoes internas. `bun run lint` e
+`bun run build` passaram em 2026-08-08.
 
 ## AGORA - M1 RAG No Chat Com Fontes
 
@@ -51,7 +51,10 @@ o primeiro valor diario do piloto.
 - [x] Criar runner reproduzivel com validacao, filtros e relatorio JSON.
 - [x] Cobrir casos literal, multi-chunk, ambiguo e sem resposta.
 - [x] Executar o benchmark externo sem indexar arquivos de resposta esperada.
-- [ ] Fazer smoke test com historico recarregado e mais de uma organizacao.
+- [x] Fazer smoke test com historico recarregado e mais de uma organizacao.
+  Em 2026-08-08, duas organizacoes passaram 12 verificacoes de resposta
+  fundamentada, fonte/trecho persistidos apos recarga, download autenticado e
+  bloqueio cross-tenant; dados sinteticos foram removidos.
 
 Aceite: respostas fundamentadas citam documentos corretos; perguntas sem
 evidencia nao inventam resposta; nenhuma busca atravessa organizacoes.
@@ -89,14 +92,21 @@ e operar os hosts self-hosted com numeros de teste separados.
   auditoria e URLs assinadas de leitura.
   - [x] Base remota aplicada: bucket privado de 25 MB, tabelas de anexos e
     reações, RLS e FK tenant-scoped para reply.
-  - [ ] Implementar retenção, auditoria operacional e emissão server-side de
-    URL assinada; Storage ainda não é acessível pelo composer/thread.
-- [ ] Normalizar anexos, citações e reações recebidos em ambos os webhooks;
-  baixar mídia no servidor, nunca no navegador ou por URL do fornecedor.
-- [ ] Entregar composer com anexo, gravação/envio de áudio, reply e reação,
-  persistindo antes do envio e preservando idempotência.
-- [ ] Renderizar mídia, arquivo, mensagem citada e reação na thread, inclusive
-  para entradas enviadas pelo aparelho.
+  - [x] Implementar upload server-side e rota autenticada de leitura; Storage
+    está acessível pelo composer e pela thread sem expor credenciais.
+  - [ ] Definir retenção e auditoria operacional de anexos.
+- [x] Normalizar anexos recebidos em ambos os webhooks e baixá-los no servidor,
+  nunca no navegador ou por URL do fornecedor. Wuzapi entrega Base64 assinado;
+  Evolution é recuperado pela API server-side autenticada.
+- [ ] Normalizar citações e reações recebidas em ambos os webhooks.
+- [x] Entregar composer de múltiplos anexos, persistindo antes do envio e
+  preservando idempotência; cada mídia tem prévia e legenda própria.
+- [ ] Implementar gravação de áudio, reply e reação.
+- [x] Renderizar mídia e arquivo de saída na thread, com fallback, download e
+  viewer com zoom/carrossel.
+- [x] Renderizar mídia recebida pelo aparelho pela mesma thread/viewer privado;
+  o smoke real comparativo segue pendente.
+- [ ] Renderizar citação e reação recebidas pelo aparelho.
 - [ ] Executar smoke bidirecional por Wuzapi/Evolution com dois tenants e
   validar limites, MIME, tamanho, exclusão e isolamento de Storage.
 - [x] Implementar provisionamento gerenciado Wuzapi com nome, credenciais
@@ -208,6 +218,11 @@ Bloqueado pela auditoria da plataforma e disponibilidade dos dados.
 - A migration `20260712160034_harden_tenant_security_functions.sql` foi
   aplicada remotamente; o proximo passo e validar isolamento com dois usuarios
   reais e registrar os advisories que ainda permanecerem.
+- Advisors corretos de 2026-08-08: as unicas funcoes `SECURITY DEFINER`
+  sinalizadas sao RPCs autenticadas intencionais, com `search_path` vazio,
+  `anon` revogado e guardas de admin/owner. Performance aponta quatro FKs sem
+  indice em Atendimento/midia; planejar nova migration antes de ampliar o
+  trafego desse modulo.
 - Os 57 testes pgTAP de hardening estao prontos, mas exigem Docker/Supabase local
   para execucao completa; contratos criticos tambem foram validados por SQL
   transacional no remoto.

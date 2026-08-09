@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import {
-  getManagedWuzapiConfig,
+  getManagedChannelConfig,
 } from "@/features/channels/managed/managed-channel-config";
 import type { ManagedChannelActionResult } from "@/features/channels/managed/managed-channel-contracts";
 import {
@@ -17,6 +17,7 @@ import {
   managedChannelInputSchema,
   managedChannelRegistrationSchema,
 } from "@/features/channels/managed/managed-channel-schema";
+import { provisionManagedEvolution } from "@/features/channels/managed/provision-managed-evolution";
 import { provisionManagedWuzapi } from "@/features/channels/managed/provision-managed-wuzapi";
 import { getRequiredWorkspace } from "@/features/organizations/queries";
 import { getAppBaseUrl } from "@/lib/app-url";
@@ -41,10 +42,10 @@ export async function provisionManagedChannelAction(
     };
   }
 
-  let config: ReturnType<typeof getManagedWuzapiConfig>;
+  let config: ReturnType<typeof getManagedChannelConfig>;
   let admin: ReturnType<typeof createSupabaseAdminClient>;
   try {
-    config = getManagedWuzapiConfig();
+    config = getManagedChannelConfig();
     admin = createSupabaseAdminClient();
     getAppBaseUrl();
   } catch (error) {
@@ -56,7 +57,7 @@ export async function provisionManagedChannelAction(
     "register_managed_channel_provisioning",
     {
       connection_name: parsed.data.name,
-      managed_provider: "wuzapi",
+      managed_provider: config.provider,
       provisioning_request_id: parsed.data.requestId,
       target_organization_id: workspace.organization.id,
     },
@@ -92,13 +93,21 @@ export async function provisionManagedChannelAction(
     }
   }
 
-  const result = await provisionManagedWuzapi({
-    actorUserId: workspace.user.id,
-    admin,
-    config,
-    organizationId: workspace.organization.id,
-    registration: registration.data,
-  });
+  const result = config.provider === "wuzapi"
+    ? await provisionManagedWuzapi({
+      actorUserId: workspace.user.id,
+      admin,
+      config,
+      organizationId: workspace.organization.id,
+      registration: registration.data,
+    })
+    : await provisionManagedEvolution({
+      actorUserId: workspace.user.id,
+      admin,
+      config,
+      organizationId: workspace.organization.id,
+      registration: registration.data,
+    });
   revalidatePath(channelsPath);
   return result;
 }

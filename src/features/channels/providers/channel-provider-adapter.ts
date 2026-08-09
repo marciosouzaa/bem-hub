@@ -60,6 +60,13 @@ export type ChannelMessageReactionInput = {
 
 export type ChannelMediaType = "audio" | "document" | "image" | "video";
 
+export type ChannelInboundMediaDownload = {
+  dataBase64: string;
+  fileName: string | null;
+  mimeType: string;
+  mediaType: ChannelMediaType;
+};
+
 /** Binary content is accepted only inside the server delivery boundary. */
 export type ChannelMediaMessageInput = {
   caption?: string;
@@ -75,6 +82,7 @@ export type ChannelMediaMessageInput = {
 export interface ChannelProviderAdapter {
   configureWebhook?(input: ChannelWebhookConfiguration): Promise<void>;
   disconnect(): Promise<void>;
+  downloadInboundMedia?(input: { downloadContext: unknown }): Promise<ChannelInboundMediaDownload>;
   getHealth(): Promise<ChannelProviderHealth>;
   getWebhookHealth?(
     input: ChannelWebhookConfiguration,

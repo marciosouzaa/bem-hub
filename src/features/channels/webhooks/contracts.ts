@@ -7,6 +7,29 @@ export const channelSenderIdentityTypeSchema = z.enum([
   "lid",
 ]);
 
+export const channelMediaTypeSchema = z.enum([
+  "audio",
+  "document",
+  "image",
+  "video",
+]);
+
+/**
+ * `downloadContext` never reaches a browser or the database. It is a
+ * provider-authenticated message envelope used only by the server adapter when
+ * the webhook itself does not include binary media.
+ */
+export const channelInboundMediaSchema = z.object({
+  dataBase64: z.string().trim().min(1).optional(),
+  downloadContext: z.unknown().optional(),
+  fileName: z.string().trim().min(1).max(255).nullable(),
+  mediaType: channelMediaTypeSchema,
+  mimeType: z.string().trim().min(3).max(200),
+}).refine(
+  (value) => Boolean(value.dataBase64 || value.downloadContext),
+  "Mídia recebida sem conteúdo para download.",
+);
+
 export const channelInboundMessageEventSchema = z.object({
   occurredAt: z.string().datetime(),
   providerMessageId: z.string().trim().min(1).max(300),
@@ -15,6 +38,7 @@ export const channelInboundMessageEventSchema = z.object({
   senderName: z.string().trim().min(1).max(200).nullable(),
   senderPhone: z.string().regex(/^\+\d{8,15}$/).nullable(),
   text: z.string().trim().min(1).max(10_000),
+  media: channelInboundMediaSchema.optional(),
   type: z.literal("message.received"),
 });
 

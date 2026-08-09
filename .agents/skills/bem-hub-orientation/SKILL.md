@@ -88,6 +88,17 @@ persisted sources and benchmark validation.
 
 ## UI Orientation
 
+### UX quality gate
+
+UI/UX e parte do criterio de aceite do MVP. Ao implementar uma interacao,
+valide o fluxo inteiro — hierarquia visual, espacamento, responsividade,
+estados vazios/erro, foco, overflow e alcance dos controles — e nao apenas o
+caso funcional feliz. Quando houver uma referencia familiar (por exemplo,
+WhatsApp), reproduza os comportamentos que tornam a experiencia reconhecivel,
+nao uma semelhanca superficial. Nao considere uma tela concluida se qualquer
+controle essencial puder ficar oculto, sobreposto ou inutilizavel pelo proprio
+conteudo.
+
 Use the "AI Operating System" direction: dark, focused, technical, calm, and
 dense enough for daily work. Preserve the green operational signal from
 `docs/design-system.md` and `src/app/globals.css`.

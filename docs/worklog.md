@@ -4,6 +4,107 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-08-09 - M2 Atendimento: Mídia Nos Dois Sentidos
+
+### Feito
+
+- O envio de imagem, vídeo, áudio e documento está persistido antes da entrega,
+  em Storage privado tenant-scoped, e funciona contra Evolution e Wuzapi. A
+  diferença de payload de Base64 dos provedores está encapsulada no adapter.
+- O composer agora abre uma composição de múltiplas mídias: aceita adicionar
+  arquivos sem fechar o modal, mostra a prévia selecionada, mantém uma faixa de
+  miniaturas e oferece legenda individual por arquivo.
+- O viewer foi redesenhado como lightbox amplo: viewport com overflow contido,
+  controles de zoom sempre fora da imagem, navegação anterior/próxima,
+  download autenticado, nome/tamanho e miniaturas reais das outras mídias da
+  conversa.
+- A orientação do repositório passa a exigir validação de UX completa, não só o
+  caminho funcional, e proíbe concluir telas com conteúdo cobrindo controles.
+- Webhooks de Evolution e Wuzapi agora reconhecem imagem, vídeo, áudio e
+  documento, preservam a legenda quando existente e não descartam mensagem sem
+  texto por ela conter apenas mídia. Wuzapi fornece Base64 no webhook assinado;
+  Evolution é recuperado pelo adapter na API interna autenticada.
+- A mensagem inbound é criada antes do anexo. O binário passa por validação de
+  MIME/tamanho, é salvo no bucket privado e recebe ID/caminho determinísticos;
+  reentregas não duplicam o arquivo e uma falha temporária pode ser repetida.
+
+### Verificação
+
+- `bun run lint` passou sem erros.
+- `bun run build` passou com Next.js 16.2.9.
+- Testes específicos de normalização dos webhooks: 10/10; adapters e webhooks
+  relacionados: 28/28.
+
+### Próximo Passo
+
+Executar o smoke real recebendo cada tipo de mídia em Wuzapi e Evolution e
+confirmar que o arquivo, a legenda e o download aparecem no atendimento.
+
+## 2026-08-08 - M1 RAG: Smoke Multi-tenant Concluido
+
+### Feito
+
+- Duas organizacoes reais receberam assistente, documento, chunk e conversa
+  temporarios para validar a rota `/api/chat` ponta a ponta.
+- Ambas respostas ficaram `grounded`, citaram documento e trecho no header, e
+  persistiram a mesma fonte na mensagem do assistente apos recarregar a
+  conversa.
+- Ambas rotas autenticadas de download geraram URL assinada. A conta A nao
+  recarregou a conversa nem baixou a fonte temporaria da conta B.
+- Foram 12 verificacoes aprovadas. Conversas, assistentes, documentos, chunks e
+  objetos temporarios foram removidos pelo ID criado no teste.
+
+### Proximo Passo
+
+Validar uso diario do assistente de catalogo com equipe do piloto; M1 tecnico
+esta concluido.
+
+## 2026-08-08 - M0: Isolamento Remoto Com Duas Contas
+
+### Feito
+
+- Autenticadas duas contas reais, cada uma em organizacao distinta, contra o
+  projeto configurado em `.env.local`.
+- Conta B criou objeto privado, documento `ready` e chunk vetorial sinteticos.
+  A conta A nao leu `organizations`, `organization_members`, `documents` ou
+  `document_chunks` de B; nao alterou/removou documento; nao baixou/removou
+  objeto; e nao gerou URL assinada de B.
+- `is_org_member`, `is_org_admin`, `match_document_chunks` e
+  `bootstrap_owned_organization` recusaram o acesso cruzado. Papel anonimo nao
+  executou RPC interno. A URL assinada da propria conta B funcionou.
+- Foram 20 verificacoes aprovadas. Documento, chunk e objeto de teste foram
+  removidos ao final; nenhum dado de cliente foi usado.
+
+### Pendencias E Observacoes
+
+- MCP Supabase global foi corrigido para o projeto de `.env.local` e OAuth
+  concluiu em 2026-08-08. Esta sessao ainda reteve a ferramenta antiga; iniciar
+  nova sessao e confirmar URL antes de executar advisors ou migrations.
+
+### Verificacao
+
+- `bun run lint` passou.
+- `bun run build` passou.
+- MCP `supabase-bem-hub` confirmou o projeto de `.env.local`. Advisors de
+  seguranca retornaram somente tres funcoes `SECURITY DEFINER` autenticadas
+  intencionais (`add_organization_member_by_email`,
+  `bootstrap_owned_organization` e `register_managed_channel_provisioning`).
+  As tres usam `search_path` vazio, recusam `anon` e validam admin/owner antes
+  de elevar privilegios.
+- Advisors de performance apontaram quatro FKs sem indice, todas no escopo de
+  Atendimento/midia: `support_message_attachments_message_fkey`,
+  `support_message_reactions_channel_connection_id_fkey`,
+  `support_message_reactions_message_fkey` e
+  `support_messages_reply_to_message_fkey`. Alertas restantes sao indices ainda
+  sem uso; nao remover sem carga real e plano de consulta.
+
+### Proximo Passo
+
+1. Fazer smoke RAG com conversa recarregada em duas organizacoes, incluindo
+   fontes persistidas e download autenticado.
+2. Planejar indices das quatro FKs de Atendimento antes de ampliar trafego de
+   midia; nao bloqueiam M1 RAG.
+
 ## 2026-08-04 - Temperatura Compativel Com GPT-5
 
 ### Feito
@@ -2254,3 +2355,47 @@ bloqueio de credencial ou decisao de produto.
   `20260712160034_harden_tenant_security_functions`.
 - `mcp__supabase.get_advisors` reportou o warning esperado sobre
   `bootstrap_owned_organization` como `SECURITY DEFINER` exposto.
+## 2026-08-08 - Canais Gerenciados Sem URL De Usuário
+
+### Feito
+
+- O provisionamento gerenciado agora resolve Wuzapi e Evolution exclusivamente
+  no servidor. O usuário informa o nome do canal e lê o QR Code.
+- URLs de infraestrutura, chaves administrativas, instância e webhook não são
+  mais dados operacionais do usuário. Em desenvolvimento, as chaves locais
+  podem ser lidas dos `.env` dos provedores apenas pelo servidor.
+- URLs temporárias atuais foram registradas só em `.env.local`; os containers e
+  os três túneis locais estão ativos.
+
+### Verificação
+
+- `bun run test`: 124 testes passaram.
+- `bun run lint`, `bun run build` e `git diff --check` passaram.
+- Smoke real Wuzapi concluído pelo usuário: QR, envio pelo Atendimento e
+  recebimento na mesma conversa funcionaram.
+
+### Próximo Passo
+
+1. Para testar Evolution, trocar somente `WHATSAPP_MANAGED_PROVIDER` no
+   ambiente server-side, reiniciar o BEM HUB e criar outro canal.
+## 2026-08-09 - Mídia No Atendimento: Envio E Viewer
+
+### Feito
+
+- Anexos saem por Evolution e Wuzapi, ficam em Storage privado e retornam ao
+  histórico pelo link autenticado de curta duração.
+- Corrigido Evolution: a versão local aceita Base64 puro e rejeita o prefixo
+  `data:`; Wuzapi mantém o formato próprio.
+- Bolhas identificam imagem, vídeo, áudio e documento; imagens têm prévia e
+  todo anexo abre viewer com zoom, carrossel e download.
+
+### Verificação
+
+- Smoke real Evolution confirmou envio de imagem.
+- Teste focado dos adapters, lint, build e `git diff --check` passaram.
+
+### Próximo passo
+
+1. Trocar o seletor simples pelo compositor modal múltiplo, com legenda por
+   mídia e inclusão contínua.
+2. Normalizar e persistir mídia recebida por webhook nos dois provedores.

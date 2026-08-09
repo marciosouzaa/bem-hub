@@ -30,14 +30,10 @@ CACHE_REDIS_URI=redis://...
 AUTHENTICATION_API_KEY=<segredo-forte>
 ```
 
-Depois que a API responder por HTTPS, no BEM HUB:
-
-1. abra `Canais > Conectar`;
-2. escolha `Evolution API`;
-3. informe URL, um nome unico de instancia e `AUTHENTICATION_API_KEY`;
-4. salve; o BEM HUB cria a instancia `WHATSAPP-BAILEYS` se necessario;
-5. gere o QR Code e escaneie no WhatsApp;
-6. ative o recebimento para registrar `messages.upsert` e `messages.update`.
+Depois que a API responder por HTTPS, configure `EVOLUTION_MANAGED_BASE_URL` e
+`EVOLUTION_API_KEY` somente no ambiente server-side do BEM HUB e selecione
+`WHATSAPP_MANAGED_PROVIDER=evolution`. O usuário do BEM HUB informa apenas o
+nome do canal e lê o QR Code; a instância, credenciais e webhook são internos.
 
 O BEM HUB configura o webhook, envia texto e acompanha entrega/leitura.
 
@@ -97,19 +93,11 @@ Para HTTPS temporario:
 Mantenha esse terminal aberto. Depois execute `show-bem-hub-config.ps1` em
 outro terminal; ele encontra a URL no `.cloudflared-evolution.log`.
 
-No BEM HUB:
-
-1. crie um canal nao oficial com o numero reservado para Evolution e metodo QR;
-2. abra `Conectar`, escolha `Evolution API` e use `Url` e `InstanceName`
-   mostrados pelo script;
-3. execute o script com `-CopyApiKey` e cole em `API key`;
-4. clique `Validar e salvar`;
-5. clique `Gerar QR Code`;
-6. no aparelho, abra `WhatsApp > Aparelhos conectados > Conectar um aparelho`
-   e escaneie;
-7. clique `Atualizar estado` ate aparecer `Conectado`;
-8. clique `Ativar recebimento`;
-9. execute o smoke obrigatorio deste runbook.
+No ambiente server-side do BEM HUB, registre a URL pública temporária em
+`EVOLUTION_MANAGED_BASE_URL` e use `EVOLUTION_LOCAL_ENV_FILE` apenas em
+desenvolvimento para ler a chave local. No produto, crie `Novo canal`, dê um
+nome e leia o QR Code. Nenhuma URL, nome de instância ou chave é informada pelo
+usuário final.
 
 Para parar sem apagar sessao, banco ou cache:
 
@@ -136,8 +124,8 @@ DB_PORT=5432
 `WEBHOOK_FORMAT=json` e obrigatorio porque o endpoint do BEM HUB aceita apenas
 JSON e valida a assinatura sobre o corpo bruto.
 
-Crie um usuario isolado no Wuzapi usando o Admin Token. O token desse usuario,
-e nao o Admin Token, entra no BEM HUB:
+O BEM HUB cria um usuário Wuzapi isolado pelo Admin Token no provisionamento
+gerenciado. Esta chamada é interna; o token do usuário nunca chega ao browser:
 
 ```http
 POST /admin/users
@@ -151,10 +139,9 @@ Content-Type: application/json
 }
 ```
 
-No BEM HUB, informe a URL HTTPS, o token exclusivo do usuario e uma chave HMAC
-de pelo menos 32 caracteres. Ao ativar o recebimento, o BEM HUB grava essa HMAC
-no usuario Wuzapi, configura o webhook e passa a rejeitar callbacks sem
-assinatura valida.
+No servidor, configure `WUZAPI_MANAGED_BASE_URL` e `WUZAPI_ADMIN_TOKEN` (ou
+`WUZAPI_LOCAL_ENV_FILE` no desenvolvimento). O BEM HUB gera token e HMAC por
+canal, configura o webhook e entrega somente o QR Code ao usuário.
 
 ### Desenvolvimento local validado no Windows
 
@@ -194,16 +181,16 @@ cada tunnel e mantenha os processos ativos:
 & 'C:\Program Files (x86)\cloudflared\cloudflared.exe' tunnel --url http://127.0.0.1:3000
 ```
 
-Use a primeira URL como URL do servidor Wuzapi no canal. Use a segunda em
-`APP_BASE_URL` no `.env.local` do BEM HUB. Como Quick Tunnels mudam ao
-reiniciar:
+Registre a primeira URL internamente em `WUZAPI_MANAGED_BASE_URL` e a segunda
+em `APP_BASE_URL` no `.env.local` do BEM HUB. Como Quick Tunnels mudam ao
+reiniciar, a atualização é de infraestrutura, nunca de formulário do usuário:
 
 1. inicie o BEM HUB com `bun dev`;
 2. crie os dois tunnels;
 3. atualize `APP_BASE_URL` com o tunnel do BEM HUB;
-4. substitua a URL do servidor no canal pela URL do tunnel Wuzapi;
-5. clique `Atualizar estado`; para Wuzapi e Evolution, o BEM HUB compara a URL
-   atual do provedor com `APP_BASE_URL` e corrige o callback automaticamente.
+4. atualize `WUZAPI_MANAGED_BASE_URL` ou `EVOLUTION_MANAGED_BASE_URL` conforme
+   o provedor ativo e reinicie o BEM HUB;
+5. abra o canal e leia um novo QR Code somente se a sessão tiver sido perdida.
 
 Antes de aceitar um webhook como saudável, o backend consulta
 `/api/health/webhook-ingress` pelo próprio `APP_BASE_URL`. Um tunnel encerrado,

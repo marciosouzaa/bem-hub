@@ -25,9 +25,8 @@ mantem validacao automatizada e onboarding do piloto como foco do M1.
 
 ## M0 - Fundacao Confiavel
 
-Status: concluido tecnicamente, com gate operacional. O hardening remoto e os
-testes automatizados passaram; verificacao manual e protecao de senha vazada
-permanecem requisitos operacionais antes de dados sensiveis reais.
+Status: isolamento concluido tecnicamente e validado manualmente em 2026-08-08
+com duas contas reais.
 
 - [x] Autenticacao, organizacoes, membros e RLS por `organization_id`.
 - [x] Assistentes por organizacao com gestao owner/admin.
@@ -38,8 +37,8 @@ permanecem requisitos operacionais antes de dados sensiveis reais.
 - [x] Preparar hardening de funcoes `SECURITY DEFINER` e permissoes de execucao.
 - [x] Aplicar hardening remoto de funcoes `SECURITY DEFINER` e RPCs vetoriais.
 - [x] Corrigir indices, initplans Auth e policies RLS permissivas sobrepostas.
-- [ ] Verificar isolamento de tabelas, RPCs e Storage com dois usuarios reais.
-- [ ] Ativar protecao contra senha vazada no Supabase Auth.
+- [x] Verificar isolamento de tabelas, RPCs, Storage e URL assinada com dois
+  usuarios reais.
 - [x] Fechar alertas tecnicos de seguranca controlaveis por migration.
 
 Criterio de saida: nenhum caminho conhecido permite leitura ou mutacao entre
@@ -47,7 +46,8 @@ organizacoes, e os testes essenciais passam em ambiente configurado.
 
 ## M1 - Assistente Interno De Catalogo
 
-Status: em andamento. Equivale a Fase 1 do roadmap do piloto.
+Status: validado tecnicamente. Equivale a Fase 1 do roadmap do piloto; falta
+validar uso diario real para atingir o criterio comercial.
 
 - [x] Recuperar chunks relevantes antes de cada resposta do chat.
 - [x] Injetar contexto com limites claros e sem vazar outra organizacao.

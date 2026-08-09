@@ -12,9 +12,11 @@ import {
 } from "@/features/channels/webhooks/endpoint-token";
 import { decryptSecret } from "@/lib/security/encryption";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { storeInboundSupportMedia } from "@/features/support/store-inbound-support-media";
 
 const ingestResultSchema = z.object({
   duplicate: z.boolean(),
+  messageId: z.string().uuid().nullable(),
   status: z.enum(["failed", "processed"]),
 });
 
@@ -147,6 +149,16 @@ export async function processChannelWebhook(
     if (error) throw error;
 
     const result = ingestResultSchema.parse(data);
+    if (event.type !== "message.delivery_updated" && event.media) {
+      if (!result.messageId) throw new Error("Webhook de mídia não retornou a mensagem persistida.");
+      await storeInboundSupportMedia({
+        adapter,
+        event,
+        messageId: result.messageId,
+        organizationId: endpoint.organization_id,
+        supabase: admin,
+      });
+    }
     if (result.status === "failed") {
       failed += 1;
     } else if (result.duplicate) {

@@ -1,6 +1,69 @@
 # Handoff Notes
 
-Atualizado em 2026-08-04.
+Atualizado em 2026-08-09.
+
+## Handoff 2026-08-09 - M2 Mídia: Saída, Composição E Viewer
+
+- A mídia de saída está funcional nos dois provedores: Evolution recebe Base64
+  sem prefixo e Wuzapi recebe data URI, distinção isolada nos adapters.
+- Arquivos são enviados pelo servidor, persistidos no bucket privado
+  `support-message-media` e servidos somente por rota autenticada. A thread
+  possui preview, fallback por tipo, download e viewer amplo.
+- O modal de composição segue o comportamento esperado de mensageiro: várias
+  mídias, inclusão sem fechar, carrossel de miniaturas e uma legenda por mídia.
+- O viewer também usa miniaturas reais, não nomes de arquivo; sua área de
+  visualização recorta conteúdo ampliado para que os controles de zoom não
+  sejam encobertos.
+- `bun run lint` e `bun run build` passaram em 2026-08-09.
+
+### Retomada Exata
+
+1. Fazer smoke real de imagem, vídeo, áudio e documento recebidos em Wuzapi e
+   Evolution, incluindo legenda e download autenticado no Atendimento.
+2. Implementar reply, reações e gravação de áudio; a fundação de mídia já
+   suporta esses próximos fluxos.
+
+## Handoff 2026-08-08 - M1 RAG Smoke Multi-tenant Concluido
+
+- Duas organizacoes reais passaram 12 verificacoes ponta a ponta da rota de
+  chat: resposta `grounded`, fonte e trecho no header, persistencia apos
+  recarga, URL assinada autenticada e bloqueio de conversa/download cruzados.
+- Assistentes, documentos, chunks, conversas e objetos criados pelo smoke foram
+  removidos ao final por IDs explicitamente criados.
+- M1 RAG tecnico esta concluido. O criterio comercial pendente e uso diario
+  validado pela equipe do piloto.
+
+### Retomada Exata
+
+1. Validar uso diario do assistente de catalogo com equipe do piloto.
+2. Planejar indices das quatro FKs de Atendimento antes de ampliar trafego de
+   midia; nao bloqueiam M1 RAG.
+
+## Handoff 2026-08-08 - M0 Isolamento Remoto Validado
+
+- Duas contas reais, em organizacoes distintas, passaram 20 verificacoes
+  remotas: leitura e mutacao cross-tenant, RPCs de membro/admin/bootstrap e
+  busca vetorial, execucao anonima, Storage privado e URL assinada.
+- Dados sinteticos de documento, chunk e objeto foram removidos ao final.
+  Nenhum dado de cliente foi usado.
+- MCP `supabase-bem-hub` confirmou o projeto de `.env.local`. Advisors de
+  seguranca retornaram somente tres funcoes `SECURITY DEFINER` autenticadas
+  intencionais. As funcoes possuem `search_path` vazio, sem execucao anonima,
+  e validam admin/owner.
+- Advisors de performance apontaram quatro FKs sem indice no Atendimento/midia:
+  `support_message_attachments_message_fkey`,
+  `support_message_reactions_channel_connection_id_fkey`,
+  `support_message_reactions_message_fkey` e
+  `support_messages_reply_to_message_fkey`. Indices ainda sem uso nao devem ser
+  removidos sem carga real e plano de consulta.
+- `bun run lint` e `bun run build` passaram.
+
+### Retomada Exata
+
+1. Fazer smoke RAG com conversa recarregada em duas organizacoes, confirmando
+   fontes persistidas, isolamento e download autenticado.
+2. Planejar indices das quatro FKs de Atendimento antes de ampliar trafego de
+   midia; nao bloqueiam M1 RAG.
 
 ## Handoff 2026-08-04 - GPT-5 Sem Temperatura Incompativel
 
@@ -1002,3 +1065,27 @@ Proxima sessao:
 4. Retornar e exibir as fontes usadas na resposta.
 5. Executar o benchmark externo, incluindo perguntas sem resposta, e comparar
    resultado, documento citado e comportamento esperado.
+## Handoff 2026-08-08 - Provedor WhatsApp Resolvido Pelo Servidor
+
+- O fluxo de canal gerenciado não expõe URL, API key, token de instância ou
+  HMAC ao usuário: ele fornece um nome e lê o QR Code.
+- Wuzapi e Evolution agora usam a mesma seleção server-side por
+  `WHATSAPP_MANAGED_PROVIDER`; credenciais locais de desenvolvimento são lidas
+  por caminhos de `.env` internos.
+- Quick Tunnels de BEM HUB, Wuzapi e Evolution estão ativos nesta sessão, e as
+  URLs foram configuradas apenas em `.env.local`.
+- Verificação final: 124 testes, lint, build e `git diff --check` passaram.
+- Smoke real Wuzapi concluído: QR, envio e recebimento no Atendimento passaram.
+
+### Próxima ação de smoke
+
+1. Alternar o provedor no ambiente server-side para Evolution e repetir em
+   outro número; nunca informar URL no produto.
+## Handoff 2026-08-09 - Mídia De Saída E Viewer
+
+- Envio de anexo passou no Evolution real; Evolution requer Base64 sem prefixo
+  e Wuzapi segue com data URI.
+- Storage e download permanecem privados/tenant-scoped. O histórico mostra
+  preview, fallback por tipo e viewer modal com zoom, carrossel e download.
+- Próximo bloco: modal de composição múltipla e mídia recebida por webhook para
+  ambos os provedores.
