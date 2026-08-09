@@ -1,7 +1,7 @@
 "use client";
 
-import { Pause, Play, Volume2 } from "lucide-react";
-import { useRef, useState, type PointerEvent } from "react";
+import { LoaderCircle, Pause, Play, Volume2 } from "lucide-react";
+import { useEffect, useRef, useState, type PointerEvent } from "react";
 
 import { IconButton } from "@/components/ui/icon-button";
 
@@ -18,7 +18,34 @@ export function SupportAudioPlayer({ src }: { src: string }) {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [playing, setPlaying] = useState(false);
+  const [source, setSource] = useState<string | null>(null);
+  const [sourceError, setSourceError] = useState(false);
   const progress = duration ? (currentTime / duration) * 100 : 0;
+
+  useEffect(() => {
+    let cancelled = false;
+    let objectUrl: string | null = null;
+
+    async function loadAudio() {
+      try {
+        const response = await fetch(src);
+        if (!response.ok) throw new Error("audio_fetch_failed");
+        objectUrl = URL.createObjectURL(await response.blob());
+        if (!cancelled) {
+          setSourceError(false);
+          setSource(objectUrl);
+        }
+      } catch {
+        if (!cancelled) setSourceError(true);
+      }
+    }
+
+    void loadAudio();
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [src]);
 
   function togglePlayback() {
     const audio = audioRef.current;
@@ -57,10 +84,10 @@ export function SupportAudioPlayer({ src }: { src: string }) {
       onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
       preload="metadata"
       ref={audioRef}
-      src={src}
+      src={source ?? undefined}
     />
-    <IconButton label={playing ? "Pausar áudio" : "Reproduzir áudio"} onClick={togglePlayback} size="sm" variant="ghost">
-      {playing ? <Pause className="size-4 fill-current" /> : <Play className="size-4 fill-current" />}
+    <IconButton disabled={!source} label={sourceError ? "Áudio indisponível" : playing ? "Pausar áudio" : "Reproduzir áudio"} onClick={togglePlayback} size="sm" variant="ghost">
+      {!source && !sourceError ? <LoaderCircle className="size-4 animate-spin motion-reduce:animate-none" /> : playing ? <Pause className="size-4 fill-current" /> : <Play className="size-4 fill-current" />}
     </IconButton>
     <div className="min-w-0 flex-1">
       <div className="relative h-7">

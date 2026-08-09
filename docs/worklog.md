@@ -4,6 +4,15 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-08-09 - Correção: Reprodução Estável De Áudio
+
+- O elemento de áudio dependia da rota que redireciona para URL assinada; em
+  requests de faixa subsequentes isso interrompia a reprodução e inutilizava
+  play/pausa.
+- O player agora baixa o blob autenticado uma vez e toca por URL local, mantendo
+  o controle de tempo estável durante toda a reprodução.
+- `bun run lint`, `bun run build` e `git diff --check` passaram.
+
 ## 2026-08-09 - Refinamento: Paridade Visual Da Conversa
 
 - Bolhas agora seguem a ordem do WhatsApp: mídia primeiro e legenda depois.
