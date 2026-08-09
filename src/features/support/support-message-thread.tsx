@@ -2,13 +2,14 @@
 
 /* eslint-disable @next/next/no-img-element */
 
-import { FileDown, Headset, LoaderCircle, RotateCcw, UserRound } from "lucide-react";
+import { FileDown, Headset, LoaderCircle, Play, RotateCcw, UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import type { SupportConversation } from "@/features/support/queries";
 import { SupportMessageDeliveryStatus } from "@/features/support/support-message-delivery-status";
+import { SupportAudioPlayer } from "@/features/support/support-audio-player";
 import { SupportMediaViewer } from "@/features/support/support-media-viewer";
 import {
   formatSupportTime,
@@ -97,6 +98,7 @@ export function SupportMessageThread({
           <div className="space-y-5">
             {messages.map((message) => {
               const outbound = message.direction === "outbound";
+              const hidesAttachmentFallback = message.attachments.some((attachment) => message.content === `Arquivo: ${attachment.fileName}`);
 
               return (
                 <article
@@ -130,23 +132,19 @@ export function SupportMessageThread({
                       message.status === "failed" && "border-danger/35",
                     )}
                   >
-                    {message.content !== "Mídia recebida" || !message.attachments.length ? (
-                      <p className="whitespace-pre-wrap text-sm leading-6 text-foreground">
+                    {message.attachments.map((attachment) => {
+                      const attachmentUrl = `/api/support/attachments/${attachment.id}`;
+                      if (attachment.mediaType === "image") return <button aria-label="Abrir imagem" className="block overflow-hidden rounded-xl border border-panel-border bg-black/30" key={attachment.id} onClick={() => setActiveMediaId(attachment.id)} type="button"><img alt="Imagem recebida" className="max-h-48 max-w-[280px] object-cover" src={attachmentUrl} /></button>;
+                      if (attachment.mediaType === "video") return <button aria-label="Abrir vídeo" className="relative block overflow-hidden rounded-xl border border-panel-border bg-black/30" key={attachment.id} onClick={() => setActiveMediaId(attachment.id)} type="button"><video className="max-h-48 max-w-[280px]" muted preload="metadata" src={attachmentUrl} /><span className="absolute inset-0 flex items-center justify-center bg-black/25 text-primary"><Play className="size-7 fill-current drop-shadow-lg" /></span></button>;
+                      if (attachment.mediaType === "audio") return <div key={attachment.id}><SupportAudioPlayer src={attachmentUrl} /></div>;
+                      return <button className="flex w-full items-center gap-2 rounded-lg border border-panel-border bg-panel-subtle px-3 py-2 text-left text-xs text-muted-strong transition-colors hover:border-primary/30 hover:text-foreground" key={attachment.id} onClick={() => setActiveMediaId(attachment.id)} type="button"><FileDown className="size-3.5 text-primary" /><span className="min-w-0 flex-1 truncate">{attachment.fileName ?? "Documento"}</span><span className="shrink-0 text-muted">{Math.ceil(attachment.byteSize / 1024)} KB</span></button>;
+                    })}
+
+                    {(!hidesAttachmentFallback && (message.content !== "Mídia recebida" || !message.attachments.length)) ? (
+                      <p className={message.attachments.length ? "mt-2 whitespace-pre-wrap text-sm leading-6 text-foreground" : "whitespace-pre-wrap text-sm leading-6 text-foreground"}>
                         {message.content}
                       </p>
                     ) : null}
-                    {message.attachments.map((attachment) => (
-                      <button
-                        className="mt-2 flex w-full items-center gap-2 rounded-lg border border-panel-border bg-panel-subtle px-3 py-2 text-left text-xs text-muted-strong transition-colors hover:border-primary/30 hover:text-foreground"
-                        onClick={() => setActiveMediaId(attachment.id)}
-                        key={attachment.id}
-                        type="button"
-                      >
-                        {attachment.mediaType === "image" ? <img alt="Prévia da imagem" className="size-10 rounded object-cover" src={`/api/support/attachments/${attachment.id}`} /> : attachment.mediaType === "video" ? <span className="flex size-10 items-center justify-center rounded bg-black/30 text-primary">▶</span> : <FileDown className="size-3.5 text-primary" />}
-                        <span className="min-w-0 flex-1 truncate">{attachment.fileName ?? "Arquivo"}</span>
-                        <span className="shrink-0 text-muted">{Math.ceil(attachment.byteSize / 1024)} KB</span>
-                      </button>
-                    ))}
 
                     <div
                       className={cn(

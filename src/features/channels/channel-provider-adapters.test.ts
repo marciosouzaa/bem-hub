@@ -233,6 +233,26 @@ describe("Evolution API adapter", () => {
     });
     expect(result).toEqual({ externalMessageId: "evolution-media-001" });
   });
+
+  test("baixa mídia recebida e traduz o tipo nativo", async () => {
+    let request: { init?: RequestInit; url?: string } = {};
+    const fetcher = (async (input: string | URL | Request, init?: RequestInit) => {
+      request = { init, url: input.toString() };
+      return jsonResponse({
+        base64: "aGVsbG8=",
+        fileName: "foto.jpg",
+        mediaType: "imageMessage",
+        mimetype: "image/jpeg",
+      });
+    }) as typeof fetch;
+
+    const result = await createEvolutionAdapter(evolutionCredentials, fetcher)
+      .downloadInboundMedia?.({ downloadContext: { key: { id: "incoming-001" } } });
+
+    expect(request.url).toBe("https://evolution.example.com/chat/getBase64FromMediaMessage/bem-hub-test");
+    expect(JSON.parse(String(request.init?.body))).toEqual({ message: { key: { id: "incoming-001" } } });
+    expect(result).toEqual({ dataBase64: "aGVsbG8=", fileName: "foto.jpg", mediaType: "image", mimeType: "image/jpeg" });
+  });
 });
 
 describe("Uazapi adapter", () => {

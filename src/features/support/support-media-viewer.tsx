@@ -8,6 +8,7 @@ import {
   Download,
   FileText,
   Headphones,
+  LoaderCircle,
   Minus,
   Play,
   Plus,
@@ -17,6 +18,8 @@ import { useMemo, useState } from "react";
 
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { IconButton } from "@/components/ui/icon-button";
+import { downloadSupportAttachment } from "@/features/support/support-attachment-download";
+import { SupportAudioPlayer } from "@/features/support/support-audio-player";
 import type { SupportConversation } from "@/features/support/queries";
 
 type Attachment = SupportConversation["messages"][number]["attachments"][number];
@@ -41,6 +44,7 @@ function AttachmentPreview({ attachment, className }: { attachment: Attachment; 
 
 export function SupportMediaViewer({ attachments, initialId, onClose }: { attachments: Attachment[]; initialId: string | null; onClose: () => void }) {
   const [zoom, setZoom] = useState(1);
+  const [downloading, setDownloading] = useState(false);
   const initialIndex = useMemo(
     () => Math.max(0, attachments.findIndex((item) => item.id === initialId)),
     [attachments, initialId],
@@ -55,6 +59,15 @@ export function SupportMediaViewer({ attachments, initialId, onClose }: { attach
     setActiveIndex((next + attachments.length) % attachments.length);
     setZoom(1);
   };
+  async function downloadActiveAttachment() {
+    if (downloading) return;
+    setDownloading(true);
+    try {
+      await downloadSupportAttachment(active.id, active.fileName);
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   return <Dialog onOpenChange={(open) => !open && onClose()} open={Boolean(initialId)}>
     <DialogContent className="grid h-[calc(100dvh-2rem)] max-h-[860px] w-[calc(100vw-2rem)] max-w-[1240px] grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden bg-[#090b0a] p-0" showClose={false}>
@@ -64,7 +77,7 @@ export function SupportMediaViewer({ attachments, initialId, onClose }: { attach
           <p className="text-xs text-muted">{Math.ceil(active.byteSize / 1024)} KB · {active.mediaType}</p>
         </div>
         <div className="flex shrink-0 gap-1">
-          <a href={url} download><IconButton label="Baixar" size="sm" variant="ghost"><Download className="size-4" /></IconButton></a>
+          <IconButton disabled={downloading} label="Baixar" onClick={() => void downloadActiveAttachment()} size="sm" variant="ghost">{downloading ? <LoaderCircle className="size-4 animate-spin motion-reduce:animate-none" /> : <Download className="size-4" />}</IconButton>
           <IconButton label="Fechar" onClick={onClose} size="sm" variant="ghost"><X className="size-4" /></IconButton>
         </div>
       </header>
@@ -81,7 +94,7 @@ export function SupportMediaViewer({ attachments, initialId, onClose }: { attach
           ) : active.mediaType === "video" ? (
             <video className="max-h-full max-w-full" controls src={url} />
           ) : active.mediaType === "audio" ? (
-            <audio controls src={url} />
+            <SupportAudioPlayer src={url} />
           ) : (
             <a className="flex flex-col items-center gap-3 text-muted-strong hover:text-primary" href={url} target="_blank">
               <FileText className="size-12" />Abrir documento

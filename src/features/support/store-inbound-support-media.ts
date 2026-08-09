@@ -92,7 +92,7 @@ export async function storeInboundSupportMedia(input: {
 
 function stableUuid(value: string) {
   const hash = createHash("sha256").update(value).digest("hex");
-  return `${hash.slice(0, 8)}-${hash.slice(8, 12)}-${hash.slice(12, 16)}-${hash.slice(16, 20)}-${hash.slice(20, 32)}`;
+  return `${hash.slice(0, 8)}-${hash.slice(8, 12)}-4${hash.slice(13, 16)}-8${hash.slice(17, 20)}-${hash.slice(20, 32)}`;
 }
 
 function safeFileName(fileName: string | null, mimeType: string, mediaType: string) {

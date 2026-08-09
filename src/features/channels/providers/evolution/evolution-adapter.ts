@@ -36,7 +36,7 @@ const sentMessageSchema = z.object({
 const inboundMediaSchema = z.object({
   base64: z.string().trim().min(1),
   fileName: z.string().trim().min(1).nullable().optional(),
-  mediaType: z.enum(["audio", "document", "image", "video"]),
+  mediaType: z.enum(["audioMessage", "documentMessage", "imageMessage", "videoMessage"]),
   mimetype: z.string().trim().min(3),
 });
 
@@ -227,7 +227,12 @@ export function createEvolutionAdapter(
       return {
         dataBase64: media.base64,
         fileName: media.fileName ?? null,
-        mediaType: media.mediaType,
+        mediaType: ({
+          audioMessage: "audio",
+          documentMessage: "document",
+          imageMessage: "image",
+          videoMessage: "video",
+        } as const)[media.mediaType],
         mimeType: media.mimetype,
       };
     },

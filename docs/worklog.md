@@ -4,6 +4,51 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-08-09 - Refinamento: Paridade Visual Da Conversa
+
+- Bolhas agora seguem a ordem do WhatsApp: mídia primeiro e legenda depois.
+  Marcadores internos como `Arquivo: nome` não são exibidos quando o anexo já
+  comunica o conteúdo.
+- Prévia de imagem/vídeo foi limitada a 280×192 px para consulta rápida; o
+  viewer permanece o local para inspeção detalhada.
+- O waveform de áudio preenche toda a faixa e o scrub usa a coordenada real do
+  ponteiro, eliminando o desvio entre ponto clicado e tempo reproduzido.
+- `bun run lint`, `bun run build` e `git diff --check` passaram.
+
+## 2026-08-09 - Refinamento: Mídia Visível, Áudio E Download
+
+- Imagens e vídeos passaram a ocupar a bolha como mídia visual, sem repetir
+  nome de arquivo. Documentos preservam nome/tamanho por não terem preview
+  útil dentro da conversa.
+- Criado player reutilizável de áudio com waveform, reprodução/pausa, arraste
+  de posição e tempos atual/duração; ele é usado tanto na bolha como no viewer.
+- O download no viewer busca o blob autenticado e inicia salvamento local. A
+  abertura em nova aba ficou restrita ao fallback de falha, sem navegar para
+  fora do BEM HUB.
+- `bun run lint`, `bun run build` e `git diff --check` passaram.
+
+## 2026-08-09 - Correção: UUID De Anexo Inbound
+
+- Um anexo recebido pelo Evolution foi gravado com UUID sem versão RFC. O
+  Postgres aceita esse formato, mas a validação da query exige UUID versionado;
+  por isso a conversa inteira caía ao montar a thread.
+- O gerador determinístico agora força versão/variante v4. O único registro
+  afetado foi corrigido in-place, preservando o objeto privado no Storage.
+- Regra operacional: uma mídia inválida nunca deve impedir a leitura de todo o
+  atendimento; a validação de build continua sendo obrigatória após mudanças
+  de contrato/persistência.
+
+## 2026-08-09 - Correção: Tipo Nativo De Mídia Evolution
+
+- O endpoint interno `getBase64FromMediaMessage` devolve tipos nativos como
+  `imageMessage`, enquanto o BEM HUB usa `image`. A incompatibilidade causava
+  resposta 400 após a mensagem já ser criada, deixando somente “Mídia
+  recebida” na thread.
+- O adapter agora traduz os quatro tipos nativos antes de persistir o anexo.
+  Testes de adapter/webhook: 25/25; `bun run lint` passou.
+- A mensagem que já falhou não traz mais seu envelope de mídia no banco; envie
+  uma nova mídia pelo WhatsApp para o Evolution para validar o fluxo corrigido.
+
 ## 2026-08-09 - M2 Atendimento: Mídia Nos Dois Sentidos
 
 ### Feito
