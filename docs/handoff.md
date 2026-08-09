@@ -2,6 +2,43 @@
 
 Atualizado em 2026-08-09.
 
+## Handoff 2026-08-09 - Atendimento: Mídia E Envio Otimista
+
+### Estado Entregue
+
+- Texto é enviado de forma otimista: a bolha local entra em `Enviando`, o
+  composer é liberado e focado novamente, e vários envios podem coexistir.
+  Em confirmação, a bolha é reconciliada pelo ID persistido; em falha, a
+  mensagem server-side volta com `Tentar novamente`.
+- Imagem e vídeo são prévias compactas na bolha (máximo 280×192 px), com
+  mídia antes da legenda; documento conserva nome/tamanho; o viewer continua
+  sendo o espaço de inspeção detalhada.
+- `SupportAudioPlayer` é reutilizado na bolha e no viewer: waveform de largura
+  total, play/pausa, tempo atual/duração e scrub pela posição real do ponteiro.
+  Ele baixa o blob autenticado para evitar cortes de reprodução causados por
+  redirects/URLs assinadas durante o stream.
+- Download do viewer baixa o blob sem sair do BEM HUB. Abrir em nova aba é
+  fallback apenas quando o download não puder ser feito.
+- Mídia inbound Evolution e Wuzapi está implementada. O Evolution traduz
+  `imageMessage`/equivalentes para o contrato interno; IDs de anexo são UUID v4
+  válidos. Um anexo legado inválido foi reparado in-place sem remover o objeto.
+
+### Verificação Atual
+
+- Última validação: `bun run lint`, `bun run build` e `git diff --check`
+  passaram após o envio otimista e após o player de áudio.
+- Testes focados de adapters/webhooks que incluem a tradução Evolution:
+  25/25. Teste completo anterior: 126/126.
+
+### Retomada Exata
+
+1. Fazer smoke manual do áudio completo: tocar, pausar, arrastar para frente e
+   trás, e validar no viewer e na bolha.
+2. Confirmar recebimento real de imagem, vídeo, áudio e documento em ambos os
+   provedores, inclusive preview, legenda e download autenticado.
+3. Próximo item M2: reply, reações e gravação de áudio. Manter o padrão de UX
+   de mensageiro e não expor URL/credencial de provedor ao usuário.
+
 ## Handoff 2026-08-09 - M2 Mídia: Saída, Composição E Viewer
 
 - A mídia de saída está funcional nos dois provedores: Evolution recebe Base64

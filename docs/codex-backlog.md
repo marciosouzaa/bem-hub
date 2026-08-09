@@ -101,6 +101,8 @@ e operar os hosts self-hosted com numeros de teste separados.
 - [ ] Normalizar citações e reações recebidas em ambos os webhooks.
 - [x] Entregar composer de múltiplos anexos, persistindo antes do envio e
   preservando idempotência; cada mídia tem prévia e legenda própria.
+- [x] Tornar envio textual otimista, sem bloquear o composer enquanto a entrega
+  é confirmada no provedor.
 - [ ] Implementar gravação de áudio, reply e reação.
 - [x] Renderizar mídia e arquivo de saída na thread, com fallback, download e
   viewer com zoom/carrossel.

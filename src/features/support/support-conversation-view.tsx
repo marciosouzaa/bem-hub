@@ -1,5 +1,8 @@
+"use client";
+
 import { ArrowLeft, Hash, Radio } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,6 +30,35 @@ export function SupportConversationView({
   viewerId: string;
 }) {
   const name = getSupportContactName(conversation.contact);
+  const [optimisticMessages, setOptimisticMessages] = useState<SupportConversation["messages"]>([]);
+  const messages = [
+    ...conversation.messages,
+    ...optimisticMessages.filter((message) => !conversation.messages.some((persisted) => persisted.id === message.id)),
+  ];
+
+  function addOptimisticMessage(input: { content: string; requestId: string }) {
+    setOptimisticMessages((current) => [...current, {
+      acceptedAt: null,
+      attachments: [],
+      content: input.content,
+      createdAt: new Date().toISOString(),
+      deliveredAt: null,
+      deliveryFailedAt: null,
+      deliveryStatus: "sending",
+      deliveryUpdatedAt: null,
+      direction: "outbound",
+      id: input.requestId,
+      readAt: null,
+      sentAt: null,
+      status: "sending",
+    }]);
+  }
+
+  function settleOptimisticMessage(requestId: string, messageId: string | null) {
+    setOptimisticMessages((current) => messageId
+      ? current.map((message) => message.id === requestId ? { ...message, id: messageId } : message)
+      : current.filter((message) => message.id !== requestId));
+  }
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -93,7 +125,7 @@ export function SupportConversationView({
                 || conversation.assignedTo === viewerId
               )
             }
-            messages={conversation.messages}
+            messages={messages}
           />
           <SupportMessageComposer
             assigned={conversation.assignedTo !== null}
@@ -102,6 +134,9 @@ export function SupportConversationView({
             }
             channelStatus={conversation.channel.operationalStatus}
             conversationId={conversation.id}
+            onOptimisticFailure={(requestId) => settleOptimisticMessage(requestId, null)}
+            onOptimisticSend={addOptimisticMessage}
+            onOptimisticSuccess={settleOptimisticMessage}
             status={conversation.status}
           />
         </main>

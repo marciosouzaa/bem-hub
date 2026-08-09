@@ -47,12 +47,18 @@ export function SupportMessageComposer({
   canSend,
   channelStatus,
   conversationId,
+  onOptimisticFailure,
+  onOptimisticSend,
+  onOptimisticSuccess,
   status,
 }: {
   assigned: boolean;
   canSend: boolean;
   channelStatus: SupportConversation["channel"]["operationalStatus"];
   conversationId: string;
+  onOptimisticFailure: (requestId: string) => void;
+  onOptimisticSend: (input: { content: string; requestId: string }) => void;
+  onOptimisticSuccess: (requestId: string, messageId: string | null) => void;
   status: SupportConversation["status"];
 }) {
   const router = useRouter();
@@ -143,29 +149,34 @@ export function SupportMessageComposer({
     if (!remaining.length) setMediaDialogOpen(false);
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const message = content.trim();
-    if (!message || sending) return;
+    if (!message) return;
 
+    const requestId = crypto.randomUUID();
     setError(null);
-    setSending(true);
-    try {
-      const response = await fetch("/api/support/messages", {
-        body: JSON.stringify({ action: "send", clientRequestId: crypto.randomUUID(), content: message, conversationId }),
-        headers: { "Content-Type": "application/json" }, method: "POST",
-      });
-      const payload: unknown = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(payload && typeof payload === "object" && "message" in payload && typeof payload.message === "string" ? payload.message : "Não foi possível enviar a mensagem.");
+    setContent("");
+    onOptimisticSend({ content: message, requestId });
+    requestAnimationFrame(() => textareaRef.current?.focus());
 
-      setContent("");
-      router.refresh();
-      requestAnimationFrame(() => textareaRef.current?.focus());
-    } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "Não foi possível enviar a mensagem.");
-    } finally {
-      setSending(false);
-    }
+    void (async () => {
+      try {
+        const response = await fetch("/api/support/messages", {
+          body: JSON.stringify({ action: "send", clientRequestId: requestId, content: message, conversationId }),
+          headers: { "Content-Type": "application/json" }, method: "POST",
+        });
+        const payload: unknown = await response.json().catch(() => null);
+        if (!response.ok) throw new Error(payload && typeof payload === "object" && "message" in payload && typeof payload.message === "string" ? payload.message : "Não foi possível enviar a mensagem.");
+        const messageId = payload && typeof payload === "object" && "messageId" in payload && typeof payload.messageId === "string" ? payload.messageId : null;
+        onOptimisticSuccess(requestId, messageId);
+        router.refresh();
+      } catch (submitError) {
+        onOptimisticFailure(requestId);
+        setError(submitError instanceof Error ? submitError.message : "Não foi possível enviar a mensagem.");
+        router.refresh();
+      }
+    })();
   }
 
   async function sendMedia() {
@@ -207,7 +218,7 @@ export function SupportMessageComposer({
   return (
     <div className="border-t border-panel-border bg-panel-subtle px-3 py-3 sm:px-5">
       <form className="mx-auto max-w-3xl rounded-[16px] border border-panel-border bg-panel p-2 shadow-[var(--shadow-card)] focus-within:border-primary/35 focus-within:shadow-[var(--shadow-focus)]" onSubmit={handleSubmit} ref={formRef}>
-        <Textarea aria-label="Mensagem para o contato" className="min-h-20 resize-none border-0 bg-transparent focus:ring-0" disabled={sending} maxLength={10_000} onChange={(event) => setContent(event.target.value)} onKeyDown={handleKeyDown} placeholder="Digite uma mensagem..." ref={textareaRef} value={content} />
+        <Textarea aria-label="Mensagem para o contato" className="min-h-20 resize-none border-0 bg-transparent focus:ring-0" maxLength={10_000} onChange={(event) => setContent(event.target.value)} onKeyDown={handleKeyDown} placeholder="Digite uma mensagem..." ref={textareaRef} value={content} />
         <div className="flex items-end justify-between gap-3 border-t border-panel-border px-2 pb-1 pt-2">
           <div>
             <p className="text-[11px] leading-4 text-muted">Enter envia · Shift + Enter quebra a linha</p>
@@ -216,9 +227,9 @@ export function SupportMessageComposer({
           <div className="flex items-center gap-2">
             <input accept={ACCEPTED_MEDIA} className="sr-only" multiple onChange={(event) => addMedia(event.target.files)} ref={fileInputRef} type="file" />
             <Button aria-label="Anexar mídias" disabled={sending} onClick={() => fileInputRef.current?.click()} size="icon" type="button" variant="ghost"><Paperclip className="size-4" /></Button>
-            <Button disabled={sending || !content.trim()} size="sm" type="submit">
-              {sending ? <LoaderCircle className="size-3.5 animate-spin motion-reduce:animate-none" /> : <SendHorizontal className="size-3.5" />}
-              {sending ? "Enviando" : "Enviar"}
+            <Button disabled={!content.trim()} size="sm" type="submit">
+              <SendHorizontal className="size-3.5" />
+              Enviar
             </Button>
           </div>
         </div>

@@ -4,6 +4,15 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-08-09 - Refinamento: Envio Otimista No Atendimento
+
+- Envio textual cria uma bolha local imediatamente com estado `Enviando`, limpa
+  e devolve foco ao composer sem esperar a resposta do provedor.
+- Vários envios podem seguir em paralelo. Quando o servidor confirma, a bolha
+  local é reconciliada pelo ID definitivo; quando falha, a página recarrega a
+  mensagem persistida com o fluxo existente de `Tentar novamente`.
+- `bun run lint`, `bun run build` e `git diff --check` passaram.
+
 ## 2026-08-09 - Correção: Reprodução Estável De Áudio
 
 - O elemento de áudio dependia da rota que redireciona para URL assinada; em
