@@ -34,6 +34,16 @@ export type ManagedWuzapiProvisionResult = {
   reconciled: boolean;
 };
 
+const managedMediaConfig = {
+  enabled: false,
+  mediaDelivery: "base64",
+};
+
+const managedSessionMediaConfig = {
+  enabled: false,
+  media_delivery: "base64",
+};
+
 export function createManagedWuzapiProvisioner(
   input: {
     adminToken: string;
@@ -66,6 +76,7 @@ export function createManagedWuzapiProvisioner(
               events: "Message,ReadReceipt",
               hmacKey: provisioning.hmacKey,
               name: provisioning.instanceName,
+              s3Config: managedMediaConfig,
               token: provisioning.token,
               webhook: provisioning.webhookUrl,
             }),
@@ -87,6 +98,7 @@ export function createManagedWuzapiProvisioner(
 
         const existing = await findByToken(provisioning.token);
         if (!existing) throw error;
+        await configureMediaDelivery(provisioning.token);
         return {
           externalInstanceId: existing.id,
           reconciled: true,
@@ -114,6 +126,21 @@ export function createManagedWuzapiProvisioner(
         && user.id === lookup.externalInstanceId
       )
       || user.token === lookup.token
+    );
+  }
+
+  async function configureMediaDelivery(token: string) {
+    await fetchProviderJson(
+      fetcher,
+      `${input.baseUrl}/session/s3/config`,
+      {
+        body: JSON.stringify(managedSessionMediaConfig),
+        headers: {
+          "Content-Type": "application/json",
+          token,
+        },
+        method: "POST",
+      },
     );
   }
 }

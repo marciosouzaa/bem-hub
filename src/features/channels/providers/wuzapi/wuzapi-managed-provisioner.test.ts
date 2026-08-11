@@ -53,19 +53,33 @@ describe("managed Wuzapi provisioner", () => {
       events: "Message,ReadReceipt",
       hmacKey: provisioning.hmacKey,
       name: provisioning.instanceName,
+      s3Config: {
+        enabled: false,
+        mediaDelivery: "base64",
+      },
       token: provisioning.token,
       webhook: provisioning.webhookUrl,
     });
   });
 
   test("reconciles an existing user after a token conflict", async () => {
-    const requests: string[] = [];
+    const requests: Array<{ body: unknown; method: string; url: string }> = [];
     const fetcher = (async (
       input: string | URL | Request,
       init?: RequestInit,
     ) => {
-      requests.push(`${init?.method}:${input.toString()}`);
+      requests.push({
+        body: init?.body ? JSON.parse(String(init.body)) : null,
+        method: String(init?.method),
+        url: input.toString(),
+      });
       if (init?.method === "POST") {
+        if (input.toString().endsWith("/session/s3/config")) {
+          return jsonResponse({
+            Details: "S3 configuration saved successfully",
+            Enabled: false,
+          });
+        }
         return jsonResponse({
           code: 409,
           error: "user with this token already exists",
@@ -95,8 +109,34 @@ describe("managed Wuzapi provisioner", () => {
       reconciled: true,
     });
     expect(requests).toEqual([
-      "POST:https://wuzapi.example.com/admin/users",
-      "GET:https://wuzapi.example.com/admin/users",
+      {
+        body: {
+          events: "Message,ReadReceipt",
+          hmacKey: provisioning.hmacKey,
+          name: provisioning.instanceName,
+          s3Config: {
+            enabled: false,
+            mediaDelivery: "base64",
+          },
+          token: provisioning.token,
+          webhook: provisioning.webhookUrl,
+        },
+        method: "POST",
+        url: "https://wuzapi.example.com/admin/users",
+      },
+      {
+        body: null,
+        method: "GET",
+        url: "https://wuzapi.example.com/admin/users",
+      },
+      {
+        body: {
+          enabled: false,
+          media_delivery: "base64",
+        },
+        method: "POST",
+        url: "https://wuzapi.example.com/session/s3/config",
+      },
     ]);
   });
 
