@@ -31,15 +31,21 @@ export function SupportConversationView({
 }) {
   const name = getSupportContactName(conversation.contact);
   const [optimisticMessages, setOptimisticMessages] = useState<SupportConversation["messages"]>([]);
+  const [replyTo, setReplyTo] = useState<SupportConversation["messages"][number] | null>(null);
   const messages = [
     ...conversation.messages,
     ...optimisticMessages.filter((message) => !conversation.messages.some((persisted) => persisted.id === message.id)),
   ];
 
-  function addOptimisticMessage(input: { content: string; requestId: string }) {
+  function addOptimisticMessage(input: {
+    content: string;
+    replyTo: SupportConversation["messages"][number] | null;
+    requestId: string;
+  }) {
     setOptimisticMessages((current) => [...current, {
       acceptedAt: null,
       attachments: [],
+      canReply: false,
       content: input.content,
       createdAt: new Date().toISOString(),
       deliveredAt: null,
@@ -49,6 +55,14 @@ export function SupportConversationView({
       direction: "outbound",
       id: input.requestId,
       readAt: null,
+      replyTo: input.replyTo
+        ? {
+          attachments: input.replyTo.attachments,
+          content: input.replyTo.content,
+          direction: input.replyTo.direction,
+          id: input.replyTo.id,
+        }
+        : null,
       sentAt: null,
       status: "sending",
     }]);
@@ -126,6 +140,7 @@ export function SupportConversationView({
               )
             }
             messages={messages}
+            onReplyTo={setReplyTo}
           />
           <SupportMessageComposer
             assigned={conversation.assignedTo !== null}
@@ -137,6 +152,8 @@ export function SupportConversationView({
             onOptimisticFailure={(requestId) => settleOptimisticMessage(requestId, null)}
             onOptimisticSend={addOptimisticMessage}
             onOptimisticSuccess={settleOptimisticMessage}
+            onReplyToChange={setReplyTo}
+            replyTo={replyTo}
             status={conversation.status}
           />
         </main>

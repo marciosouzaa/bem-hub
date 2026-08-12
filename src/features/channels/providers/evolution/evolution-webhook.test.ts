@@ -78,6 +78,34 @@ describe("Evolution API webhook", () => {
     ]);
   });
 
+  test("normaliza citação recebida pelo WhatsApp", () => {
+    const [event] = verifyAndNormalizeEvolutionWebhook({
+      expectedInstanceId: "bem-hub-test",
+      headers: webhookHeaders(),
+      payload: {
+        data: {
+          key: { fromMe: false, id: "reply-001", remoteJid: "5511999999999@s.whatsapp.net" },
+          message: {
+            extendedTextMessage: {
+              contextInfo: { stanzaId: "quoted-001" },
+              text: "Respondendo pelo celular.",
+            },
+          },
+          messageTimestamp: 1_750_000_000,
+        },
+        event: "messages.upsert",
+        instance: "bem-hub-test",
+      },
+      rawBody: "{}",
+    }, apiKey, "bem-hub-test");
+
+    expect(event).toMatchObject({
+      providerMessageId: "reply-001",
+      replyToProviderMessageId: "quoted-001",
+      text: "Respondendo pelo celular.",
+    });
+  });
+
   test("normaliza imagem recebida e preserva contexto só para download server-side", () => {
     const [event] = verifyAndNormalizeEvolutionWebhook({
       expectedInstanceId: "bem-hub-test",

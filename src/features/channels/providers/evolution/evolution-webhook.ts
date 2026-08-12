@@ -100,6 +100,7 @@ function normalizeMessage(message: UnknownRecord): ChannelMessageEvent | null {
   }
 
   const providerMessageId = firstString(message, ["key.id", "keyId", "id"]);
+  const replyToProviderMessageId = findQuotedProviderMessageId(message);
   const media = extractEvolutionMedia(message);
   const text = firstString(message, [
     "message.conversation",
@@ -125,9 +126,26 @@ function normalizeMessage(message: UnknownRecord): ChannelMessageEvent | null {
     senderName: fromMe ? null : firstString(message, ["pushName"]),
     senderPhone: normalizePhone(identitySource),
     text,
+    ...(replyToProviderMessageId ? { replyToProviderMessageId } : {}),
     ...(media ? { media: { ...media, downloadContext: message } } : {}),
     type: fromMe ? "message.sent_by_phone" : "message.received",
   });
+}
+
+function findQuotedProviderMessageId(record: UnknownRecord, depth = 0): string | null {
+  if (depth > 5) return null;
+  const context = firstRecord(record, ["contextInfo", "ContextInfo"]);
+  const reference = context
+    ? firstString(context, ["stanzaId", "StanzaId", "stanzaID", "StanzaID"])
+    : null;
+  if (reference) return reference;
+
+  for (const value of Object.values(record)) {
+    if (!isRecord(value)) continue;
+    const nestedReference = findQuotedProviderMessageId(value, depth + 1);
+    if (nestedReference) return nestedReference;
+  }
+  return null;
 }
 
 function extractEvolutionMedia(message: UnknownRecord): {

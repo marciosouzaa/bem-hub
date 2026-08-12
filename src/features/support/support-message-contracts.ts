@@ -4,6 +4,7 @@ export const directSupportMessageSchema = z.object({
   clientRequestId: z.string().uuid(),
   content: z.string().trim().min(1).max(10_000),
   conversationId: z.string().uuid(),
+  replyToMessageId: z.string().uuid().optional(),
 });
 
 export const retrySupportMessageSchema = z.object({

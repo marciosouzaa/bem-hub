@@ -8,7 +8,10 @@ import { ChannelProviderRequestError } from "@/features/channels/providers/provi
 import { resolveChannelProvider } from "@/features/channels/providers/resolve-channel-provider";
 import { getOrCreateWorkspace } from "@/features/organizations/bootstrap";
 import type { DirectSupportMessageResult } from "@/features/support/support-message-contracts";
-import type { ChannelMediaMessageInput } from "@/features/channels/providers/channel-provider-adapter";
+import type {
+  ChannelMediaMessageInput,
+  ChannelMessageReference,
+} from "@/features/channels/providers/channel-provider-adapter";
 import { decryptSecret, EncryptionConfigError } from "@/lib/security/encryption";
 import {
   createSupabaseAdminClient,
@@ -32,6 +35,10 @@ const deliverySchema = z.object({
   messageId: z.string().uuid(),
   provider: z.string().min(1),
   recipient: z.string().trim().min(3).max(300),
+  replyTo: z.object({
+    direction: z.enum(["inbound", "outbound"]),
+    externalMessageId: z.string().trim().min(1),
+  }).nullable().default(null),
   status: z.literal("sending"),
 });
 
@@ -141,6 +148,9 @@ export async function deliverSupportMessageAttempt(
 
     const sent = await adapter.sendTextMessage({
       recipient: delivery.recipient,
+      ...(delivery.replyTo
+        ? { replyTo: delivery.replyTo as ChannelMessageReference }
+        : {}),
       text: delivery.content,
       trackingId: delivery.messageId,
     });
@@ -215,7 +225,14 @@ export async function deliverSupportMediaAttempt(
     if (!adapter.sendMediaMessage) {
       throw new SupportMessageSendError("Este provedor ainda não permite enviar mídia.", 422);
     }
-    const sent = await adapter.sendMediaMessage({ ...media, recipient: delivery.recipient, trackingId: delivery.messageId });
+    const sent = await adapter.sendMediaMessage({
+      ...media,
+      recipient: delivery.recipient,
+      ...(delivery.replyTo
+        ? { replyTo: delivery.replyTo as ChannelMessageReference }
+        : {}),
+      trackingId: delivery.messageId,
+    });
     const { error: finalizeError } = await admin.rpc("finalize_support_message_send_attempt", {
       delivery_metadata: { acceptedAt: new Date().toISOString(), provider: delivery.provider },
       delivery_status: "sent",

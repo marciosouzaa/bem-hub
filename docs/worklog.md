@@ -4,6 +4,72 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-08-11 - Atendimento: Reply Bidirecional E Paridade De Citação
+
+### Feito
+
+- Aplicadas no remoto BEM HUB (`lzqugeqtcisgaztggcxq`) as migrations de reply:
+  `20260812011209_add_support_message_replies` e
+  `20260812013625_20260811213647_link_inbound_support_message_replies`.
+- Validado no banco: `begin_support_message_reply` e
+  `link_support_message_reply` existem; apenas `service_role` executa o vínculo
+  inbound. `anon` e `authenticated` não possuem essa permissão.
+- Responder pelo BEM HUB para o WhatsApp funciona para texto e mídia; o
+  WhatsApp recebe a citação correta.
+- A thread e o composer agora mostram paridade maior de citação: autor,
+  texto/legenda, tipo (`Foto`, `Vídeo`, `Áudio`, `Documento`), nome do arquivo
+  e miniatura/ícone. A miniatura citada abre o viewer privado.
+- Wuzapi e Evolution permanecem sem alteração de API, webhook ou tunnel.
+
+### Pendente Real
+
+- A direção inversa ainda falha no smoke: ao responder no WhatsApp, a mensagem
+  chega ao BEM HUB, porém sem a referência/citação. Não marcar reply inbound
+  como concluído.
+- O normalizador já procura `ContextInfo.StanzaId`/`contextInfo.stanzaId`, mas
+  o payload real desse caso não está salvo. Capturar um webhook real sanitizado
+  do provedor/canal em teste, congelar fixture e ajustar o normalizador ao
+  envelope efetivo. Depois enviar nova resposta por texto e por mídia para
+  confirmar o link e a prévia no BEM HUB.
+- Mensagens já recebidas sem `reply_to_message_id` não podem ganhar citação
+  retroativamente, pois o payload bruto não é persistido.
+
+### Verificação
+
+- `bun test src/features/support/support-reply-preview.test.ts`: 2/2.
+- `bun run lint`, `bun run build` e `git diff --check` passaram.
+- Advisor de segurança não reportou alerta das funções novas. Permanecem avisos
+  anteriores de RPCs autenticadas intencionais e de proteção contra senha
+  vazada desativada.
+
+### Próximo Passo Exato
+
+1. Capturar e sanitizar o payload de uma resposta feita no WhatsApp para a
+   mensagem citada; não alterar Wuzapi/Evolution antes de conhecer o envelope.
+2. Cobrir esse payload com teste de normalização e persistir o ID citado.
+3. Repetir smoke inbound texto e mídia, recarregando a conversa no BEM HUB.
+
+## 2026-08-11 - Atendimento: Reply Provider-neutral Local
+
+- A thread permite selecionar mensagem já confirmada e responder com texto ou
+  anexo. Composer mostra contexto, permite cancelar e mantém envio otimista.
+- Browser envia somente ID interno. Nova RPC tenant-scoped valida organização,
+  conversa, canal e confirmação da mensagem original antes de resolver o ID
+  externo exclusivamente no servidor para Wuzapi/Evolution.
+- Webhooks Wuzapi e Evolution agora extraem `ContextInfo.StanzaId`, persistem a
+  ligação somente quando a mensagem citada pertence à mesma conversa e deixam
+  a referência não resolvida auditável sem falhar a entrega.
+- Esta entrada foi superada pela aplicação remota registrada acima. Não houve
+  mudança em APIs, webhook configurado ou tunnel dos provedores.
+- `bun test src/features/support/send-support-message.test.ts`, adapters 21/21,
+  `bun run lint`, `bun run build` e `git diff --check` passaram.
+
+### Próximo passo
+
+Capturar o payload real de uma resposta pelo aparelho: a entrada chega, mas a
+citação não está sendo extraída no envelope real. O webhook já recebido não
+pode ser reconstruído sem payload salvo.
+
 ## 2026-08-09 - Refinamento: Envio Otimista No Atendimento
 
 - Envio textual cria uma bolha local imediatamente com estado `Enviando`, limpa

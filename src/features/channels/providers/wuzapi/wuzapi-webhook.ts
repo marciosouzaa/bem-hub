@@ -73,6 +73,9 @@ function normalizeMessage(event: UnknownRecord, payload: UnknownRecord): Channel
   );
   const providerMessageId = firstString(info, ["ID", "id"]);
   const message = firstRecord(event, ["Message", "message"]);
+  const replyToProviderMessageId = message
+    ? findQuotedProviderMessageId(message)
+    : null;
   const media = message ? extractWuzapiMedia(message, payload) : null;
   const text = message ? firstString(message, [
     "conversation",
@@ -98,9 +101,26 @@ function normalizeMessage(event: UnknownRecord, payload: UnknownRecord): Channel
     senderName: fromMe ? null : firstString(info, ["PushName", "pushName"]),
     senderPhone: normalizePhone(identitySource),
     text,
+    ...(replyToProviderMessageId ? { replyToProviderMessageId } : {}),
     ...(media ? { media } : {}),
     type: fromMe ? "message.sent_by_phone" : "message.received",
   })];
+}
+
+function findQuotedProviderMessageId(record: UnknownRecord, depth = 0): string | null {
+  if (depth > 5) return null;
+  const context = firstRecord(record, ["contextInfo", "ContextInfo"]);
+  const reference = context
+    ? firstString(context, ["stanzaId", "StanzaId", "stanzaID", "StanzaID"])
+    : null;
+  if (reference) return reference;
+
+  for (const value of Object.values(record)) {
+    if (!isRecord(value)) continue;
+    const nestedReference = findQuotedProviderMessageId(value, depth + 1);
+    if (nestedReference) return nestedReference;
+  }
+  return null;
 }
 
 function extractWuzapiMedia(message: UnknownRecord, payload: UnknownRecord): {

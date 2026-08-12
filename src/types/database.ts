@@ -1261,6 +1261,16 @@ export type Database = {
         }
         Returns: Json
       }
+      begin_support_message_reply: {
+        Args: {
+          message_content: string
+          request_id: string
+          target_conversation_id: string
+          target_organization_id: string
+          target_reply_to_message_id: string
+        }
+        Returns: Json
+      }
       begin_support_message_retry: {
         Args: {
           request_id: string
@@ -1359,6 +1369,14 @@ export type Database = {
           target_webhook_endpoint_id: string
         }
         Returns: Json
+      }
+      link_support_message_reply: {
+        Args: {
+          target_message_id: string
+          target_provider_message_id: string
+          target_webhook_endpoint_id: string
+        }
+        Returns: boolean
       }
       ingest_support_message_delivery_update: {
         Args: {

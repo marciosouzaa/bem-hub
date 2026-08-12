@@ -36,4 +36,17 @@ describe("support message request", () => {
       conversationId: messageId,
     }).success).toBe(false);
   });
+
+  test("aceita referência interna para resposta", () => {
+    expect(supportMessageRequestSchema.parse({
+      action: "send",
+      clientRequestId: requestId,
+      content: "Respondendo à mensagem anterior",
+      conversationId: messageId,
+      replyToMessageId: "33333333-3333-4333-8333-333333333333",
+    })).toMatchObject({
+      action: "send",
+      replyToMessageId: "33333333-3333-4333-8333-333333333333",
+    });
+  });
 });

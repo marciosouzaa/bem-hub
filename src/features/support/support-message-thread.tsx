@@ -2,7 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element */
 
-import { FileDown, Headset, LoaderCircle, Play, RotateCcw, UserRound } from "lucide-react";
+import { FileDown, Headset, LoaderCircle, Play, Reply, RotateCcw, UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -11,6 +11,7 @@ import type { SupportConversation } from "@/features/support/queries";
 import { SupportMessageDeliveryStatus } from "@/features/support/support-message-delivery-status";
 import { SupportAudioPlayer } from "@/features/support/support-audio-player";
 import { SupportMediaViewer } from "@/features/support/support-media-viewer";
+import { SupportReplyPreview } from "@/features/support/support-reply-preview";
 import {
   formatSupportTime,
 } from "@/features/support/support-presenters";
@@ -19,9 +20,11 @@ import { cn } from "@/lib/utils";
 export function SupportMessageThread({
   canRetry,
   messages,
+  onReplyTo,
 }: {
   canRetry: boolean;
   messages: SupportConversation["messages"];
+  onReplyTo: (message: SupportConversation["messages"][number]) => void;
 }) {
   const router = useRouter();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -132,6 +135,10 @@ export function SupportMessageThread({
                       message.status === "failed" && "border-danger/35",
                     )}
                   >
+                    {message.replyTo ? (
+                      <SupportReplyPreview className="mb-2 border-panel-border/80 bg-black/10" onOpenAttachment={setActiveMediaId} replyTo={message.replyTo} />
+                    ) : null}
+
                     {message.attachments.map((attachment) => {
                       const attachmentUrl = `/api/support/attachments/${attachment.id}`;
                       if (attachment.mediaType === "image") return <button aria-label="Abrir imagem" className="block overflow-hidden rounded-xl border border-panel-border bg-black/30" key={attachment.id} onClick={() => setActiveMediaId(attachment.id)} type="button"><img alt="Imagem recebida" className="max-h-48 max-w-[280px] object-cover" src={attachmentUrl} /></button>;
@@ -160,6 +167,20 @@ export function SupportMessageThread({
                       <span aria-hidden="true">·</span>
                       <SupportMessageDeliveryStatus message={message} />
                     </div>
+
+                    {message.canReply ? (
+                      <button
+                        className={cn(
+                          "mt-2 inline-flex min-h-7 items-center gap-1 rounded-md px-1.5 text-[11px] font-medium text-muted transition-colors hover:bg-panel-elevated hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45",
+                          outbound && "float-right",
+                        )}
+                        onClick={() => onReplyTo(message)}
+                        type="button"
+                      >
+                        <Reply className="size-3.5" />
+                        Responder
+                      </button>
+                    ) : null}
 
                     {outbound
                       && message.status === "failed"

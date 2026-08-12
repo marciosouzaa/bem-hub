@@ -98,17 +98,29 @@ e operar os hosts self-hosted com numeros de teste separados.
 - [x] Normalizar anexos recebidos em ambos os webhooks e baixá-los no servidor,
   nunca no navegador ou por URL do fornecedor. Wuzapi entrega Base64 assinado;
   Evolution é recuperado pela API server-side autenticada.
-- [ ] Normalizar citações e reações recebidas em ambos os webhooks.
+- [ ] Fechar citação recebida do WhatsApp em Wuzapi/Evolution: migrations estão
+  aplicadas e o normalizador procura `ContextInfo.StanzaId`, mas o smoke real
+  ainda entrega a mensagem sem referência. Capturar payload sanitizado,
+  congelar fixture e ajustar o envelope antes de alterar APIs dos provedores.
+- [ ] Normalizar reações recebidas em ambos os webhooks.
 - [x] Entregar composer de múltiplos anexos, persistindo antes do envio e
   preservando idempotência; cada mídia tem prévia e legenda própria.
 - [x] Tornar envio textual otimista, sem bloquear o composer enquanto a entrega
   é confirmada no provedor.
-- [ ] Implementar gravação de áudio, reply e reação.
+- [x] Aplicar migrations de reply no remoto BEM HUB: registradas como
+  `20260812011209_add_support_message_replies` e
+  `20260812013625_20260811213647_link_inbound_support_message_replies`; RPCs
+  e permissões verificadas.
+- [x] Validar resposta citada do BEM HUB para o WhatsApp, texto e mídia;
+  provider recebe a citação correta sem alteração das APIs hospedadas.
+- [ ] Implementar gravação de áudio e reações.
 - [x] Renderizar mídia e arquivo de saída na thread, com fallback, download e
   viewer com zoom/carrossel.
 - [x] Renderizar mídia recebida pelo aparelho pela mesma thread/viewer privado;
   o smoke real comparativo segue pendente.
-- [ ] Renderizar citação e reação recebidas pelo aparelho.
+- [ ] Renderizar citação recebida pelo aparelho após corrigir a extração do
+  payload real; UI já mostra texto/legenda, tipo, arquivo e miniatura quando o
+  `reply_to_message_id` chega persistido. Reações continuam pendentes.
 - [ ] Executar smoke bidirecional por Wuzapi/Evolution com dois tenants e
   validar limites, MIME, tamanho, exclusão e isolamento de Storage.
 - [x] Implementar provisionamento gerenciado Wuzapi com nome, credenciais

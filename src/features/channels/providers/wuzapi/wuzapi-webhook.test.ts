@@ -73,6 +73,30 @@ describe("Wuzapi webhook", () => {
     });
   });
 
+  test("normaliza citação recebida pelo WhatsApp", () => {
+    const [event] = verifyAndNormalizeWuzapiWebhook(signedInput({
+      event: {
+        Info: {
+          Chat: "5521999999999@s.whatsapp.net", ID: "reply-001", IsFromMe: false,
+          IsGroup: false, Sender: "5521999999999@s.whatsapp.net", Timestamp: "2026-08-11T12:00:00Z",
+        },
+        Message: {
+          ExtendedTextMessage: {
+            ContextInfo: { StanzaId: "quoted-001" },
+            Text: "Respondendo pelo celular.",
+          },
+        },
+      },
+      type: "Message",
+    }), hmacKey);
+
+    expect(event).toMatchObject({
+      providerMessageId: "reply-001",
+      replyToProviderMessageId: "quoted-001",
+      text: "Respondendo pelo celular.",
+    });
+  });
+
   test("normaliza mídia Base64 entregue pelo webhook", () => {
     const [event] = verifyAndNormalizeWuzapiWebhook(signedInput({
       base64: "aGVsbG8=",

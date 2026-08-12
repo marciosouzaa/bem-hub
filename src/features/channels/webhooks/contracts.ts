@@ -33,6 +33,7 @@ export const channelInboundMediaSchema = z.object({
 export const channelInboundMessageEventSchema = z.object({
   occurredAt: z.string().datetime(),
   providerMessageId: z.string().trim().min(1).max(300),
+  replyToProviderMessageId: z.string().trim().min(1).max(300).optional(),
   senderIdentityType: channelSenderIdentityTypeSchema,
   senderIdentityValue: z.string().trim().min(3).max(300),
   senderName: z.string().trim().min(1).max(200).nullable(),

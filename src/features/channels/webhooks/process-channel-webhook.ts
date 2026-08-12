@@ -149,6 +149,21 @@ export async function processChannelWebhook(
     if (error) throw error;
 
     const result = ingestResultSchema.parse(data);
+    if (
+      event.type !== "message.delivery_updated"
+      && event.replyToProviderMessageId
+      && result.messageId
+    ) {
+      const { error: replyError } = await admin.rpc(
+        "link_support_message_reply",
+        {
+          target_message_id: result.messageId,
+          target_provider_message_id: event.replyToProviderMessageId,
+          target_webhook_endpoint_id: endpoint.id,
+        },
+      );
+      if (replyError) throw replyError;
+    }
     if (event.type !== "message.delivery_updated" && event.media) {
       if (!result.messageId) throw new Error("Webhook de mídia não retornou a mensagem persistida.");
       await storeInboundSupportMedia({

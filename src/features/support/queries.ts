@@ -47,10 +47,26 @@ export const supportInboxItemSchema = z.object({
   }),
 });
 
+const supportMessageAttachmentSchema = z.object({
+  id: z.string().uuid(),
+  fileName: z.string().nullable(),
+  mediaType: z.enum(["audio", "document", "image", "video"]),
+  mimeType: z.string(),
+  byteSize: z.number().int().nonnegative(),
+  status: z.enum(["pending", "available", "failed"]),
+});
+
 const supportMessageBaseSchema = z.object({
+  canReply: z.boolean().default(false),
   id: z.string().uuid(),
   direction: z.enum(["inbound", "outbound"]),
   content: z.string(),
+  replyTo: z.object({
+    id: z.string().uuid(),
+    direction: z.enum(["inbound", "outbound"]),
+    content: z.string(),
+    attachments: z.array(supportMessageAttachmentSchema).default([]),
+  }).nullable().default(null),
   status: z.enum([
     "received",
     "draft",
@@ -85,9 +101,7 @@ const supportMessageDeliveryStateSchema = z.object({
 });
 
 const supportMessageSchema = supportMessageBaseSchema.extend({
-  attachments: z.array(z.object({
-    id: z.string().uuid(), fileName: z.string().nullable(), mediaType: z.enum(["audio", "document", "image", "video"]), mimeType: z.string(), byteSize: z.number().int().nonnegative(), status: z.enum(["pending", "available", "failed"]),
-  })),
+  attachments: z.array(supportMessageAttachmentSchema),
   deliveryStatus: supportDeliveryStatusSchema,
   deliveryUpdatedAt: z.string().nullable(),
   acceptedAt: z.string().nullable(),
@@ -266,7 +280,16 @@ export async function getSupportConversation(
     ...conversationData,
     ...supportConversationStateSchema.parse(stateResult.data),
     events: supportEventsSchema.parse(eventsResult.data),
-    messages: messages.map((message) => ({ ...message, attachments: attachmentsByMessage.get(message.id) ?? [] })),
+    messages: messages.map((message) => ({
+      ...message,
+      attachments: attachmentsByMessage.get(message.id) ?? [],
+      replyTo: message.replyTo
+        ? {
+          ...message.replyTo,
+          attachments: attachmentsByMessage.get(message.replyTo.id) ?? [],
+        }
+        : null,
+    })),
   });
 }
 

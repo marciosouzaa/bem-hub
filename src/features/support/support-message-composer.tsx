@@ -21,6 +21,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { IconButton } from "@/components/ui/icon-button";
 import { Textarea } from "@/components/ui/textarea";
 import type { SupportConversation } from "@/features/support/queries";
+import { SupportReplyPreview } from "@/features/support/support-reply-preview";
 
 const ACCEPTED_MEDIA = "image/jpeg,image/png,image/webp,video/mp4,audio/mpeg,audio/mp4,audio/ogg,application/pdf,text/plain,text/csv,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
@@ -50,6 +51,8 @@ export function SupportMessageComposer({
   onOptimisticFailure,
   onOptimisticSend,
   onOptimisticSuccess,
+  onReplyToChange,
+  replyTo,
   status,
 }: {
   assigned: boolean;
@@ -57,8 +60,14 @@ export function SupportMessageComposer({
   channelStatus: SupportConversation["channel"]["operationalStatus"];
   conversationId: string;
   onOptimisticFailure: (requestId: string) => void;
-  onOptimisticSend: (input: { content: string; requestId: string }) => void;
+  onOptimisticSend: (input: {
+    content: string;
+    replyTo: SupportConversation["messages"][number] | null;
+    requestId: string;
+  }) => void;
   onOptimisticSuccess: (requestId: string, messageId: string | null) => void;
+  onReplyToChange: (message: SupportConversation["messages"][number] | null) => void;
+  replyTo: SupportConversation["messages"][number] | null;
   status: SupportConversation["status"];
 }) {
   const router = useRouter();
@@ -155,15 +164,23 @@ export function SupportMessageComposer({
     if (!message) return;
 
     const requestId = crypto.randomUUID();
+    const replyToMessageId = replyTo?.id;
     setError(null);
     setContent("");
-    onOptimisticSend({ content: message, requestId });
+    onOptimisticSend({ content: message, replyTo, requestId });
+    onReplyToChange(null);
     requestAnimationFrame(() => textareaRef.current?.focus());
 
     void (async () => {
       try {
         const response = await fetch("/api/support/messages", {
-          body: JSON.stringify({ action: "send", clientRequestId: requestId, content: message, conversationId }),
+          body: JSON.stringify({
+            action: "send",
+            clientRequestId: requestId,
+            content: message,
+            conversationId,
+            ...(replyToMessageId ? { replyToMessageId } : {}),
+          }),
           headers: { "Content-Type": "application/json" }, method: "POST",
         });
         const payload: unknown = await response.json().catch(() => null);
@@ -190,6 +207,7 @@ export function SupportMessageComposer({
         form.set("caption", item.caption.trim());
         form.set("clientRequestId", crypto.randomUUID());
         form.set("conversationId", conversationId);
+        if (replyTo?.id) form.set("replyToMessageId", replyTo.id);
         form.set("file", item.file);
         const response = await fetch("/api/support/media", { body: form, method: "POST" });
         const payload: unknown = await response.json().catch(() => null);
@@ -218,6 +236,14 @@ export function SupportMessageComposer({
   return (
     <div className="border-t border-panel-border bg-panel-subtle px-3 py-3 sm:px-5">
       <form className="mx-auto max-w-3xl rounded-[16px] border border-panel-border bg-panel p-2 shadow-[var(--shadow-card)] focus-within:border-primary/35 focus-within:shadow-[var(--shadow-focus)]" onSubmit={handleSubmit} ref={formRef}>
+        {replyTo ? (
+          <div className="mx-1 mt-1 flex items-start gap-2">
+            <SupportReplyPreview className="flex-1 border-primary/20 bg-primary/5" replyTo={replyTo} />
+            <IconButton label="Cancelar resposta" onClick={() => onReplyToChange(null)} size="sm" variant="ghost">
+              <X className="size-3.5" />
+            </IconButton>
+          </div>
+        ) : null}
         <Textarea aria-label="Mensagem para o contato" className="min-h-20 resize-none border-0 bg-transparent focus:ring-0" maxLength={10_000} onChange={(event) => setContent(event.target.value)} onKeyDown={handleKeyDown} placeholder="Digite uma mensagem..." ref={textareaRef} value={content} />
         <div className="flex items-end justify-between gap-3 border-t border-panel-border px-2 pb-1 pt-2">
           <div>

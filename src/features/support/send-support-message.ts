@@ -20,13 +20,19 @@ export async function sendSupportMessage(
   const input = directSupportMessageSchema.parse(rawInput);
   const { admin, organizationId, supabase } =
     await getSupportDeliveryContext();
+  const rpcName = input.replyToMessageId
+    ? "begin_support_message_reply"
+    : "begin_support_message_send";
   const { data: begun, error: beginError } = await supabase.rpc(
-    "begin_support_message_send",
+    rpcName,
     {
       message_content: input.content,
       request_id: input.clientRequestId,
       target_conversation_id: input.conversationId,
       target_organization_id: organizationId,
+      ...(input.replyToMessageId
+        ? { target_reply_to_message_id: input.replyToMessageId }
+        : {}),
     },
   );
 
@@ -63,6 +69,12 @@ export async function retrySupportMessage(
 
 function mapBeginError(error: { code?: string; message: string }) {
   if (error.code === "P0002") {
+    if (error.message.includes("support_reply_target")) {
+      return new SupportMessageSendError(
+        "A mensagem original não está mais disponível para resposta.",
+        409,
+      );
+    }
     return new SupportMessageSendError(
       "Atendimento não encontrado ou já resolvido.",
       404,
@@ -87,6 +99,12 @@ function mapBeginError(error: { code?: string; message: string }) {
     );
   }
   if (error.code === "22023") {
+    if (error.message.includes("support_reply_target_not_delivered")) {
+      return new SupportMessageSendError(
+        "Aguarde a confirmação da mensagem original antes de responder.",
+        409,
+      );
+    }
     return new SupportMessageSendError("Mensagem inválida.", 400);
   }
   return new SupportMessageSendError(

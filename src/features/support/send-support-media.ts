@@ -12,19 +12,20 @@ const acceptedTypes = new Map<string, "audio" | "document" | "image" | "video">(
   ["text/csv", "document"], ["application/vnd.openxmlformats-officedocument.wordprocessingml.document", "document"],
 ]);
 
-export async function sendSupportMedia(input: { caption: string; clientRequestId: string; conversationId: string; file: File }) {
-  const parsed = z.object({ caption: z.string().trim().max(10_000), clientRequestId: z.string().uuid(), conversationId: z.string().uuid() }).parse(input);
+export async function sendSupportMedia(input: { caption: string; clientRequestId: string; conversationId: string; file: File; replyToMessageId?: string }) {
+  const parsed = z.object({ caption: z.string().trim().max(10_000), clientRequestId: z.string().uuid(), conversationId: z.string().uuid(), replyToMessageId: z.string().uuid().optional() }).parse(input);
   if (!input.file.size || input.file.size > maxSize) throw new Error("O arquivo deve ter até 25 MB.");
   const mediaType = acceptedTypes.get(input.file.type);
   if (!mediaType) throw new Error("Formato de arquivo não suportado.");
 
   const { admin, organizationId, supabase } = await getSupportDeliveryContext();
   const content = parsed.caption || `Arquivo: ${input.file.name}`;
-  const { data: begun, error: beginError } = await supabase.rpc("begin_support_message_send", {
+  const { data: begun, error: beginError } = await supabase.rpc(parsed.replyToMessageId ? "begin_support_message_reply" : "begin_support_message_send", {
     message_content: content,
     request_id: parsed.clientRequestId,
     target_conversation_id: parsed.conversationId,
     target_organization_id: organizationId,
+    ...(parsed.replyToMessageId ? { target_reply_to_message_id: parsed.replyToMessageId } : {}),
   });
   if (beginError) throw new Error("Não foi possível preparar o envio do arquivo.");
   const begin = supportMessageBeginResultSchema.parse(begun);

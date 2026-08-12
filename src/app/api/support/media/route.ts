@@ -14,6 +14,9 @@ export async function POST(request: Request) {
       caption: typeof formData.get("caption") === "string" ? String(formData.get("caption")) : "",
       clientRequestId: String(formData.get("clientRequestId") ?? ""),
       conversationId: String(formData.get("conversationId") ?? ""), file,
+      replyToMessageId: typeof formData.get("replyToMessageId") === "string"
+        ? String(formData.get("replyToMessageId"))
+        : undefined,
     });
     return NextResponse.json(result, { status: result.status === "sending" ? 202 : result.duplicate ? 200 : 201 });
   } catch (error) {
