@@ -2,7 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element */
 
-import { FileDown, Headset, LoaderCircle, Play, Reply, RotateCcw, UserRound } from "lucide-react";
+import { FileDown, Headset, LoaderCircle, Play, RotateCcw, UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import type { SupportConversation } from "@/features/support/queries";
 import { SupportMessageDeliveryStatus } from "@/features/support/support-message-delivery-status";
 import { SupportAudioPlayer } from "@/features/support/support-audio-player";
+import { SupportMessageActions } from "@/features/support/support-message-actions";
 import { SupportMediaViewer } from "@/features/support/support-media-viewer";
 import { SupportReplyPreview } from "@/features/support/support-reply-preview";
 import {
@@ -128,13 +129,15 @@ export function SupportMessageThread({
 
                   <div
                     className={cn(
-                      "max-w-[min(82%,680px)] rounded-[16px] border px-4 py-3 shadow-[var(--shadow-card)]",
+                      "group/message relative max-w-[min(82%,680px)] rounded-[16px] border px-4 py-3 pr-9 shadow-[var(--shadow-card)]",
                       outbound
                         ? "rounded-br-[6px] border-primary/20 bg-sidebar-active/65"
                         : "rounded-bl-[6px] border-panel-border bg-panel",
                       message.status === "failed" && "border-danger/35",
                     )}
                   >
+                    <SupportMessageActions message={message} onReplyTo={onReplyTo} />
+
                     {message.replyTo ? (
                       <SupportReplyPreview className="mb-2 border-panel-border/80 bg-black/10" onOpenAttachment={setActiveMediaId} replyTo={message.replyTo} />
                     ) : null}
@@ -167,20 +170,6 @@ export function SupportMessageThread({
                       <span aria-hidden="true">·</span>
                       <SupportMessageDeliveryStatus message={message} />
                     </div>
-
-                    {message.canReply ? (
-                      <button
-                        className={cn(
-                          "mt-2 inline-flex min-h-7 items-center gap-1 rounded-md px-1.5 text-[11px] font-medium text-muted transition-colors hover:bg-panel-elevated hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45",
-                          outbound && "float-right",
-                        )}
-                        onClick={() => onReplyTo(message)}
-                        type="button"
-                      >
-                        <Reply className="size-3.5" />
-                        Responder
-                      </button>
-                    ) : null}
 
                     {outbound
                       && message.status === "failed"

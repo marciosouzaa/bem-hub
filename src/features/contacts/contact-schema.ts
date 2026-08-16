@@ -57,6 +57,7 @@ export const contactFormSchema = z.object({
 });
 
 export const contactSchema = z.object({
+  avatarUrl: z.string().url().nullable().default(null),
   channelNames: z.array(z.string()),
   conversationCount: z.number().int().nonnegative(),
   email: z.string().nullable(),

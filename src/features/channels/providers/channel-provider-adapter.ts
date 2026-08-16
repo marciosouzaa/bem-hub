@@ -67,6 +67,10 @@ export type ChannelInboundMediaDownload = {
   mediaType: ChannelMediaType;
 };
 
+export type ChannelContactProfilePicture = {
+  avatarUrl: string | null;
+};
+
 /** Binary content is accepted only inside the server delivery boundary. */
 export type ChannelMediaMessageInput = {
   caption?: string;
@@ -83,6 +87,9 @@ export interface ChannelProviderAdapter {
   configureWebhook?(input: ChannelWebhookConfiguration): Promise<void>;
   disconnect(): Promise<void>;
   downloadInboundMedia?(input: { downloadContext: unknown }): Promise<ChannelInboundMediaDownload>;
+  getContactProfilePicture?(
+    input: { phone: string },
+  ): Promise<ChannelContactProfilePicture>;
   getHealth(): Promise<ChannelProviderHealth>;
   getWebhookHealth?(
     input: ChannelWebhookConfiguration,

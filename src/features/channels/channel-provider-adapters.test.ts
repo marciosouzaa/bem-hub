@@ -253,6 +253,33 @@ describe("Evolution API adapter", () => {
     expect(JSON.parse(String(request.init?.body))).toEqual({ message: { key: { id: "incoming-001" } } });
     expect(result).toEqual({ dataBase64: "aGVsbG8=", fileName: "foto.jpg", mediaType: "image", mimeType: "image/jpeg" });
   });
+
+  test("busca foto de perfil do contato", async () => {
+    let request: { init?: RequestInit; url?: string } = {};
+    const fetcher = (async (input: string | URL | Request, init?: RequestInit) => {
+      request = { init, url: input.toString() };
+      return jsonResponse({
+        profilePictureUrl: "https://pps.whatsapp.net/avatar.jpg",
+      });
+    }) as typeof fetch;
+
+    const result = await createEvolutionAdapter(
+      evolutionCredentials,
+      fetcher,
+    ).getContactProfilePicture?.({
+      phone: "+55 (11) 99999-9999",
+    });
+
+    expect(request.url).toBe(
+      "https://evolution.example.com/chat/fetchProfilePictureUrl/bem-hub-test",
+    );
+    expect(JSON.parse(String(request.init?.body))).toEqual({
+      number: "5511999999999",
+    });
+    expect(result).toEqual({
+      avatarUrl: "https://pps.whatsapp.net/avatar.jpg",
+    });
+  });
 });
 
 describe("Uazapi adapter", () => {
@@ -648,6 +675,37 @@ describe("Wuzapi adapter", () => {
       Phone: "5521999999999",
     });
     expect(result).toEqual({ externalMessageId: "AUDIO001" });
+  });
+
+  test("busca avatar do contato por endpoint do usuario", async () => {
+    let request: { init?: RequestInit; url?: string } = {};
+    const fetcher = (async (input: string | URL | Request, init?: RequestInit) => {
+      request = { init, url: input.toString() };
+      return jsonResponse({
+        data: {
+          Type: "preview",
+          URL: "https://pps.whatsapp.net/avatar-preview.jpg",
+        },
+        success: true,
+      });
+    }) as typeof fetch;
+
+    const result = await createWuzapiAdapter(
+      wuzapiCredentials,
+      fetcher,
+    ).getContactProfilePicture?.({
+      phone: "+55 21 99999-9999",
+    });
+
+    expect(request.url).toBe("https://wuzapi.example.com/user/avatar");
+    expect(request.init?.method).toBe("POST");
+    expect(JSON.parse(String(request.init?.body))).toEqual({
+      Phone: "5521999999999",
+      Preview: true,
+    });
+    expect(result).toEqual({
+      avatarUrl: "https://pps.whatsapp.net/avatar-preview.jpg",
+    });
   });
 });
 

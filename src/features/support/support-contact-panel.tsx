@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatContactPhone } from "@/features/contacts/phone-normalization";
 import type { SupportConversation } from "@/features/support/queries";
 import { SupportChannelStatusBadge } from "@/features/support/support-channel-status-badge";
+import { SupportContactAvatar } from "@/features/support/support-contact-avatar";
 import {
   getContactInitials,
   getSupportContactName,
@@ -33,9 +34,12 @@ export function SupportContactPanel({
   return (
     <aside className="hidden min-h-0 overflow-y-auto border-l border-panel-border bg-panel-subtle p-5 xl:block">
       <div className="flex items-center gap-3">
-        <span className="flex size-11 items-center justify-center rounded-xl border border-primary/20 bg-sidebar-active text-sm font-bold text-primary">
-          {getContactInitials(name)}
-        </span>
+        <SupportContactAvatar
+          active
+          avatarUrl={conversation.contact.avatarUrl}
+          className="size-11 rounded-xl text-sm"
+          initials={getContactInitials(name)}
+        />
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-foreground">{name}</p>
           <p className="mt-1 text-xs text-muted">Contexto do contato</p>

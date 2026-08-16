@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { SupportContactPanel } from "@/features/support/support-contact-panel";
 import { SupportChannelStatusBadge } from "@/features/support/support-channel-status-badge";
 import { SupportConversationActions } from "@/features/support/support-conversation-actions";
+import { SupportContactAvatar } from "@/features/support/support-contact-avatar";
 import { SupportMessageComposer } from "@/features/support/support-message-composer";
 import { SupportMessageThread } from "@/features/support/support-message-thread";
 import { SupportReadReceipt } from "@/features/support/support-read-receipt";
@@ -84,9 +85,12 @@ export function SupportConversationView({
           </Link>
         </Button>
 
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-[11px] border border-primary/20 bg-sidebar-active text-xs font-bold text-primary">
-          {getContactInitials(name)}
-        </span>
+        <SupportContactAvatar
+          active
+          avatarUrl={conversation.contact.avatarUrl}
+          className="size-10 rounded-[11px] text-xs"
+          initials={getContactInitials(name)}
+        />
 
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-2">

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import type { SupportInboxItem as SupportInboxItemData } from "@/features/support/queries";
 import { SupportChannelStatusBadge } from "@/features/support/support-channel-status-badge";
+import { SupportContactAvatar } from "@/features/support/support-contact-avatar";
 import {
   formatSupportDate,
   getContactInitials,
@@ -52,16 +53,12 @@ export function SupportInboxItem({
       href={`/app/support/${item.id}`}
     >
       <div className="flex items-start gap-3">
-        <span
-          className={cn(
-            "flex size-10 shrink-0 items-center justify-center rounded-[10px] border text-xs font-bold",
-            active
-              ? "border-primary/25 bg-primary/15 text-primary"
-              : "border-panel-border bg-panel-elevated text-muted-strong",
-          )}
-        >
-          {getContactInitials(name)}
-        </span>
+        <SupportContactAvatar
+          active={active}
+          avatarUrl={item.contact.avatarUrl}
+          className="size-10 rounded-[10px] text-xs"
+          initials={getContactInitials(name)}
+        />
 
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">

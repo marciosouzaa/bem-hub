@@ -40,6 +40,13 @@ const sentMessageSchema = z.object({
   data: z.object({ Id: z.string().trim().min(1) }),
 });
 
+const avatarResponseSchema = z.object({
+  data: z.object({
+    URL: z.string().trim().url().nullable().optional(),
+  }).optional(),
+  URL: z.string().trim().url().nullable().optional(),
+});
+
 type WuzapiCredentials = z.infer<typeof wuzapiCredentialsSchema>;
 
 export function createWuzapiAdapter(
@@ -91,6 +98,24 @@ export function createWuzapiAdapter(
     },
     async getWebhookHealth(input) {
       return getWebhookHealth(input.url);
+    },
+    async getContactProfilePicture(input) {
+      const payload = await fetchProviderJson(
+        fetcher,
+        `${credentials.baseUrl}/user/avatar`,
+        {
+          body: JSON.stringify({
+            Phone: onlyDigits(input.phone),
+            Preview: true,
+          }),
+          headers,
+          method: "POST",
+        },
+      );
+      const parsed = avatarResponseSchema.parse(payload);
+      return {
+        avatarUrl: parsed.data?.URL ?? parsed.URL ?? null,
+      };
     },
     async requestPairing(): Promise<ChannelPairing> {
       let status = await getStatus();

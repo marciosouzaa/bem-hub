@@ -13,6 +13,7 @@ import {
 import { decryptSecret } from "@/lib/security/encryption";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { storeInboundSupportMedia } from "@/features/support/store-inbound-support-media";
+import { syncSupportContactAvatarForInboundMessage } from "@/features/support/support-contact-avatar-sync";
 
 const ingestResultSchema = z.object({
   duplicate: z.boolean(),
@@ -172,6 +173,19 @@ export async function processChannelWebhook(
         messageId: result.messageId,
         organizationId: endpoint.organization_id,
         supabase: admin,
+      });
+    }
+    if (
+      event.type !== "message.delivery_updated"
+      && !result.duplicate
+      && result.messageId
+    ) {
+      await syncSupportContactAvatarForInboundMessage({
+        admin,
+        adapter,
+        messageId: result.messageId,
+        organizationId: endpoint.organization_id,
+        phone: event.senderPhone ?? null,
       });
     }
     if (result.status === "failed") {

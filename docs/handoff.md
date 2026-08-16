@@ -1,6 +1,34 @@
 # Handoff Notes
 
-Atualizado em 2026-08-09.
+Atualizado em 2026-08-16.
+
+## Handoff 2026-08-16 - Atendimento: Menu, Avatar E Tunnels Locais
+
+- Menu por mensagem foi adicionado dentro da bolha do Atendimento. `Responder`,
+  `Copiar` e `Baixar` usam contratos existentes; `Editar` e `Excluir` ficam
+  visiveis porem desabilitados ate existir fluxo server-side.
+- Wuzapi e Evolution agora possuem contrato opcional para buscar foto de perfil
+  do contato. O sync e best-effort no inicio manual e no inbound; falha do
+  provider ou privacidade do WhatsApp nao bloqueia mensagem.
+- Migration local pendente de aplicacao remota:
+  `20260816142315_add_contact_avatar_url`.
+- Containers locais estao ativos:
+  - Wuzapi: `127.0.0.1:8081`
+  - Evolution: `127.0.0.1:8082`
+- Quick Tunnels desta sessao:
+  - BEM HUB: `https://revision-civilization-tutorials-durham.trycloudflare.com`
+  - Wuzapi: `https://look-resolved-bluetooth-situations.trycloudflare.com`
+  - Evolution: `https://screensavers-california-paris-absolute.trycloudflare.com`
+- `.env.local` foi atualizado localmente com o novo `APP_BASE_URL` e bases
+  internas dos providers. Nao commitar `.env.local`.
+- Verificado: suite completa 134/134, lint, build e `git diff --check`.
+
+### Retomada Exata
+
+1. Aplicar a migration de avatar no Supabase remoto quando autorizado.
+2. Atualizar estado do canal para reconciliar webhook com o novo `APP_BASE_URL`.
+3. Fazer smoke real 1:1 validando dropdown da bolha, avatar do contato,
+   recebimento/envio e captura do payload real de reply inbound.
 
 ## Handoff 2026-08-09 - Atendimento: Mídia E Envio Otimista
 

@@ -623,6 +623,68 @@ export type Database = {
           },
         ]
       }
+      contacts: {
+        Row: {
+          archived_at: string | null
+          avatar_fetched_at: string | null
+          avatar_url: string | null
+          created_at: string
+          email: string | null
+          id: string
+          lifecycle_stage: string
+          name: string | null
+          organization_id: string
+          phone: string | null
+          phone_country_code: string | null
+          phone_match_key: string | null
+          phone_normalization_reason: string | null
+          phone_normalization_status: string
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string | null
+          avatar_fetched_at?: string | null
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          lifecycle_stage?: string
+          name?: string | null
+          organization_id: string
+          phone?: string | null
+          phone_country_code?: string | null
+          phone_match_key?: string | null
+          phone_normalization_reason?: string | null
+          phone_normalization_status?: string
+          updated_at?: string
+        }
+        Update: {
+          archived_at?: string | null
+          avatar_fetched_at?: string | null
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          lifecycle_stage?: string
+          name?: string | null
+          organization_id?: string
+          phone?: string | null
+          phone_country_code?: string | null
+          phone_match_key?: string | null
+          phone_normalization_reason?: string | null
+          phone_normalization_status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contacts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversations: {
         Row: {
           assistant_id: string | null
@@ -909,6 +971,126 @@ export type Database = {
           status?: string
           storage_bucket?: string
           storage_object_path?: string
+        }
+        Relationships: []
+      }
+      support_conversations: {
+        Row: {
+          assigned_at: string | null
+          assigned_to: string | null
+          channel_connection_id: string
+          contact_id: string
+          created_at: string
+          id: string
+          last_message_at: string
+          organization_id: string
+          priority: string
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_to?: string | null
+          channel_connection_id: string
+          contact_id: string
+          created_at?: string
+          id?: string
+          last_message_at?: string
+          organization_id: string
+          priority?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_to?: string | null
+          channel_connection_id?: string
+          contact_id?: string
+          created_at?: string
+          id?: string
+          last_message_at?: string
+          organization_id?: string
+          priority?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
+      }
+      support_messages: {
+        Row: {
+          accepted_at: string | null
+          channel_connection_id: string
+          client_request_id: string | null
+          content: string
+          conversation_id: string
+          created_at: string
+          delivered_at: string | null
+          delivery_failed_at: string | null
+          delivery_status: string
+          delivery_updated_at: string | null
+          direction: string
+          external_message_id: string | null
+          id: string
+          metadata: Json
+          organization_id: string
+          read_at: string | null
+          reply_to_message_id: string | null
+          sent_at: string | null
+          sent_by: string | null
+          status: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          channel_connection_id: string
+          client_request_id?: string | null
+          content: string
+          conversation_id: string
+          created_at?: string
+          delivered_at?: string | null
+          delivery_failed_at?: string | null
+          delivery_status?: string
+          delivery_updated_at?: string | null
+          direction: string
+          external_message_id?: string | null
+          id?: string
+          metadata?: Json
+          organization_id: string
+          read_at?: string | null
+          reply_to_message_id?: string | null
+          sent_at?: string | null
+          sent_by?: string | null
+          status?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          channel_connection_id?: string
+          client_request_id?: string | null
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          delivered_at?: string | null
+          delivery_failed_at?: string | null
+          delivery_status?: string
+          delivery_updated_at?: string | null
+          direction?: string
+          external_message_id?: string | null
+          id?: string
+          metadata?: Json
+          organization_id?: string
+          read_at?: string | null
+          reply_to_message_id?: string | null
+          sent_at?: string | null
+          sent_by?: string | null
+          status?: string
         }
         Relationships: []
       }

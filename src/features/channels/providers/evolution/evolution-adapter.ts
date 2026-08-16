@@ -40,6 +40,10 @@ const inboundMediaSchema = z.object({
   mimetype: z.string().trim().min(3),
 });
 
+const profilePictureSchema = z.object({
+  profilePictureUrl: z.string().trim().url().nullable().optional(),
+});
+
 type EvolutionCredentials = z.infer<typeof evolutionCredentialsSchema>;
 
 export function createEvolutionAdapter(
@@ -142,6 +146,20 @@ export function createEvolutionAdapter(
         };
       }
       return { healthy: true, reason: null };
+    },
+    async getContactProfilePicture(input) {
+      const payload = await fetchProviderJson(
+        fetcher,
+        `${credentials.baseUrl}/chat/fetchProfilePictureUrl/${instancePath}`,
+        {
+          body: JSON.stringify({ number: onlyDigits(input.phone) }),
+          headers,
+          method: "POST",
+        },
+      );
+      return {
+        avatarUrl: profilePictureSchema.parse(payload).profilePictureUrl ?? null,
+      };
     },
     async requestPairing(input): Promise<ChannelPairing> {
       const query = input.method === "pin"

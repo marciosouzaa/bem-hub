@@ -6,6 +6,7 @@ import {
   supportConversationStartRequestSchema,
 } from "@/features/support/start-support-conversation-contracts";
 import type { DirectSupportMessageResult } from "@/features/support/support-message-contracts";
+import { syncSupportContactAvatarForChannelContact } from "@/features/support/support-contact-avatar-sync";
 import {
   deliverSupportMessageAttempt,
   getSupportDeliveryContext,
@@ -64,6 +65,12 @@ export async function startSupportConversation(
       organizationId,
       start,
     );
+    await syncSupportContactAvatarForChannelContact({
+      admin,
+      channelConnectionId: start.channelConnectionId,
+      contactId: start.contactId,
+      organizationId,
+    });
     return {
       ...delivery,
       conversationCreated: start.conversationCreated,

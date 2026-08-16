@@ -118,6 +118,13 @@ e operar os hosts self-hosted com numeros de teste separados.
   viewer com zoom/carrossel.
 - [x] Renderizar mídia recebida pelo aparelho pela mesma thread/viewer privado;
   o smoke real comparativo segue pendente.
+- [x] Adicionar menu por mensagem dentro da bolha, com `Responder`, `Copiar` e
+  `Baixar` habilitados quando ja existem contratos e `Editar`/`Excluir`
+  desabilitados ate haver fluxo server-side.
+- [ ] Aplicar remotamente a migration local
+  `20260816142315_add_contact_avatar_url` e validar foto de perfil do contato
+  em Wuzapi/Evolution; o codigo ja busca avatar de forma best-effort ao iniciar
+  atendimento ou receber mensagem.
 - [ ] Renderizar citação recebida pelo aparelho após corrigir a extração do
   payload real; UI já mostra texto/legenda, tipo, arquivo e miniatura quando o
   `reply_to_message_id` chega persistido. Reações continuam pendentes.

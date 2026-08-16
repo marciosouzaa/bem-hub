@@ -4,6 +4,61 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-08-16 - Atendimento: Menu De Mensagem, Avatar E Tunnels
+
+### Feito
+
+- Bolhas do Atendimento ganharam menu no canto superior direito, no padrao
+  familiar de mensageiro. Acoes disponiveis: `Responder`, `Copiar` e `Baixar`
+  anexos existentes. `Editar` e `Excluir` aparecem desabilitados ate haver
+  contrato server-side seguro.
+- Removido o botao solto `Responder` da base da bolha; a acao agora fica no
+  dropdown da propria mensagem.
+- Wuzapi e Evolution receberam contrato opcional para buscar foto de perfil do
+  contato. O sync e best-effort, nao quebra envio/webhook quando o WhatsApp nao
+  libera avatar ou o provider falha.
+- Migration local criada para `contacts.avatar_url` e `contacts.avatar_fetched_at`
+  e para expor `avatarUrl` em `list_contacts`,
+  `get_support_inbox_operational` e `get_support_conversation`.
+- Header do atendimento, inbox e painel lateral renderizam a foto quando
+  disponivel e caem para iniciais quando a imagem falha.
+- Containers locais Wuzapi e Evolution estao rodando via Docker Compose. Tres
+  Quick Tunnels foram iniciados:
+  - BEM HUB: `https://revision-civilization-tutorials-durham.trycloudflare.com`
+  - Wuzapi: `https://look-resolved-bluetooth-situations.trycloudflare.com`
+  - Evolution: `https://screensavers-california-paris-absolute.trycloudflare.com`
+- `.env.local` local foi atualizado com `APP_BASE_URL` do tunnel BEM HUB e
+  base URLs internas `127.0.0.1` para Wuzapi/Evolution.
+
+### Verificacao
+
+- `bun test src/features/channels/channel-provider-adapters.test.ts`: 23/23.
+- `bun test`: 134/134.
+- `bun run lint` passou.
+- `bun run build` passou.
+- `git diff --check` passou.
+- Health externo do tunnel BEM HUB retornou HTTP 204; Evolution retornou HTTP
+  200; Wuzapi retornou HTTP 401 esperado sem token.
+
+### Pendente Real
+
+- Aplicar remotamente a migration
+  `20260816142315_add_contact_avatar_url` antes de esperar avatar persistido no
+  projeto Supabase remoto.
+- Fazer QA visual autenticado desktop/mobile do menu da bolha; browser integrado
+  nao ficou disponivel nesta sessao.
+- Fazer smoke real de profile pic em Wuzapi e Evolution com contato 1:1.
+- Continuar pendencia anterior: capturar payload real sanitizado de reply
+  inbound que ainda chega sem referencia.
+
+### Proximo Passo Exato
+
+1. Aplicar a migration de avatar no remoto quando autorizado.
+2. Clicar `Atualizar estado` no canal para reconciliar webhook com o novo
+   `APP_BASE_URL`.
+3. Enviar mensagem direta 1:1 e validar: dropdown da bolha, resposta, avatar do
+   contato, midia e reply inbound com payload capturado.
+
 ## 2026-08-11 - Atendimento: Reply Bidirecional E Paridade De Citação
 
 ### Feito
