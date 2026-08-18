@@ -1,0 +1,12 @@
+▲ Next.js 16.2.9 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.1.9:3000
+- Environments: .env.local
+✓ Ready in 1023ms
+- Experiments (use with caution):
+  · proxyClientMaxBodySize: "6mb"
+
+ GET /api/health/webhook-ingress 204 in 1682ms (next.js: 1229ms, proxy.ts: 428ms, application-code: 25ms)
+ GET /api/health/webhook-ingress 204 in 57ms (next.js: 25ms, proxy.ts: 12ms, application-code: 20ms)
+✓ Finished filesystem cache database compaction in 10.2s
+[?25h

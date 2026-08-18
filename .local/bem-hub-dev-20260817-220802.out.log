@@ -1,0 +1,43 @@
+▲ Next.js 16.2.9 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.1.9:3000
+- Environments: .env.local
+✓ Ready in 692ms
+- Experiments (use with caution):
+  · proxyClientMaxBodySize: "6mb"
+
+ GET / 200 in 1099ms (next.js: 146ms, proxy.ts: 499ms, application-code: 454ms)
+ GET /api/health/webhook-ingress 204 in 165ms (next.js: 140ms, proxy.ts: 10ms, application-code: 15ms)
+ GET /api/health/webhook-ingress 204 in 20ms (next.js: 4ms, proxy.ts: 10ms, application-code: 6ms)
+ GET /api/health/webhook-ingress 204 in 15ms (next.js: 4ms, proxy.ts: 6ms, application-code: 5ms)
+ GET / 200 in 140ms (next.js: 6ms, proxy.ts: 9ms, application-code: 125ms)
+ GET / 200 in 110ms (next.js: 4ms, proxy.ts: 6ms, application-code: 100ms)
+ GET / 200 in 108ms (next.js: 5ms, proxy.ts: 6ms, application-code: 97ms)
+ GET / 200 in 132ms (next.js: 6ms, proxy.ts: 5ms, application-code: 121ms)
+ GET / 200 in 140ms (next.js: 7ms, proxy.ts: 25ms, application-code: 108ms)
+ GET / 200 in 134ms (next.js: 7ms, proxy.ts: 19ms, application-code: 108ms)
+ GET / 200 in 125ms (next.js: 7ms, proxy.ts: 14ms, application-code: 104ms)
+ GET / 200 in 117ms (next.js: 4ms, proxy.ts: 4ms, application-code: 109ms)
+ GET / 200 in 169ms (next.js: 7ms, proxy.ts: 17ms, application-code: 145ms)
+ GET / 200 in 137ms (next.js: 8ms, proxy.ts: 16ms, application-code: 113ms)
+ GET / 200 in 107ms (next.js: 4ms, proxy.ts: 5ms, application-code: 98ms)
+ GET / 200 in 353ms (next.js: 15ms, proxy.ts: 20ms, application-code: 317ms)
+ GET / 200 in 416ms (next.js: 15ms, proxy.ts: 17ms, application-code: 384ms)
+ GET /app 200 in 2.5s (next.js: 668ms, proxy.ts: 469ms, application-code: 1396ms)
+ GET /app/support 200 in 1015ms (next.js: 195ms, proxy.ts: 34ms, application-code: 786ms)
+ GET /app/support 200 in 595ms (next.js: 18ms, proxy.ts: 47ms, application-code: 530ms)
+ GET /app/support/245a2c91-df11-465d-9799-cd4b06d809a2 200 in 2.2s (next.js: 1473ms, proxy.ts: 11ms, application-code: 718ms)
+ POST /app/support/245a2c91-df11-465d-9799-cd4b06d809a2 200 in 1350ms (next.js: 33ms, proxy.ts: 16ms, application-code: 1301ms)
+  └─ ƒ markSupportConversationReadAction("245a2c91-df11-465d-9799-cd4b06d809a2") in 234ms src/features/support/support-actions.ts
+ GET /app/support/245a2c91-df11-465d-9799-cd4b06d809a2 200 in 949ms (next.js: 11ms, proxy.ts: 12ms, application-code: 926ms)
+ GET /api/support/attachments/8f05ed68-0584-4762-831c-ce45a2e41751 307 in 2.4s (next.js: 1940ms, proxy.ts: 18ms, application-code: 436ms)
+ GET / 200 in 198ms (next.js: 6ms, proxy.ts: 8ms, application-code: 185ms)
+ GET /app/support/75126980-5b50-4370-ac66-036e64bc9682 200 in 801ms (next.js: 64ms, proxy.ts: 35ms, application-code: 701ms)
+ POST /app/support/75126980-5b50-4370-ac66-036e64bc9682 200 in 1495ms (next.js: 22ms, proxy.ts: 39ms, application-code: 1434ms)
+  └─ ƒ markSupportConversationReadAction("75126980-5b50-4370-ac66-036e64bc9682") in 214ms src/features/support/support-actions.ts
+ GET /app/support/75126980-5b50-4370-ac66-036e64bc9682 200 in 1155ms (next.js: 16ms, proxy.ts: 44ms, application-code: 1095ms)
+ GET /app/support/75126980-5b50-4370-ac66-036e64bc9682 200 in 926ms (next.js: 44ms, proxy.ts: 10ms, application-code: 873ms)
+ GET /app/support/75126980-5b50-4370-ac66-036e64bc9682 200 in 1020ms (next.js: 42ms, proxy.ts: 14ms, application-code: 965ms)
+ GET / 200 in 206ms (next.js: 7ms, proxy.ts: 10ms, application-code: 189ms)
+ GET / 200 in 409ms (next.js: 16ms, proxy.ts: 25ms, application-code: 368ms)
+ GET / 200 in 252ms (next.js: 9ms, proxy.ts: 23ms, application-code: 220ms)

@@ -1154,3 +1154,15 @@ Proxima sessao:
   preview, fallback por tipo e viewer modal com zoom, carrossel e download.
 - Próximo bloco: modal de composição múltipla e mídia recebida por webhook para
   ambos os provedores.
+
+## Handoff 2026-08-17 - URLs De Producao E QuickTunnel
+
+- URL de producao usada pelo usuario para abrir o app: `https://bem-hub.vercel.app/app`.
+- Para variaveis tecnicas de webhook, usar origem sem path: `APP_BASE_URL=https://bem-hub.vercel.app`.
+  O backend concatena `/api/...`; usar `/app` em `APP_BASE_URL` quebra health/webhook.
+- Front/producao estao no Vercel; para smoke temporario com este notebook como servidor,
+  atualizar apenas as managed base URLs do provedor no ambiente de producao.
+- QuickTunnel atual para Wuzapi: `https://collective-nested-authorized-martin.trycloudflare.com`.
+- QuickTunnel atual para Evolution: `https://verification-notes-basename-chassis.trycloudflare.com`.
+- QuickTunnels sao efemeros: se notebook dormir, internet cair ou cloudflared reiniciar,
+  gerar novas URLs e atualizar env de producao com redeploy.

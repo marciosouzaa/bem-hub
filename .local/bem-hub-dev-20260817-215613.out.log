@@ -1,0 +1,11 @@
+▲ Next.js 16.2.9 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.1.9:3000
+- Environments: .env.local
+✓ Ready in 752ms
+- Experiments (use with caution):
+  · proxyClientMaxBodySize: "6mb"
+
+ GET / 200 in 1469ms (next.js: 200ms, proxy.ts: 538ms, application-code: 731ms)
+ GET /api/health/webhook-ingress 204 in 183ms (next.js: 154ms, proxy.ts: 12ms, application-code: 17ms)
+[?25h

@@ -39,10 +39,18 @@ export async function ensureManagedCredentials(input: {
       JSON.parse(decryptSecret(stored.encrypted_credentials)),
     );
     if (existing.webhookEndpointToken) {
-      return {
+      const credentials = {
         ...existing,
+        baseUrl: input.baseUrl,
         webhookEndpointToken: existing.webhookEndpointToken,
       };
+      if (existing.baseUrl !== input.baseUrl) {
+        await updateStoredCredentialsBaseUrl({
+          ...input,
+          credentials,
+        });
+      }
+      return credentials;
     }
   }
 
@@ -87,6 +95,38 @@ export async function ensureManagedWebhookEndpoint(input: {
     .single();
   if (error || !data) throw new ManagedProvisioningDatabaseError();
   return data.id;
+}
+
+async function updateStoredCredentialsBaseUrl(input: {
+  admin: AdminClient;
+  baseUrl: string;
+  channelId: string;
+  credentials: ManagedWuzapiCredentials;
+  organizationId: string;
+}) {
+  const now = new Date().toISOString();
+  const [{ error: credentialsError }, { error: channelError }] = await Promise.all([
+    input.admin
+      .from("channel_credentials")
+      .update({
+        encrypted_credentials: encryptSecret(JSON.stringify(input.credentials)),
+        updated_at: now,
+      })
+      .eq("channel_connection_id", input.channelId)
+      .eq("organization_id", input.organizationId),
+    input.admin
+      .from("channel_connections")
+      .update({
+        credential_updated_at: now,
+        provider_base_url: input.baseUrl,
+        status: "provisioning",
+        status_reason: "Credenciais internas protegidas. Criando a instância.",
+      })
+      .eq("id", input.channelId)
+      .eq("organization_id", input.organizationId),
+  ]);
+
+  if (credentialsError || channelError) throw new ManagedProvisioningDatabaseError();
 }
 
 function createCredentials(baseUrl: string): ManagedWuzapiCredentials {
