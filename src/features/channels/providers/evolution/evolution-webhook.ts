@@ -95,18 +95,25 @@ function normalizeDeliveryStatus(value: unknown) {
 function normalizeMessage(message: UnknownRecord): ChannelMessageEvent | null {
   const chatId = firstString(message, ["key.remoteJidAlt", "key.remoteJid"]);
   const fromMe = firstBoolean(message, ["key.fromMe"]) ?? false;
-  if (!chatId || chatId.endsWith("@g.us") || chatId === "status@broadcast") {
+  if (
+    !chatId
+    || chatId.endsWith("@g.us")
+    || chatId.endsWith("@newsletter")
+    || chatId === "status@broadcast"
+  ) {
     return null;
   }
 
   const providerMessageId = firstString(message, ["key.id", "keyId", "id"]);
+  const content = firstRecord(message, ["message"]);
+  if (!content || isProtocolOnlyMessage(content)) return null;
   const replyToProviderMessageId = findQuotedProviderMessageId(message);
   const media = extractEvolutionMedia(message);
   const text = firstString(message, [
     "message.conversation",
     "message.extendedTextMessage.text",
     "message.text",
-  ]) ?? media?.caption ?? "Mídia recebida";
+  ]) ?? media?.caption ?? (media ? "Mídia recebida" : null);
   if (!providerMessageId || !text) return null;
 
   const participant = firstString(message, [
@@ -115,6 +122,7 @@ function normalizeMessage(message: UnknownRecord): ChannelMessageEvent | null {
   ]);
   const identitySource = fromMe ? chatId : participant ?? chatId;
   const identity = normalizeIdentity(identitySource);
+  if (identity.type === "remote_jid") return null;
 
   return channelMessageEventSchema.parse({
     occurredAt: normalizeTimestamp(
@@ -130,6 +138,10 @@ function normalizeMessage(message: UnknownRecord): ChannelMessageEvent | null {
     ...(media ? { media: { ...media, downloadContext: message } } : {}),
     type: fromMe ? "message.sent_by_phone" : "message.received",
   });
+}
+
+function isProtocolOnlyMessage(message: UnknownRecord) {
+  return firstRecord(message, ["protocolMessage", "ProtocolMessage"]) !== null;
 }
 
 function findQuotedProviderMessageId(record: UnknownRecord, depth = 0): string | null {

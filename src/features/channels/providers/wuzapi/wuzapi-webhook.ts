@@ -73,6 +73,7 @@ function normalizeMessage(event: UnknownRecord, payload: UnknownRecord): Channel
   );
   const providerMessageId = firstString(info, ["ID", "id"]);
   const message = firstRecord(event, ["Message", "message"]);
+  if (!message || isProtocolOnlyMessage(message)) return [];
   const replyToProviderMessageId = message
     ? findQuotedProviderMessageId(message)
     : null;
@@ -84,13 +85,14 @@ function normalizeMessage(event: UnknownRecord, payload: UnknownRecord): Channel
     "ExtendedTextMessage.text",
     "extendedTextMessage.Text",
     "ExtendedTextMessage.Text",
-  ]) ?? media?.caption ?? "Mídia recebida" : null;
+  ]) ?? media?.caption ?? (media ? "Mídia recebida" : null) : null;
   if (!chatId || !providerMessageId || !text) return [];
 
   const identitySource = fromMe
     ? preferPhoneIdentity(chatId, recipientAlt)
     : preferPhoneIdentity(senderId ?? chatId, senderAlt);
   const identity = normalizeIdentity(identitySource);
+  if (identity.type === "remote_jid") return [];
   return [channelMessageEventSchema.parse({
     occurredAt: normalizeTimestamp(
       firstValue(info, ["Timestamp", "timestamp"]),
@@ -121,6 +123,10 @@ function findQuotedProviderMessageId(record: UnknownRecord, depth = 0): string |
     if (nestedReference) return nestedReference;
   }
   return null;
+}
+
+function isProtocolOnlyMessage(message: UnknownRecord) {
+  return firstRecord(message, ["protocolMessage", "ProtocolMessage"]) !== null;
 }
 
 function extractWuzapiMedia(message: UnknownRecord, payload: UnknownRecord): {

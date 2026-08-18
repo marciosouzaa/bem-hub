@@ -131,6 +131,76 @@ describe("Evolution API webhook", () => {
     expect(event && "media" in event && event.media?.downloadContext).toBeDefined();
   });
 
+  test("ignora pacotes de sincronizacao do historico", () => {
+    const events = verifyAndNormalizeEvolutionWebhook({
+      expectedInstanceId: "bem-hub-test",
+      headers: webhookHeaders(),
+      payload: {
+        data: {
+          key: {
+            fromMe: true,
+            id: "history-sync-001",
+            remoteJid: "5511999999999@s.whatsapp.net",
+          },
+          message: {
+            protocolMessage: {
+              historySyncNotification: { chunkOrder: 1, syncType: 3 },
+              type: 5,
+            },
+          },
+          messageTimestamp: 1_750_000_000,
+        },
+        event: "messages.upsert",
+        instance: "bem-hub-test",
+      },
+      rawBody: "{}",
+    }, apiKey, "bem-hub-test");
+
+    expect(events).toEqual([]);
+  });
+
+  test("ignora newsletters e pacotes sem texto nem mídia real", () => {
+    const newsletter = verifyAndNormalizeEvolutionWebhook({
+      expectedInstanceId: "bem-hub-test",
+      headers: webhookHeaders(),
+      payload: {
+        data: {
+          key: {
+            fromMe: false,
+            id: "newsletter-001",
+            remoteJid: "120363421932149025@newsletter",
+          },
+          message: { imageMessage: { mimetype: "image/jpeg" } },
+          messageTimestamp: 1_750_000_000,
+        },
+        event: "messages.upsert",
+        instance: "bem-hub-test",
+      },
+      rawBody: "{}",
+    }, apiKey, "bem-hub-test");
+    const empty = verifyAndNormalizeEvolutionWebhook({
+      expectedInstanceId: "bem-hub-test",
+      headers: webhookHeaders(),
+      payload: {
+        data: {
+          key: {
+            fromMe: false,
+            id: "empty-001",
+            remoteJid: "5511999999999@s.whatsapp.net",
+          },
+          message: { messageContextInfo: { deviceListMetadataVersion: 2 } },
+          messageTimestamp: 1_750_000_000,
+        },
+        event: "messages.upsert",
+        instance: "bem-hub-test",
+      },
+      rawBody: "{}",
+    }, apiKey, "bem-hub-test");
+
+    expect(newsletter).toEqual([]);
+    expect(empty).toEqual([]);
+  });
+
   test("rejeita API key ou instância divergente", () => {
     expect(() => verifyAndNormalizeEvolutionWebhook({
       expectedInstanceId: "bem-hub-test",

@@ -22,6 +22,7 @@ import { IconButton } from "@/components/ui/icon-button";
 import { Textarea } from "@/components/ui/textarea";
 import type { SupportConversation } from "@/features/support/queries";
 import { SupportReplyPreview } from "@/features/support/support-reply-preview";
+import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 const ACCEPTED_MEDIA = "image/jpeg,image/png,image/webp,video/mp4,audio/mpeg,audio/mp4,audio/ogg,application/pdf,text/plain,text/csv,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
@@ -30,6 +31,25 @@ type PendingMedia = {
   file: File;
   id: string;
   previewUrl: string | null;
+};
+
+type PreparedMediaPayload = {
+  attachment: {
+    byteSize: number;
+    fileName: string;
+    id: string;
+    mediaType: "audio" | "document" | "image" | "video";
+    mimeType: string;
+  };
+  begin: {
+    attemptId: string;
+    messageId: string;
+  };
+  upload: {
+    bucket: string;
+    path: string;
+    token: string;
+  };
 };
 
 function pendingMediaPreview(item: PendingMedia, compact = false) {
@@ -41,6 +61,42 @@ function pendingMediaPreview(item: PendingMedia, compact = false) {
 
   const Icon = item.file.type.startsWith("video/") ? Video : item.file.type.startsWith("audio/") ? Headphones : FileText;
   return <span className={`flex items-center justify-center bg-black/35 text-primary ${compact ? "size-full" : "size-20 rounded-2xl"}`}><Icon className={compact ? "size-4" : "size-9"} /></span>;
+}
+
+function isPreparedMediaPayload(value: unknown): value is PreparedMediaPayload {
+  if (!value || typeof value !== "object") return false;
+  const record = value as Record<string, unknown>;
+  const upload = record.upload as Record<string, unknown> | undefined;
+  const attachment = record.attachment as Record<string, unknown> | undefined;
+  const begin = record.begin as Record<string, unknown> | undefined;
+  return typeof upload?.bucket === "string"
+    && typeof upload.path === "string"
+    && typeof upload.token === "string"
+    && typeof attachment?.id === "string"
+    && typeof attachment.fileName === "string"
+    && typeof attachment.mimeType === "string"
+    && typeof attachment.byteSize === "number"
+    && ["audio", "document", "image", "video"].includes(String(attachment.mediaType))
+    && typeof begin?.attemptId === "string"
+    && typeof begin.messageId === "string";
+}
+
+function isDuplicateMediaPayload(value: unknown) {
+  return Boolean(
+    value
+    && typeof value === "object"
+    && "duplicate" in value
+    && value.duplicate === true,
+  );
+}
+
+function readPayloadMessage(value: unknown) {
+  return value
+    && typeof value === "object"
+    && "message" in value
+    && typeof value.message === "string"
+    ? value.message
+    : null;
 }
 
 export function SupportMessageComposer({
@@ -202,16 +258,79 @@ export function SupportMessageComposer({
     setMediaError(null);
     setSending(true);
     try {
+      const supabase = createSupabaseBrowserClient();
       for (const item of mediaItems) {
-        const form = new FormData();
-        form.set("caption", item.caption.trim());
-        form.set("clientRequestId", crypto.randomUUID());
-        form.set("conversationId", conversationId);
-        if (replyTo?.id) form.set("replyToMessageId", replyTo.id);
-        form.set("file", item.file);
-        const response = await fetch("/api/support/media", { body: form, method: "POST" });
-        const payload: unknown = await response.json().catch(() => null);
-        if (!response.ok) throw new Error(payload && typeof payload === "object" && "message" in payload && typeof payload.message === "string" ? payload.message : `Não foi possível enviar ${item.file.name}.`);
+        const caption = item.caption.trim();
+        const prepareResponse = await fetch("/api/support/media", {
+          body: JSON.stringify({
+            action: "prepare",
+            byteSize: item.file.size,
+            caption,
+            clientRequestId: crypto.randomUUID(),
+            conversationId,
+            fileName: item.file.name,
+            mimeType: item.file.type,
+            ...(replyTo?.id ? { replyToMessageId: replyTo.id } : {}),
+          }),
+          headers: { "Content-Type": "application/json" },
+          method: "POST",
+        });
+        const prepared: unknown = await prepareResponse.json().catch(() => null);
+        if (!prepareResponse.ok) {
+          throw new Error(readPayloadMessage(prepared) ?? `Não foi possível preparar ${item.file.name}.`);
+        }
+        if (isDuplicateMediaPayload(prepared)) {
+          if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+          setMediaItems((current) => current.filter((currentItem) => currentItem.id !== item.id));
+          continue;
+        }
+        if (!isPreparedMediaPayload(prepared)) {
+          throw new Error(`Não foi possível preparar ${item.file.name}.`);
+        }
+
+        const { error: uploadError } = await supabase.storage
+          .from(prepared.upload.bucket)
+          .uploadToSignedUrl(
+            prepared.upload.path,
+            prepared.upload.token,
+            item.file,
+            { contentType: item.file.type },
+          );
+        if (uploadError) {
+          await fetch("/api/support/media", {
+            body: JSON.stringify({
+              action: "fail",
+              attachmentId: prepared.attachment.id,
+              attemptId: prepared.begin.attemptId,
+              messageId: prepared.begin.messageId,
+              path: prepared.upload.path,
+            }),
+            headers: { "Content-Type": "application/json" },
+            method: "POST",
+          }).catch(() => null);
+          throw new Error(`Não foi possível enviar ${item.file.name} para o armazenamento.`);
+        }
+
+        const deliverResponse = await fetch("/api/support/media", {
+          body: JSON.stringify({
+            action: "deliver",
+            attachmentId: prepared.attachment.id,
+            attemptId: prepared.begin.attemptId,
+            byteSize: prepared.attachment.byteSize,
+            caption,
+            fileName: prepared.attachment.fileName,
+            mediaType: prepared.attachment.mediaType,
+            messageId: prepared.begin.messageId,
+            mimeType: prepared.attachment.mimeType,
+            path: prepared.upload.path,
+          }),
+          headers: { "Content-Type": "application/json" },
+          method: "POST",
+        });
+        const delivered: unknown = await deliverResponse.json().catch(() => null);
+        if (!deliverResponse.ok) {
+          throw new Error(readPayloadMessage(delivered) ?? `Não foi possível enviar ${item.file.name}.`);
+        }
         if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
         setMediaItems((current) => current.filter((currentItem) => currentItem.id !== item.id));
       }
@@ -226,7 +345,6 @@ export function SupportMessageComposer({
       setSending(false);
     }
   }
-
   function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
     if (event.key !== "Enter" || event.shiftKey || event.nativeEvent.isComposing) return;
     event.preventDefault();

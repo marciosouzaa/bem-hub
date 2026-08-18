@@ -177,6 +177,82 @@ describe("Wuzapi webhook", () => {
     });
   });
 
+  test("ignora pacotes de sincronizacao do historico recebidos como mensagem", () => {
+    const events = verifyAndNormalizeWuzapiWebhook(signedInput({
+      event: {
+        Info: {
+          Chat: "5521999999999@s.whatsapp.net",
+          ID: "history-sync-001",
+          IsFromMe: true,
+          IsGroup: false,
+          Sender: "5521999999999@s.whatsapp.net",
+          Timestamp: "2026-08-17T22:25:12-03:00",
+          Type: "text",
+        },
+        Message: {
+          protocolMessage: {
+            historySyncNotification: {
+              chunkOrder: 1,
+              fileLength: 1473301,
+              syncType: 3,
+            },
+            type: 5,
+          },
+        },
+      },
+      type: "Message",
+    }), hmacKey);
+
+    expect(events).toEqual([]);
+  });
+
+  test("ignora newsletters recebidas pela Wuzapi como conversa direta", () => {
+    const events = verifyAndNormalizeWuzapiWebhook(signedInput({
+      base64: "aGVsbG8=",
+      event: {
+        Info: {
+          Chat: "120363421932149025@newsletter",
+          ID: "newsletter-media-001",
+          IsFromMe: false,
+          IsGroup: false,
+          Sender: "120363421932149025@newsletter",
+          Timestamp: "2026-08-17T22:32:12-03:00",
+          Type: "media",
+        },
+        Message: {
+          imageMessage: {
+            caption: "Oferta de canal",
+            mimetype: "image/jpeg",
+          },
+        },
+      },
+      fileName: "newsletter.jpe",
+      mimeType: "image/jpeg",
+      type: "Message",
+    }), hmacKey);
+
+    expect(events).toEqual([]);
+  });
+
+  test("ignora pacote sem texto nem mídia real", () => {
+    const events = verifyAndNormalizeWuzapiWebhook(signedInput({
+      event: {
+        Info: {
+          Chat: "5521999999999@s.whatsapp.net",
+          ID: "empty-001",
+          IsFromMe: false,
+          IsGroup: false,
+          Sender: "5521999999999@s.whatsapp.net",
+          Timestamp: "2026-08-17T22:32:12-03:00",
+        },
+        Message: { messageContextInfo: { deviceListMetadataVersion: 2 } },
+      },
+      type: "Message",
+    }), hmacKey);
+
+    expect(events).toEqual([]);
+  });
+
   test("rejeita assinatura ausente ou divergente", () => {
     const rawBody = JSON.stringify({ type: "Message" });
     expect(() => verifyAndNormalizeWuzapiWebhook({

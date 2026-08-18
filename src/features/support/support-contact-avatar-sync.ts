@@ -114,7 +114,9 @@ async function syncSupportContactAvatar(input: {
 
   const profile = await input.adapter.getContactProfilePicture({
     phone: input.phone,
-  }).catch(() => ({ avatarUrl: null }));
+  }).catch(() => null);
+  if (!profile) return;
+
   await input.admin
     .from("contacts")
     .update({
@@ -149,6 +151,6 @@ function shouldSkipAvatarFetch(
 
   const fetchedAt = new Date(contact.avatar_fetched_at).getTime();
   if (!Number.isFinite(fetchedAt)) return false;
-  const oneDayMs = 24 * 60 * 60 * 1000;
-  return Date.now() - fetchedAt < oneDayMs;
+  const retryWhenMissingMs = 15 * 60 * 1000;
+  return Date.now() - fetchedAt < retryWhenMissingMs;
 }

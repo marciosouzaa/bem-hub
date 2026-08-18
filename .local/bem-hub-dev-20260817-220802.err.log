@@ -10,3 +10,4 @@ module.exports = {
 }
 
 Read more: https://nextjs.org/docs/app/api-reference/config/next-config-js/allowedDevOrigins
+Request body exceeded 6MB for /api/support/media. Only the first 6MB will be available unless configured. See https://nextjs.org/docs/app/api-reference/config/next-config-js/middlewareClientMaxBodySize for more details.

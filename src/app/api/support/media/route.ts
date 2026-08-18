@@ -1,12 +1,57 @@
 import { NextResponse } from "next/server";
 
-import { sendSupportMedia } from "@/features/support/send-support-media";
+import {
+  deliverPreparedSupportMedia,
+  failPreparedSupportMedia,
+  prepareSupportMediaUpload,
+  sendSupportMedia,
+} from "@/features/support/send-support-media";
 import { SupportMessageSendError } from "@/features/support/support-message-delivery";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   try {
+    const contentType = request.headers.get("content-type") ?? "";
+    if (contentType.includes("application/json")) {
+      const payload = await request.json();
+      if (
+        payload
+        && typeof payload === "object"
+        && "action" in payload
+        && payload.action === "prepare"
+      ) {
+        return NextResponse.json(
+          await prepareSupportMediaUpload(payload),
+          { status: 201 },
+        );
+      }
+      if (
+        payload
+        && typeof payload === "object"
+        && "action" in payload
+        && payload.action === "deliver"
+      ) {
+        const result = await deliverPreparedSupportMedia(payload);
+        return NextResponse.json(result, {
+          status: result.status === "sending"
+            ? 202
+            : result.duplicate
+              ? 200
+              : 201,
+        });
+      }
+      if (
+        payload
+        && typeof payload === "object"
+        && "action" in payload
+        && payload.action === "fail"
+      ) {
+        return NextResponse.json(await failPreparedSupportMedia(payload));
+      }
+      return NextResponse.json({ message: "Ação de mídia inválida." }, { status: 400 });
+    }
+
     const formData = await request.formData();
     const file = formData.get("file");
     if (!(file instanceof File)) return NextResponse.json({ message: "Selecione um arquivo." }, { status: 400 });
