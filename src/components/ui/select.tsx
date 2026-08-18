@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 export function Select({ className, children, ...props }: ComponentProps<"select">) {
   return (
-    <span className="relative block">
+    <span className="relative block min-w-0">
       <select
         className={cn(
           "h-10 w-full appearance-none rounded-[var(--radius-control)] border border-panel-border bg-panel-elevated px-3 pr-9 text-sm text-foreground transition focus:border-primary/55 focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-55 aria-invalid:border-danger aria-invalid:ring-danger/15",

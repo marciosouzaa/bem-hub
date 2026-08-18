@@ -1,6 +1,49 @@
 # Handoff Notes
 
-Atualizado em 2026-08-16.
+Atualizado em 2026-08-18.
+
+## Handoff 2026-08-18 - Atendimento: Sync, Midia, Filtros E Avatar
+
+- Bolhas falsas apos pareamento/sync foram bloqueadas na origem. Wuzapi e
+  Evolution ignoram `protocolMessage`/HistorySync, newsletters, JIDs remotos
+  nao suportados e pacotes sem texto nem midia real.
+- Envio de midia do Atendimento agora usa upload direto para Supabase Storage
+  privado via URL assinada. Isso evita o limite de payload da Vercel Function;
+  o backend recebe JSON pequeno para preparar/finalizar/falhar o envio.
+- Sidebar de Atendimento foi ajustada para painel fixo no desktop, com conversa
+  ocupando o restante. Filtros avancados iniciam fechados; aba `Grupos` so
+  aparece quando o toggle de grupos estiver ativo.
+- Migration remota aplicada no projeto Supabase `lzqugeqtcisgaztggcxq`:
+  `20260816142315_add_contact_avatar_url`. Colunas confirmadas:
+  `contacts.avatar_url` e `contacts.avatar_fetched_at`.
+- Historico remoto de migrations reparado: `20260816142315` marcado como
+  `applied`.
+- Avatar de contato esta habilitado no schema remoto e no codigo, mas ainda
+  precisa smoke com contato que possua foto publica; o contato real testado na
+  Wuzapi retornou `null` sem erro.
+- QuickTunnel/prod notes importantes continuam:
+  - URL de app para usuario: `https://bem-hub.vercel.app/app`.
+  - `APP_BASE_URL` tecnico deve ser `https://bem-hub.vercel.app`, sem `/app`.
+  - QuickTunnels sao efemeros; se o notebook/container reiniciar, atualizar as
+    managed base URLs no ambiente de producao e redeployar.
+
+### Verificacao
+
+- Testes focados de webhooks e filtros passaram.
+- `bun run test:whatsapp-contracts` passou com 51 testes.
+- `bun run lint` passou.
+- `bun run build` passou.
+- Query remota e REST server-side validaram as novas colunas de avatar.
+
+### Retomada Exata
+
+1. Deployar o codigo atual na Vercel.
+2. Parear/sincronizar Wuzapi novamente e confirmar que nao aparecem novas
+   bolhas falsas de sync/historico.
+3. Testar envio de imagem grande pelo Atendimento em producao.
+4. Testar avatar com contato 1:1 que tenha foto publica no WhatsApp.
+5. So apagar mensagens antigas falsas se o usuario pedir explicitamente; a
+   correcao atual impede novas entradas.
 
 ## Handoff 2026-08-16 - Atendimento: Menu, Avatar E Tunnels Locais
 

@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useDeferredValue, useMemo, useState } from "react";
+import { useDeferredValue, useMemo, useState, useSyncExternalStore } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -49,6 +49,23 @@ const views: Array<{ label: string; value: VisibleSupportInboxView }> = [
   { label: "Encerradas", value: "resolved" },
 ];
 
+const DESKTOP_QUERY = "(min-width: 768px)";
+const SUPPORT_INBOX_WIDTH = 390;
+
+function subscribeToViewport(callback: () => void) {
+  const query = window.matchMedia(DESKTOP_QUERY);
+  query.addEventListener("change", callback);
+  return () => query.removeEventListener("change", callback);
+}
+
+function getDesktopSnapshot() {
+  return window.matchMedia(DESKTOP_QUERY).matches;
+}
+
+function getDesktopServerSnapshot() {
+  return true;
+}
+
 export function SupportInboxShell({
   children,
   channels,
@@ -63,7 +80,7 @@ export function SupportInboxShell({
   const pathname = usePathname();
   const [assignee, setAssignee] = useState("all");
   const [channelId, setChannelId] = useState("all");
-  const [filtersOpen, setFiltersOpen] = useState(true);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [includeGroups, setIncludeGroups] = useState(false);
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SupportInboxSort>("recent");
@@ -71,7 +88,19 @@ export function SupportInboxShell({
   const [tag, setTag] = useState("all");
   const [view, setView] = useState<SupportInboxView>("open");
   const deferredQuery = useDeferredValue(query);
+  const desktop = useSyncExternalStore(
+    subscribeToViewport,
+    getDesktopSnapshot,
+    getDesktopServerSnapshot,
+  );
   const hasSelection = pathname !== "/app/support";
+  const inboxStyle = desktop
+    ? {
+      flexBasis: SUPPORT_INBOX_WIDTH,
+      maxWidth: SUPPORT_INBOX_WIDTH,
+      width: SUPPORT_INBOX_WIDTH,
+    }
+    : undefined;
 
   const assignees = useMemo(() => {
     const byId = new Map<string, { id: string; label: string }>();
@@ -133,6 +162,9 @@ export function SupportInboxShell({
       viewerId,
     ],
   );
+  const visibleViews = includeGroups
+    ? views
+    : views.filter((item) => item.value !== "groups");
 
   function chooseView(nextView: SupportInboxView) {
     if (nextView === "groups" && !includeGroups) return;
@@ -149,13 +181,14 @@ export function SupportInboxShell({
 
   return (
     <>
-      <div className="grid h-[calc(100dvh-4rem)] min-h-[560px] overflow-hidden bg-background lg:grid-cols-[360px_minmax(0,1fr)] xl:grid-cols-[390px_minmax(0,1fr)]">
+      <div className="flex h-[calc(100dvh-4rem)] min-h-0 w-full max-w-full overflow-hidden bg-background">
         <aside
           aria-label="Fila de atendimentos"
           className={cn(
-            "min-h-0 flex-col border-r border-panel-border bg-panel-subtle",
-            hasSelection ? "hidden lg:flex" : "flex",
+            "min-h-0 w-full min-w-0 shrink-0 flex-col border-r border-panel-border bg-panel-subtle",
+            hasSelection ? "hidden md:flex" : "flex",
           )}
+          style={inboxStyle}
         >
           <header className="border-b border-panel-border px-4 pb-4 pt-5">
             <div className="flex items-center justify-between gap-3">
@@ -237,7 +270,7 @@ export function SupportInboxShell({
               </div>
 
               {filtersOpen ? (
-                <div className="mt-3 grid grid-cols-2 gap-2">
+                <div className="mt-3 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2">
                   <Select aria-label="Departamento" disabled value="all">
                     <option value="all">Departamento</option>
                   </Select>
@@ -278,8 +311,8 @@ export function SupportInboxShell({
                       </option>
                     ))}
                   </Select>
-                  <div className="col-span-2 flex items-center gap-2 pt-1 text-[11px] text-muted">
-                    <span>Ordenar:</span>
+                  <div className="col-span-2 flex min-w-0 flex-wrap items-center gap-2 pt-1 text-[11px] text-muted">
+                    <span className="shrink-0">Ordenar:</span>
                     {[
                       ["recent", "Recentes"],
                       ["oldest", "Antigas"],
@@ -340,18 +373,14 @@ export function SupportInboxShell({
               className="flex items-center gap-1 overflow-x-auto pb-1"
               role="group"
             >
-              {views.map((item) => {
-                const disabled = item.value === "groups" && !includeGroups;
-                return (
+              {visibleViews.map((item) => (
                   <button
-                    aria-disabled={disabled}
                     aria-pressed={view === item.value}
                     className={cn(
                       "flex h-8 shrink-0 items-center gap-1.5 rounded-[9px] px-2.5 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45",
                       view === item.value
                         ? "bg-sidebar-active text-primary"
                         : "text-muted hover:bg-panel-elevated hover:text-muted-strong",
-                      disabled && "cursor-not-allowed opacity-45 hover:bg-transparent hover:text-muted",
                     )}
                     key={item.value}
                     onClick={() => chooseView(item.value)}
@@ -362,8 +391,7 @@ export function SupportInboxShell({
                       {counts[item.value]}
                     </span>
                   </button>
-                );
-              })}
+              ))}
             </div>
             <div className="mt-2 flex items-center gap-2 px-1 text-[11px] text-muted">
               <SlidersHorizontal className="size-3.5" />
@@ -399,8 +427,8 @@ export function SupportInboxShell({
 
         <section
           className={cn(
-            "min-h-0 min-w-0 bg-background",
-            hasSelection ? "block" : "hidden lg:block",
+            "min-h-0 min-w-0 flex-1 bg-background",
+            hasSelection ? "block" : "hidden md:block",
           )}
         >
           {children}

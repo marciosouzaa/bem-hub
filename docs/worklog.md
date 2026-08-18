@@ -4,6 +4,73 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-08-18 - Atendimento: Sync, Midia, Filtros E Avatar Remoto
+
+### Feito
+
+- Corrigida a origem das bolhas falsas que apareciam apos parear/sincronizar o
+  WhatsApp: a Wuzapi estava entregando pacotes `HistorySync`/`protocolMessage`
+  como evento `Message`. Wuzapi e Evolution agora ignoram mensagens de
+  protocolo, newsletters, JIDs remotos nao suportados e pacotes sem texto nem
+  midia real.
+- Envio de midia do Atendimento deixou de depender de `multipart/form-data` na
+  Function. O browser agora faz upload direto para o bucket privado
+  `support-message-media` usando URL assinada do Supabase; o backend finaliza o
+  registro e entrega ao provedor por JSON pequeno.
+- Fluxo de midia ganhou etapa de falha explicita: se o upload direto falhar, a
+  tentativa e marcada como `failed` e o objeto esperado e removido quando
+  aplicavel, evitando mensagem presa como `sending`.
+- Sidebar do Atendimento recebeu toolbar de operacao com busca, filtros
+  avancados, ordenacao, conexao, atendente e tag. As abas foram ajustadas para
+  `Abertas`, `Atendidas`, `Minhas`, `Grupos` e `Encerradas`.
+- UX final pedida: filtros avancados começam fechados por padrao e a aba
+  `Grupos` so aparece quando o toggle de grupos esta habilitado.
+- Corrigida a quebra de layout da fila: o painel de atendimentos fica travado
+  no desktop com largura fixa, e o painel de conversa ocupa o restante sem a
+  lista virar pagina inteira.
+- Sync de avatar ficou menos agressivo: falha temporaria do provedor nao grava
+  `avatar_fetched_at`, e contato sem foto passa a tentar novamente apos janela
+  curta em vez de ficar congelado por 24h.
+- Aplicada no Supabase remoto `lzqugeqtcisgaztggcxq` a migration
+  `20260816142315_add_contact_avatar_url`, criando
+  `contacts.avatar_url` e `contacts.avatar_fetched_at` e atualizando RPCs de
+  contatos/atendimento para retornar `avatarUrl`.
+- A migration `20260816142315` tambem foi marcada como `applied` no historico
+  remoto via Supabase CLI.
+
+### Verificacao
+
+- `bun test src/features/channels/providers/wuzapi/wuzapi-webhook.test.ts src/features/channels/providers/evolution/evolution-webhook.test.ts src/features/support/support-inbox-filters.test.ts`
+  passou.
+- `bun run test:whatsapp-contracts` passou com 51 testes.
+- `bun run lint` passou apos os ajustes finais.
+- `bun run build` passou apos os ajustes finais.
+- Query remota confirmou as colunas `avatar_url` e `avatar_fetched_at` em
+  `public.contacts`.
+- REST server-side com `SUPABASE_SECRET_KEY` conseguiu selecionar
+  `contacts.avatar_url` e `contacts.avatar_fetched_at`.
+
+### Pendente Real
+
+- Deployar o codigo atual na Vercel para a correcao de layout, filtros e envio
+  de midia entrar em producao.
+- Testar em producao: parear Wuzapi de novo, confirmar que nao surgem bolhas de
+  sync/historico e enviar imagem acima de 4,5 MB pelo Atendimento.
+- Fazer smoke de avatar com contato que possua foto publica no WhatsApp. No
+  contato real testado, Wuzapi respondeu sem erro, mas sem URL de avatar.
+- Se necessario, limpar manualmente as mensagens antigas falsas ja criadas
+  antes da correcao; a prioridade desta sessao foi impedir novas entradas.
+
+### Proximo Passo Exato
+
+1. Fazer deploy na Vercel.
+2. Reparear/sincronizar o canal Wuzapi e confirmar que a fila nao cria novas
+   bolhas `Midia recebida` sem midia real.
+3. Enviar uma imagem grande pelo Atendimento e confirmar entrega, anexo no
+   historico e download autenticado.
+4. Enviar/receber mensagem de um contato com foto publica para validar avatar
+   persistido.
+
 ## 2026-08-16 - Atendimento: Menu De Mensagem, Avatar E Tunnels
 
 ### Feito
