@@ -7,6 +7,7 @@ import {
   Clock3,
   LoaderCircle,
   MoreHorizontal,
+  RefreshCw,
   RotateCcw,
   UserCheck,
   UserMinus,
@@ -16,6 +17,7 @@ import { useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useFeedbackToast } from "@/components/ui/feedback-toast";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,10 +49,7 @@ export function SupportConversationActions({
   viewerId,
 }: SupportConversationActionsProps) {
   const router = useRouter();
-  const [feedback, setFeedback] = useState<{
-    kind: "error" | "success";
-    message: string;
-  } | null>(null);
+  const { showToast } = useFeedbackToast();
   const [pending, setPending] = useState(false);
   const assignedToViewer = conversation.assignedTo === viewerId;
   const canManage = viewerCanAdmin || assignedToViewer;
@@ -64,20 +63,35 @@ export function SupportConversationActions({
   ) {
     if (pending) return;
     setPending(true);
-    setFeedback(null);
-    const result = await manageSupportConversationAction({
-      conversationId: conversation.id,
-      expectedVersion: conversation.version,
-      operation,
-      priority,
-      userId: null,
-    });
-    setFeedback({
-      kind: result.ok ? "success" : "error",
-      message: result.message,
-    });
+    try {
+      const result = await manageSupportConversationAction({
+        conversationId: conversation.id,
+        expectedVersion: conversation.version,
+        operation,
+        priority,
+        userId: null,
+      });
+      showToast({
+        message: result.message,
+        variant: result.ok ? "success" : "error",
+      });
+      router.refresh();
+    } catch {
+      showToast({
+        message: "Nao foi possivel atualizar o atendimento.",
+        variant: "error",
+      });
+    } finally {
+      setPending(false);
+    }
+  }
+
+  function refreshMessages() {
     router.refresh();
-    setPending(false);
+    showToast({
+      message: "Mensagens atualizadas.",
+      variant: "info",
+    });
   }
 
   const assigneeLabel = assignedToViewer
@@ -87,7 +101,8 @@ export function SupportConversationActions({
       || (conversation.assignedTo ? "Com outro membro" : "Sem responsável");
 
   return (
-    <div className="flex min-w-0 flex-col items-end gap-1.5">
+    <>
+    <div className="flex min-w-0 items-center gap-2">
       <div className="flex items-center gap-2">
         <Badge className="hidden normal-case tracking-normal md:inline-flex">
           <UserCheck className="mr-1 size-3" />
@@ -136,6 +151,11 @@ export function SupportConversationActions({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={refreshMessages}>
+                <RefreshCw className="size-4" />
+                Atualizar mensagens
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
               {conversation.status !== "open" ? (
                 <DropdownMenuItem onSelect={() => runOperation("open")}>
                   <RotateCcw className="size-4" />
@@ -191,17 +211,7 @@ export function SupportConversationActions({
           </DropdownMenu>
         ) : null}
       </div>
-
-      {feedback ? (
-        <p
-          aria-live="polite"
-          className={feedback.kind === "error"
-            ? "max-w-64 text-right text-[11px] text-danger"
-            : "max-w-64 text-right text-[11px] text-primary"}
-        >
-          {feedback.message}
-        </p>
-      ) : null}
     </div>
+    </>
   );
 }

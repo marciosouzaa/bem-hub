@@ -78,7 +78,7 @@ export function SupportConversationView({
   return (
     <div className="flex h-full min-h-0 flex-col">
       <SupportReadReceipt conversationId={conversation.id} />
-      <header className="flex shrink-0 items-center gap-3 border-b border-panel-border bg-background/95 px-4 py-3 backdrop-blur sm:px-6">
+      <header className="flex h-16 shrink-0 items-center gap-3 border-b border-panel-border bg-background/95 px-4 backdrop-blur sm:px-6">
         <Button asChild className="lg:hidden" size="icon" variant="ghost">
           <Link aria-label="Voltar para fila" href="/app/support">
             <ArrowLeft className="size-4" />

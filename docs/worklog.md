@@ -4,6 +4,50 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-08-24 - UI Primitives: Layers E User Menu
+
+### Feito
+
+- Criado OpenSpec change `harden-ui-primitives-and-overlays` com proposal,
+  spec, design e tasks para robustez de overlays, primitives globais e
+  componentizacao por responsabilidade.
+- Auditados pontos de fragilidade: menu manual do usuario, `z-index` cru,
+  `details` operacional, `window.confirm`, feedback inline repetido e arquivos
+  client acima do orcamento de frontend.
+- Adicionados tokens semanticos de layer em `src/app/globals.css`:
+  shell, shell overlay, overlay, modal e feedback.
+- Dropdowns, dialogs, drawers e shell passaram a usar layers semanticos em vez
+  de `z-40`, `z-50` e `z-[70]`.
+- `UserMenu` deixou de usar `details`/`summary` com painel absoluto e passou a
+  usar o `DropdownMenu` compartilhado com portal, foco, Escape, clique externo,
+  tema, logout, identidade e badge de papel preservados.
+- Criado `FeedbackToastProvider` global flutuante bottom-center para mensagens
+  de sucesso, erro, aviso e informacao sem alterar layout da tela; o padrao
+  fecha em 3s, aceita duracao customizada e possui botao `X`.
+- Toasts passaram a nascer no provider global do layout raiz, com background
+  definido pelo status e `--layer-feedback` acima dos modais.
+- Header da conversa do Atendimento ficou com altura fixa (`h-16`); feedback
+  de acoes saiu do header e passou a aparecer como toast no canto inferior.
+- Menu de acoes do atendimento ganhou `Atualizar mensagens`, que executa
+  `router.refresh()` e confirma via toast.
+
+### Verificacao
+
+- `openspec validate --changes harden-ui-primitives-and-overlays --strict`
+  passou.
+- `bun run lint` passou.
+- `bun run build` passou.
+
+### Pendente Real
+
+- QA visual autenticado do menu do usuario em desktop/mobile.
+- Confirmar stacking de dropdown dentro de paineis com scroll, dialog/drawer e
+  media viewer.
+- Follow-ups planejados no OpenSpec: `FeedbackMessage`, `StatusBadge`,
+  `IdentityCell`, `DetailList`, substituir `window.confirm` em Knowledge e
+  dividir `chat-workspace`, `support-inbox-shell`, `support-message-composer` e
+  a pagina de Knowledge por responsabilidade.
+
 ## 2026-08-18 - Atendimento: Sync, Midia, Filtros E Avatar Remoto
 
 ### Feito

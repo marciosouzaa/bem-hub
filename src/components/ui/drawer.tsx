@@ -29,10 +29,10 @@ export function DrawerContent({
 }) {
   return (
     <DialogPrimitive.Portal>
-      <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-[2px] data-[state=closed]:animate-[overlay-out_160ms_ease-in] data-[state=open]:animate-[overlay-in_180ms_ease-out] motion-reduce:animate-none" />
+      <DialogPrimitive.Overlay className="fixed inset-0 z-[var(--layer-modal)] bg-black/60 backdrop-blur-[2px] data-[state=closed]:animate-[overlay-out_160ms_ease-in] data-[state=open]:animate-[overlay-in_180ms_ease-out] motion-reduce:animate-none" />
       <DialogPrimitive.Content
         className={cn(
-          "fixed inset-y-0 right-0 z-50 flex h-dvh w-full flex-col border-l border-panel-border bg-panel shadow-[var(--shadow-popover)] data-[state=closed]:animate-[drawer-out_180ms_ease-in] data-[state=open]:animate-[drawer-in_240ms_cubic-bezier(0.22,1,0.36,1)] motion-reduce:animate-none",
+          "fixed inset-y-0 right-0 z-[var(--layer-modal)] flex h-dvh w-full flex-col border-l border-panel-border bg-panel shadow-[var(--shadow-popover)] data-[state=closed]:animate-[drawer-out_180ms_ease-in] data-[state=open]:animate-[drawer-in_240ms_cubic-bezier(0.22,1,0.36,1)] motion-reduce:animate-none",
           widths[size],
           className,
         )}

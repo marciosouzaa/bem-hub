@@ -10,6 +10,13 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useTheme } from "@/components/theme/theme-provider";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
 type UserMenuProps = {
@@ -32,21 +39,29 @@ export function UserMenu({
   const isDark = theme === "dark";
 
   return (
-    <details className={cn("group relative", className)}>
-      <summary className="flex h-10 cursor-pointer list-none items-center gap-3 rounded-[var(--radius-control)] px-2 transition hover:bg-panel focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45 [&::-webkit-details-marker]:hidden">
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-primary/25 bg-sidebar-active text-xs font-semibold text-primary">
-          {initials}
-        </span>
-        <span className="hidden min-w-0 text-left md:block">
-          <span className="block truncate text-sm font-medium">{name}</span>
-          <span className="block truncate text-xs text-muted">
-            {organization}
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          className={cn(
+            "group flex h-10 cursor-pointer items-center gap-3 rounded-[var(--radius-control)] px-2 transition hover:bg-panel focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45 data-[state=open]:bg-panel",
+            className,
+          )}
+          type="button"
+        >
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-primary/25 bg-sidebar-active text-xs font-semibold text-primary">
+            {initials}
           </span>
-        </span>
-        <ChevronDown className="hidden size-4 shrink-0 text-muted transition group-open:rotate-180 md:block" />
-      </summary>
+          <span className="hidden min-w-0 text-left md:block">
+            <span className="block truncate text-sm font-medium">{name}</span>
+            <span className="block truncate text-xs text-muted">
+              {organization}
+            </span>
+          </span>
+          <ChevronDown className="hidden size-4 shrink-0 text-muted transition group-data-[state=open]:rotate-180 md:block" />
+        </button>
+      </DropdownMenuTrigger>
 
-      <div className="absolute right-0 z-50 mt-2 w-72 rounded-[var(--radius-panel)] border border-panel-border bg-panel-elevated p-2 shadow-[var(--shadow-popover)]">
+      <DropdownMenuContent align="end" className="w-72 rounded-[var(--radius-panel)] p-2" sideOffset={8}>
         <div className="px-3 py-3">
           <div className="flex items-start gap-3">
             <span className="flex size-9 shrink-0 items-center justify-center rounded-[var(--radius-control)] bg-sidebar-active text-primary">
@@ -70,29 +85,23 @@ export function UserMenu({
           </div>
         </div>
 
-        <div className="border-t border-panel-border pt-2">
-          <button
-            className="flex h-10 w-full items-center gap-3 rounded-[var(--radius-control)] px-3 text-left text-sm text-muted-strong transition hover:bg-sidebar-active hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45"
-            onClick={toggleTheme}
-            type="button"
-          >
-            {isDark ? (
-              <SunMedium className="size-4" />
-            ) : (
-              <Moon className="size-4" />
-            )}
-            {isDark ? "Ativar tema claro" : "Ativar tema escuro"}
-          </button>
-          <Link
-            className="flex h-10 items-center gap-3 rounded-[var(--radius-control)] px-3 text-sm text-muted-strong transition hover:bg-danger/10 hover:text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/40"
-            href="/auth/logout"
-          >
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onSelect={toggleTheme}>
+          {isDark ? (
+            <SunMedium className="size-4" />
+          ) : (
+            <Moon className="size-4" />
+          )}
+          {isDark ? "Ativar tema claro" : "Ativar tema escuro"}
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild danger>
+          <Link href="/auth/logout">
             <LogOut className="size-4" />
             Sair do workspace
           </Link>
-        </div>
-      </div>
-    </details>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 

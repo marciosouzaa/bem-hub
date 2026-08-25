@@ -29,6 +29,11 @@
   --shadow-popover: 0 24px 80px rgb(0 0 0 / 38%);
   --shadow-focus: 0 0 0 4px rgb(78 227 163 / 14%);
   --shadow-glow: 0 0 34px rgb(78 227 163 / 16%);
+  --layer-shell: 40;
+  --layer-shell-overlay: 50;
+  --layer-overlay: 70;
+  --layer-modal: 80;
+  --layer-feedback: 100;
 }
 
 [data-theme="light"] {

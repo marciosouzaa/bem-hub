@@ -15,7 +15,7 @@ export function DropdownMenuContent({ className, sideOffset = 6, ...props }: Com
     <DropdownPrimitive.Portal>
       <DropdownPrimitive.Content
         className={cn(
-          "z-[70] min-w-44 overflow-hidden rounded-[var(--radius-control)] border border-panel-border bg-panel-elevated p-1.5 text-foreground shadow-[var(--shadow-popover)] data-[state=closed]:animate-[menu-out_100ms_ease-in] data-[state=open]:animate-[menu-in_140ms_ease-out] motion-reduce:animate-none",
+          "z-[var(--layer-overlay)] min-w-44 overflow-hidden rounded-[var(--radius-control)] border border-panel-border bg-panel-elevated p-1.5 text-foreground shadow-[var(--shadow-popover)] data-[state=closed]:animate-[menu-out_100ms_ease-in] data-[state=open]:animate-[menu-in_140ms_ease-out] motion-reduce:animate-none",
           className,
         )}
         sideOffset={sideOffset}
@@ -78,7 +78,7 @@ export const DropdownMenuSub = DropdownPrimitive.Sub;
 export function DropdownMenuSubContent({ className, sideOffset = 6, ...props }: ComponentProps<typeof DropdownPrimitive.SubContent>) {
   return (
     <DropdownPrimitive.SubContent
-      className={cn("z-[70] min-w-44 overflow-hidden rounded-[var(--radius-control)] border border-panel-border bg-panel-elevated p-1.5 text-foreground shadow-[var(--shadow-popover)]", className)}
+      className={cn("z-[var(--layer-overlay)] min-w-44 overflow-hidden rounded-[var(--radius-control)] border border-panel-border bg-panel-elevated p-1.5 text-foreground shadow-[var(--shadow-popover)]", className)}
       sideOffset={sideOffset}
       {...props}
     />

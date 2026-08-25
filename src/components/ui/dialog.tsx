@@ -19,10 +19,10 @@ export function DialogContent({
 }: ComponentProps<typeof DialogPrimitive.Content> & { showClose?: boolean }) {
   return (
     <DialogPrimitive.Portal>
-      <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/65 backdrop-blur-[2px] data-[state=closed]:animate-[overlay-out_150ms_ease-in] data-[state=open]:animate-[overlay-in_180ms_ease-out] motion-reduce:animate-none" />
+      <DialogPrimitive.Overlay className="fixed inset-0 z-[var(--layer-modal)] bg-black/65 backdrop-blur-[2px] data-[state=closed]:animate-[overlay-out_150ms_ease-in] data-[state=open]:animate-[overlay-in_180ms_ease-out] motion-reduce:animate-none" />
       <DialogPrimitive.Content
         className={cn(
-          "fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-[var(--radius-panel)] border border-panel-border bg-panel shadow-[var(--shadow-popover)] data-[state=closed]:animate-[dialog-out_150ms_ease-in] data-[state=open]:animate-[dialog-in_200ms_cubic-bezier(0.22,1,0.36,1)] motion-reduce:animate-none",
+          "fixed left-1/2 top-1/2 z-[var(--layer-modal)] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-[var(--radius-panel)] border border-panel-border bg-panel shadow-[var(--shadow-popover)] data-[state=closed]:animate-[dialog-out_150ms_ease-in] data-[state=open]:animate-[dialog-in_200ms_cubic-bezier(0.22,1,0.36,1)] motion-reduce:animate-none",
           className,
         )}
         {...props}

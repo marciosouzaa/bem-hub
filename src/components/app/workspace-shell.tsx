@@ -65,11 +65,11 @@ export function WorkspaceShell({ children, email, name, organization, role }: Wo
   }
 
   return <div className="overflow-hidden bg-background text-foreground" style={{ height: "100vh" }}>
-    {desktop ? <div className="fixed z-40 transition-[width] duration-300 ease-out" style={{ bottom: 0, left: 0, top: 0, width: sidebarWidth }}>
+    {desktop ? <div className="fixed z-[var(--layer-shell)] transition-[width] duration-300 ease-out" style={{ bottom: 0, left: 0, top: 0, width: sidebarWidth }}>
       <AppSidebar canManage={canManage} collapsed={collapsed} onToggle={toggleSidebar} organization={organization} />
     </div> : null}
 
-    {!desktop ? <div className={cn("fixed inset-0 z-50", drawerOpen ? "pointer-events-auto" : "pointer-events-none")} aria-hidden={!drawerOpen} inert={!drawerOpen}>
+    {!desktop ? <div className={cn("fixed inset-0 z-[var(--layer-shell-overlay)]", drawerOpen ? "pointer-events-auto" : "pointer-events-none")} aria-hidden={!drawerOpen} inert={!drawerOpen}>
       <button aria-label="Fechar menu" className={cn("absolute inset-0 bg-black/65 backdrop-blur-sm transition-opacity duration-300", drawerOpen ? "opacity-100" : "opacity-0")} onClick={() => setDrawerOpen(false)} tabIndex={drawerOpen ? 0 : -1} />
       <div aria-label="Menu principal" aria-modal="true" className={cn("relative h-screen w-[min(88vw,320px)] shadow-[var(--shadow-popover)] transition-transform duration-300 ease-out supports-[height:100dvh]:h-dvh", drawerOpen ? "translate-x-0" : "-translate-x-full")} ref={drawerRef} role="dialog">
         <AppSidebar canManage={canManage} mobile onClose={() => setDrawerOpen(false)} organization={organization} />

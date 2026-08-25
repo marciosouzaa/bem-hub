@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { cookies } from "next/headers";
 import { ThemeProvider } from "@/components/theme/theme-provider";
+import { FeedbackToastProvider } from "@/components/ui/feedback-toast";
 import { normalizeTheme, THEME_COOKIE } from "@/features/theme/theme";
 import "./globals.css";
 
@@ -37,7 +38,9 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full bg-background text-foreground">
-        <ThemeProvider initialTheme={theme}>{children}</ThemeProvider>
+        <ThemeProvider initialTheme={theme}>
+          <FeedbackToastProvider>{children}</FeedbackToastProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
