@@ -10,13 +10,10 @@ import { PageHeader } from "@/components/app";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getEntitlements } from "@/features/billing/entitlements";
-import { getRequiredWorkspace } from "@/features/organizations/queries";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { MemberForm } from "@/features/members/member-form";
-import { MemberList } from "@/features/members/member-list";
-import { listOrganizationMembers } from "@/features/members/queries";
 import { IntegrationAuditForm } from "@/features/integration-audit/audit-form";
 import { parseIntegrationAudit } from "@/features/integration-audit/audit";
+import { getRequiredWorkspace } from "@/features/organizations/queries";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export default async function AccountSettingsPage() {
   const workspace = await getRequiredWorkspace();
@@ -34,11 +31,6 @@ export default async function AccountSettingsPage() {
     .eq("organization_id", workspace.organization.id).eq("provider", "commerce_audit")
     .limit(1).maybeSingle();
   const parsedAudit = parseIntegrationAudit(auditRecord?.config);
-  const members = await listOrganizationMembers(
-    supabase,
-    workspace.organization.id,
-    await getOrganizationOwnerId(supabase, workspace.organization.id),
-  );
 
   return (
     <section className="space-y-6">
@@ -112,20 +104,6 @@ export default async function AccountSettingsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Equipe do workspace</CardTitle>
-          <p className="text-sm leading-6 text-muted-strong">
-            Inclua contas BEM HUB ja cadastradas. O limite de usuarios do plano
-            e validado no servidor.
-          </p>
-        </CardHeader>
-        <CardContent>
-          <MemberForm canManage={canManage} />
-          <MemberList canManage={canManage} members={members} />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
           <CardTitle>Auditoria de dados comerciais</CardTitle>
           <p className="text-sm leading-6 text-muted-strong">Mapeie loja, API, PDV e planilhas antes de escolher ou construir um conector.</p>
         </CardHeader>
@@ -150,15 +128,6 @@ export default async function AccountSettingsPage() {
       </section>
     </section>
   );
-}
-
-async function getOrganizationOwnerId(
-  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
-  organizationId: string,
-) {
-  const { data, error } = await supabase.from("organizations").select("owner_id").eq("id", organizationId).single();
-  if (error) throw new Error(`Falha ao buscar owner: ${error.message}`);
-  return data.owner_id;
 }
 
 async function getOrganizationMemberCount(

@@ -1207,27 +1207,42 @@ export type Database = {
       }
       organization_members: {
         Row: {
+          accepted_at: string | null
           created_at: string
           id: string
+          invited_at: string | null
+          invited_by: string | null
           organization_id: string
+          removed_at: string | null
           role: Database["public"]["Enums"]["organization_role"]
           status: Database["public"]["Enums"]["member_status"]
+          updated_at: string
           user_id: string
         }
         Insert: {
+          accepted_at?: string | null
           created_at?: string
           id?: string
+          invited_at?: string | null
+          invited_by?: string | null
           organization_id: string
+          removed_at?: string | null
           role?: Database["public"]["Enums"]["organization_role"]
           status?: Database["public"]["Enums"]["member_status"]
+          updated_at?: string
           user_id: string
         }
         Update: {
+          accepted_at?: string | null
           created_at?: string
           id?: string
+          invited_at?: string | null
+          invited_by?: string | null
           organization_id?: string
+          removed_at?: string | null
           role?: Database["public"]["Enums"]["organization_role"]
           status?: Database["public"]["Enums"]["member_status"]
+          updated_at?: string
           user_id?: string
         }
         Relationships: [
@@ -1440,12 +1455,30 @@ export type Database = {
         }
         Returns: string
       }
+      accept_organization_member_invitation: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       bootstrap_owned_organization: {
         Args: { target_organization_id: string }
         Returns: {
           organization_id: string
           role: Database["public"]["Enums"]["organization_role"]
         }[]
+      }
+      check_organization_member_invitation: {
+        Args: { target_email: string; target_organization_id: string }
+        Returns: string | null
+      }
+      create_organization_member_invitation: {
+        Args: {
+          target_email: string
+          target_name: string | null
+          target_organization_id: string
+          target_role: Database["public"]["Enums"]["organization_role"]
+          target_user_id: string
+        }
+        Returns: undefined
       }
       delete_assistant: {
         Args: { target_assistant_id: string; target_organization_id: string }

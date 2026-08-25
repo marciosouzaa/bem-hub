@@ -1,6 +1,103 @@
 # Handoff Notes
 
-Atualizado em 2026-08-18.
+Atualizado em 2026-08-25.
+
+## Handoff 2026-08-25 - Equipe, Convites E Multi-conta
+
+### Estado Entregue
+
+- Criado CRUD de Equipe em `/app/settings/team` com DataTable, busca, filtros,
+  drawer de convite/edicao e acoes por linha.
+- A pagina `Conta` nao renderiza mais o formulario/lista antiga de equipe; o
+  fluxo ficou concentrado em `Settings > Equipe`.
+- Convite de usuario agora cria `organization_members.status = 'invited'`; o
+  membro so ganha acesso RLS ao tenant apos confirmar o convite.
+- Callback de convite:
+  - `/auth/callback` troca `code` por sessao Supabase.
+  - `/app/invitations/accept` ativa o membership pendente.
+  - `/auth/invitation-accepted` mostra resultado e permite definir senha.
+- Login multi-conta:
+  - se o usuario tem uma conta ativa, entra direto.
+  - se tem mais de uma conta ativa, vai para `/auth/select-workspace`.
+  - selecao grava cookie httpOnly `bem_hub_active_organization`.
+  - logout limpa o cookie.
+- Convites usam redirect de producao por
+  `BEM_HUB_PRODUCTION_APP_URL`; fallback atual:
+  `http://bem-hub.vercel.app/app`.
+
+### Banco Remoto
+
+- Migration aplicada remotamente via MCP Supabase como
+  `20260825031214_team_invitations_membership_flow`.
+- Arquivo local alinhado:
+  `supabase/migrations/20260825031214_team_invitations_membership_flow.sql`.
+- Colunas remotas confirmadas em `public.organization_members`:
+  `invited_by`, `invited_at`, `accepted_at`, `removed_at`, `updated_at`.
+- RPCs remotas confirmadas:
+  `check_organization_member_invitation`,
+  `create_organization_member_invitation`,
+  `accept_organization_member_invitation`,
+  `manage_organization_member`.
+- A RPC antiga `add_organization_member_by_email` foi mantida apenas como
+  compatibilidade, mas agora bloqueia inclusao direta com
+  `direct_member_addition_disabled`.
+
+### Regras Implementadas
+
+- Owner nao pode ser convidado/alterado como membro.
+- Owner/admin gerenciam equipe; member nao gerencia.
+- Limite de usuarios do plano conta ativos + convidados.
+- Usuario ja vinculado como equipe em outra conta nao pode receber novo convite
+  de equipe.
+- Usuario pode ter conta propria como owner e tambem participar de outra conta,
+  caindo no seletor multi-conta no login.
+
+### Verificacao
+
+- `bun test` passou: 152 testes.
+- `bun run lint` passou.
+- `bun run build` passou.
+- `git diff --check` passou.
+- `bun run test:db` nao rodou porque o Postgres local do Supabase nao estava
+  acessivel (`LegacyDbConnectError`).
+- MCP remoto confirmou colunas, RPCs e migration aplicada.
+
+### Pendencias Importantes
+
+- Fazer smoke real completo:
+  1. criar convite em `/app/settings/team`;
+  2. receber e-mail;
+  3. aceitar convite pela rota de producao;
+  4. definir senha;
+  5. confirmar acesso ao tenant certo;
+  6. confirmar seletor multi-conta quando o mesmo usuario tiver mais de uma
+     conta ativa.
+- Configurar `BEM_HUB_PRODUCTION_APP_URL` no deploy se quiser tirar o fallback
+  hardcoded `http://bem-hub.vercel.app/app`.
+- Advisors Supabase agora tambem listam as RPCs novas de convite como
+  `SECURITY DEFINER` executaveis por `authenticated`. Elas possuem guards
+  internos de auth/admin/tenant, mas proximo hardening ideal e mover a logica
+  privilegiada para schema `private` e expor wrappers menores.
+- Validar visualmente `/app/settings/team` em desktop/mobile autenticado.
+
+### Estado Do Git
+
+- Worktree esta suja com mudancas intencionais desta sessao, varias ja aparecem
+  staged no `git status --short`. Nao reverter.
+- Antes de continuar, rodar:
+
+```powershell
+git status --short
+```
+
+### Proxima Retomada
+
+1. Fazer smoke real do convite de equipe em producao.
+2. Se convite/email funcionar, revisar advisories das novas RPCs e planejar
+   hardening `private`.
+3. Depois voltar ao OpenSpec `harden-ui-primitives-and-overlays`: QA visual,
+   `FeedbackMessage`, `StatusBadge`, `IdentityCell`, `DetailList` e divisao dos
+   arquivos grandes.
 
 ## Handoff 2026-08-18 - Atendimento: Sync, Midia, Filtros E Avatar
 

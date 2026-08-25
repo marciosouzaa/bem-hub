@@ -4,6 +4,34 @@ Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
 
+## 2026-08-25 - CRUD De Equipe E Convites
+
+### Feito
+
+- Criada rota `/app/settings/team` com DataTable, busca, filtros, drawer de
+  convite/edicao e acoes por linha.
+- Fluxo de convite cria membership pendente (`invited`) e so ativa acesso apos
+  callback/confirmacao em `/app/invitations/accept`.
+- Login prepara selecao multi-conta: uma conta entra direto; mais de uma conta
+  redireciona para `/auth/select-workspace` e grava a organizacao ativa em
+  cookie httpOnly.
+- Convites usam redirect de producao derivado de
+  `BEM_HUB_PRODUCTION_APP_URL` ou fallback `http://bem-hub.vercel.app/app`.
+- Regra de banco impede adicionar owner, duplicar membro no mesmo tenant,
+  ultrapassar limite do plano e manter mais de um vinculo externo de equipe.
+- Migration aplicada no remoto como
+  `20260825031214_team_invitations_membership_flow`.
+
+### Verificacao
+
+- `bun test` passou: 152 testes.
+- `bun run lint` passou.
+- `bun run build` passou.
+- `bun run test:db` nao executou porque o Postgres local do Supabase nao estava
+  acessivel (`LegacyDbConnectError`).
+- MCP remoto confirmou colunas `invited_at`, `invited_by`, `accepted_at`,
+  `removed_at`, `updated_at` e RPCs do fluxo de convite.
+
 ## 2026-08-24 - UI Primitives: Layers E User Menu
 
 ### Feito

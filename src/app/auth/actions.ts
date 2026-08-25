@@ -2,7 +2,15 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { getOrCreateWorkspace } from "@/features/organizations/bootstrap";
+import {
+  ensureUserProfile,
+  getOrCreateWorkspace,
+  listUserWorkspaceOptions,
+} from "@/features/organizations/bootstrap";
+import {
+  clearSelectedOrganizationId,
+  setSelectedOrganizationId,
+} from "@/features/organizations/workspace-cookie";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type AuthActionState = {
@@ -45,6 +53,21 @@ export async function login(
 
   if (error) {
     return { message: "E-mail ou senha invalidos." };
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user) {
+    await ensureUserProfile(supabase, user);
+    const workspaces = await listUserWorkspaceOptions(supabase, user.id);
+    if (workspaces.length > 1) {
+      redirect("/auth/select-workspace?next=/app");
+    }
+    if (workspaces.length === 1) {
+      await setSelectedOrganizationId(workspaces[0].organization.id);
+    }
   }
 
   redirect("/app");
@@ -93,10 +116,11 @@ export async function signup(
   }
 
   try {
-    await getOrCreateWorkspace(supabase, {
+    const workspace = await getOrCreateWorkspace(supabase, {
       user: data.user,
       organizationName: parsed.data.organizationName,
     });
+    await setSelectedOrganizationId(workspace.organization.id);
   } catch (bootstrapError) {
     return {
       message:
@@ -112,5 +136,6 @@ export async function signup(
 export async function logout() {
   const supabase = await createSupabaseServerClient();
   await supabase.auth.signOut();
+  await clearSelectedOrganizationId();
   redirect("/auth/login");
 }

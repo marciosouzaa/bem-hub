@@ -4,6 +4,7 @@ import {
   CreditCard,
   KeyRound,
   Settings,
+  UsersRound,
   UserRound,
   type LucideIcon,
 } from "lucide-react";
@@ -24,6 +25,12 @@ const settingsNavItems: SettingsNavItem[] = [
     icon: UserRound,
     label: "Conta",
     description: "Responsável, workspace e acesso.",
+  },
+  {
+    href: "/app/settings/team",
+    icon: UsersRound,
+    label: "Equipe",
+    description: "Usuarios, convites e papeis.",
   },
   {
     href: "/app/settings/billing",

@@ -1,6 +1,11 @@
 import { redirect } from "next/navigation";
 import { cache } from "react";
-import { getOrCreateWorkspace } from "@/features/organizations/bootstrap";
+import {
+  ensureUserProfile,
+  getOrCreateWorkspace,
+  listUserWorkspaceOptions,
+} from "@/features/organizations/bootstrap";
+import { getSelectedOrganizationId } from "@/features/organizations/workspace-cookie";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const getRequiredWorkspace = cache(async () => {
@@ -14,5 +19,22 @@ export const getRequiredWorkspace = cache(async () => {
     redirect("/auth/login");
   }
 
-  return getOrCreateWorkspace(supabase, { user });
+  await ensureUserProfile(supabase, user);
+
+  const selectedOrganizationId = await getSelectedOrganizationId();
+  const workspaces = await listUserWorkspaceOptions(supabase, user.id);
+  const selectedWorkspace = selectedOrganizationId
+    ? workspaces.find(
+        (workspace) => workspace.organization.id === selectedOrganizationId,
+      )
+    : null;
+
+  if (workspaces.length > 1 && !selectedWorkspace) {
+    redirect("/auth/select-workspace?next=/app");
+  }
+
+  return getOrCreateWorkspace(supabase, {
+    selectedOrganizationId: selectedWorkspace?.organization.id ?? null,
+    user,
+  });
 });

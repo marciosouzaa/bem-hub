@@ -20,8 +20,19 @@ export type WorkspaceContext = {
   };
 };
 
+export type WorkspaceOption = {
+  organization: {
+    id: string;
+    name: string;
+    slug: string;
+    ownerId: string;
+  };
+  role: Database["public"]["Enums"]["organization_role"];
+};
+
 type BootstrapInput = {
   user: User;
+  selectedOrganizationId?: string | null;
   organizationName?: string | null;
 };
 
@@ -29,28 +40,12 @@ export async function getOrCreateWorkspace(
   supabase: Supabase,
   input: BootstrapInput,
 ): Promise<WorkspaceContext> {
-  const email = input.user.email ?? null;
-  const name = getUserName(input.user);
-
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .upsert(
-      {
-        id: input.user.id,
-        name,
-        email,
-        avatar_url: null,
-      },
-      { onConflict: "id" },
-    )
-    .select("id,name,email")
-    .single();
-
-  if (profileError) {
-    throw new Error(`Falha ao salvar perfil: ${profileError.message}`);
-  }
-
-  const existingWorkspace = await getFirstWorkspace(supabase, input.user);
+  const profile = await ensureUserProfile(supabase, input.user);
+  const existingWorkspace = await getSelectedOrFirstWorkspace(
+    supabase,
+    input.user,
+    input.selectedOrganizationId,
+  );
 
   if (existingWorkspace) {
     return {
@@ -114,6 +109,84 @@ export async function getOrCreateWorkspace(
   };
 }
 
+export async function ensureUserProfile(supabase: Supabase, user: User) {
+  const email = user.email ?? null;
+  const name = getUserName(user);
+
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .upsert(
+      {
+        id: user.id,
+        name,
+        email,
+        avatar_url: null,
+      },
+      { onConflict: "id" },
+    )
+    .select("id,name,email")
+    .single();
+
+  if (profileError) {
+    throw new Error(`Falha ao salvar perfil: ${profileError.message}`);
+  }
+
+  return profile;
+}
+
+export async function listUserWorkspaceOptions(
+  supabase: Supabase,
+  userId: string,
+): Promise<WorkspaceOption[]> {
+  const { data: memberships, error: membershipError } = await supabase
+    .from("organization_members")
+    .select("organization_id,role")
+    .eq("user_id", userId)
+    .eq("status", "active")
+    .order("created_at");
+
+  if (membershipError) {
+    throw new Error(`Falha ao buscar memberships: ${membershipError.message}`);
+  }
+
+  if (!memberships.length) return [];
+
+  const { data: organizations, error: organizationError } = await supabase
+    .from("organizations")
+    .select("id,name,slug,owner_id")
+    .in("id", memberships.map((membership) => membership.organization_id));
+
+  if (organizationError) {
+    throw new Error(`Falha ao buscar organizacoes: ${organizationError.message}`);
+  }
+
+  const organizationsById = new Map(
+    organizations.map((organization) => [organization.id, organization]),
+  );
+
+  return memberships
+    .map((membership) => {
+      const organization = organizationsById.get(membership.organization_id);
+      if (!organization) return null;
+      return {
+        organization: {
+          id: organization.id,
+          name: organization.name,
+          ownerId: organization.owner_id,
+          slug: organization.slug,
+        },
+        role: membership.role,
+      };
+    })
+    .filter((option): option is WorkspaceOption => option !== null)
+    .sort((first, second) => {
+      const firstRank = getWorkspaceRoleRank(first.role);
+      const secondRank = getWorkspaceRoleRank(second.role);
+      if (firstRank !== secondRank) return firstRank - secondRank;
+      return first.organization.name.localeCompare(second.organization.name, "pt-BR");
+    });
+}
+
 async function getOwnedWorkspaceWithoutMembership(supabase: Supabase, user: User) {
   const { data: organization, error } = await supabase
     .from("organizations")
@@ -146,41 +219,39 @@ async function bootstrapOwnedOrganization(
   }
 }
 
-async function getFirstWorkspace(supabase: Supabase, user: User) {
-  const { data: membership, error: membershipError } = await supabase
-    .from("organization_members")
-    .select("organization_id,role")
-    .eq("user_id", user.id)
-    .eq("status", "active")
-    .limit(1)
-    .maybeSingle();
-
-  if (membershipError) {
-    throw new Error(`Falha ao buscar membership: ${membershipError.message}`);
-  }
-
-  if (!membership) {
+async function getSelectedOrFirstWorkspace(
+  supabase: Supabase,
+  user: User,
+  selectedOrganizationId?: string | null,
+) {
+  const workspaces = await listUserWorkspaceOptions(supabase, user.id);
+  if (!workspaces.length) {
     return null;
   }
 
-  const { data: organization, error: organizationError } = await supabase
-    .from("organizations")
-    .select("id,name,slug")
-    .eq("id", membership.organization_id)
-    .single();
-
-  if (organizationError) {
-    throw new Error(
-      `Falha ao buscar organizacao: ${organizationError.message}`,
-    );
-  }
+  const selected = selectedOrganizationId
+    ? workspaces.find(
+        (workspace) => workspace.organization.id === selectedOrganizationId,
+      )
+    : null;
+  const workspace = selected ?? workspaces[0];
 
   return {
-    organization,
+    organization: {
+      id: workspace.organization.id,
+      name: workspace.organization.name,
+      slug: workspace.organization.slug,
+    },
     membership: {
-      role: membership.role,
+      role: workspace.role,
     },
   };
+}
+
+function getWorkspaceRoleRank(role: Database["public"]["Enums"]["organization_role"]) {
+  if (role === "owner") return 0;
+  if (role === "admin") return 1;
+  return 2;
 }
 
 function getUserName(user: User) {
