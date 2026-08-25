@@ -52,7 +52,31 @@ describe("support inbox filters", () => {
     });
 
     expect(item.channel.phoneNumber).toBeNull();
+    expect(item.department).toBeNull();
+    expect(item.isPinned).toBe(false);
     expect(filterSupportInbox([item], "cliente", "all")).toHaveLength(1);
+  });
+
+  test("accepts operator state and department-ready fields", () => {
+    const departmentId = crypto.randomUUID();
+    const defaultAssistantId = crypto.randomUUID();
+    const item = supportInboxItemSchema.parse({
+      ...makeItem({ name: "Cliente fixado", status: "open", tags: [] }),
+      departmentId,
+      department: {
+        defaultAssistantId,
+        id: departmentId,
+        name: "Comercial",
+      },
+      isPinned: true,
+      markedUnreadAt: "2026-08-19T10:00:00.000Z",
+      pinnedAt: "2026-08-19T09:00:00.000Z",
+      unreadCount: 1,
+    });
+
+    expect(item.department?.defaultAssistantId).toBe(defaultAssistantId);
+    expect(item.isPinned).toBe(true);
+    expect(item.markedUnreadAt).toBe("2026-08-19T10:00:00.000Z");
   });
 
   test("filters assigned, mine and unassigned queues", () => {
@@ -87,18 +111,84 @@ describe("support inbox filters", () => {
       viewerId,
     })).toEqual([assigned]);
   });
+
+  test("filters unread conversations", () => {
+    const unread = makeItem({
+      name: "Cliente com retorno",
+      status: "open",
+      tags: [],
+      unreadCount: 2,
+    });
+    const read = makeItem({
+      name: "Cliente lido",
+      status: "open",
+      tags: [],
+      unreadCount: 0,
+    });
+
+    expect(filterSupportInbox([read, unread], {
+      query: "",
+      view: "unread",
+      viewerId: "",
+    })).toEqual([unread]);
+  });
+
+  test("keeps manually marked unread conversations in unread view", () => {
+    const manualUnread = {
+      ...makeItem({
+        name: "Cliente marcado",
+        status: "open",
+        tags: [],
+        unreadCount: 1,
+      }),
+      markedUnreadAt: "2026-08-19T10:00:00.000Z",
+    };
+
+    expect(filterSupportInbox([manualUnread], {
+      query: "",
+      view: "unread",
+      viewerId: "",
+    })).toEqual([manualUnread]);
+  });
+
+  test("keeps pinned conversations above normal rows inside active filters", () => {
+    const normalUnread = makeItem({
+      name: "Cliente normal",
+      status: "open",
+      tags: [],
+      unreadCount: 8,
+    });
+    const pinnedUnread = makeItem({
+      isPinned: true,
+      name: "Cliente fixado",
+      status: "open",
+      tags: [],
+      unreadCount: 1,
+    });
+
+    expect(filterSupportInbox([normalUnread, pinnedUnread], {
+      query: "",
+      sort: "unread",
+      view: "unread",
+      viewerId: "",
+    })).toEqual([pinnedUnread, normalUnread]);
+  });
 });
 
 function makeItem({
   assignedTo = null,
+  isPinned = false,
   name,
   status,
   tags,
+  unreadCount = 0,
 }: {
   assignedTo?: string | null;
+  isPinned?: boolean;
   name: string;
   status: SupportInboxItem["status"];
   tags: string[];
+  unreadCount?: number;
 }): SupportInboxItem {
   return {
     id: crypto.randomUUID(),
@@ -109,6 +199,11 @@ function makeItem({
     assignee: assignedTo
       ? { email: "ana@example.com", id: assignedTo, name: "Ana" }
       : null,
+    department: null,
+    departmentId: null,
+    isPinned,
+    markedUnreadAt: null,
+    pinnedAt: null,
     contact: {
       avatarUrl: null,
       id: crypto.randomUUID(),
@@ -116,7 +211,7 @@ function makeItem({
       phone: "+55 11 99999-9999",
       email: null,
       phoneReason: null,
-      phoneStatus: "valid",
+      phoneStatus: "supported",
       tags,
     },
     channel: {
@@ -128,5 +223,6 @@ function makeItem({
       name: "WhatsApp Comercial",
       phoneNumber: "+55 11 98888-8888",
     },
+    unreadCount,
   };
 }

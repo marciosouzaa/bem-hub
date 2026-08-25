@@ -17,7 +17,10 @@ export default async function SupportLayout({
 
   return (
     <>
-      <SupportRealtimeListener organizationId={workspace.organization.id} />
+      <SupportRealtimeListener
+        organizationId={workspace.organization.id}
+        viewerId={workspace.user.id}
+      />
       <SupportInboxShell
         channels={channels}
         conversations={conversations}

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import type { SupportConversation } from "@/features/support/queries";
 import { SupportMessageDeliveryStatus } from "@/features/support/support-message-delivery-status";
 import { SupportAudioPlayer } from "@/features/support/support-audio-player";
+import { getSupportMessageDisplayState } from "@/features/support/support-message-action-availability";
 import { SupportMessageActions } from "@/features/support/support-message-actions";
 import { SupportMediaViewer } from "@/features/support/support-media-viewer";
 import { SupportReplyPreview } from "@/features/support/support-reply-preview";
@@ -102,7 +103,7 @@ export function SupportMessageThread({
           <div className="space-y-5">
             {messages.map((message) => {
               const outbound = message.direction === "outbound";
-              const hidesAttachmentFallback = message.attachments.some((attachment) => message.content === `Arquivo: ${attachment.fileName}`);
+              const display = getSupportMessageDisplayState(message);
 
               return (
                 <article
@@ -150,7 +151,7 @@ export function SupportMessageThread({
                       return <button className="flex w-full items-center gap-2 rounded-lg border border-panel-border bg-panel-subtle px-3 py-2 text-left text-xs text-muted-strong transition-colors hover:border-primary/30 hover:text-foreground" key={attachment.id} onClick={() => setActiveMediaId(attachment.id)} type="button"><FileDown className="size-3.5 text-primary" /><span className="min-w-0 flex-1 truncate">{attachment.fileName ?? "Documento"}</span><span className="shrink-0 text-muted">{Math.ceil(attachment.byteSize / 1024)} KB</span></button>;
                     })}
 
-                    {(!hidesAttachmentFallback && (message.content !== "Mídia recebida" || !message.attachments.length)) ? (
+                    {display.showContent ? (
                       <p className={message.attachments.length ? "mt-2 whitespace-pre-wrap text-sm leading-6 text-foreground" : "whitespace-pre-wrap text-sm leading-6 text-foreground"}>
                         {message.content}
                       </p>

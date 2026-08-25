@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { SupportConversation } from "@/features/support/queries";
 import { downloadSupportAttachment } from "@/features/support/support-attachment-download";
+import { getSupportMessageActionAvailability } from "@/features/support/support-message-action-availability";
 
 type SupportMessage = SupportConversation["messages"][number];
 
@@ -31,18 +32,10 @@ export function SupportMessageActions({
   onReplyTo: (message: SupportMessage) => void;
 }) {
   const [copying, setCopying] = useState(false);
-  const downloadableAttachments = message.attachments.filter(
-    (attachment) => attachment.status === "available",
-  );
-  const normalizedContent = message.content.normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim()
-    .toLocaleLowerCase("pt-BR");
-  const canCopy = message.content.trim().length > 0
-    && !(normalizedContent === "midia recebida" && message.attachments.length);
+  const availability = getSupportMessageActionAvailability(message);
 
   async function copyMessageText() {
-    if (!canCopy || copying) return;
+    if (!availability.canCopy || copying) return;
 
     setCopying(true);
     try {
@@ -53,7 +46,7 @@ export function SupportMessageActions({
   }
 
   async function downloadAttachments() {
-    for (const attachment of downloadableAttachments) {
+    for (const attachment of availability.downloadableAttachments) {
       await downloadSupportAttachment(attachment.id, attachment.fileName);
     }
   }
@@ -72,7 +65,7 @@ export function SupportMessageActions({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
         <DropdownMenuItem
-          disabled={!message.canReply}
+          disabled={!availability.canReply}
           onSelect={() => onReplyTo(message)}
         >
           <Reply className="size-4" />
@@ -82,12 +75,12 @@ export function SupportMessageActions({
           <Pencil className="size-4" />
           Editar
         </DropdownMenuItem>
-        <DropdownMenuItem disabled={!canCopy || copying} onSelect={copyMessageText}>
+        <DropdownMenuItem disabled={!availability.canCopy || copying} onSelect={copyMessageText}>
           <Clipboard className="size-4" />
           {copying ? "Copiado" : "Copiar"}
         </DropdownMenuItem>
         <DropdownMenuItem
-          disabled={!downloadableAttachments.length}
+          disabled={!availability.canDownload}
           onSelect={() => void downloadAttachments()}
         >
           <Download className="size-4" />

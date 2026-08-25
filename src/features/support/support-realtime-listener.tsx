@@ -6,14 +6,22 @@ import {
   getSupportRealtimeTopic,
   SUPPORT_REALTIME_EVENT,
 } from "@/features/support/realtime";
+import {
+  playSupportNotificationSound,
+  readSupportSoundPreference,
+  shouldPlaySupportSoundNotification,
+  type SupportRealtimePayload,
+} from "@/features/support/support-notifications";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 const REFRESH_DEBOUNCE_MS = 200;
 
 export function SupportRealtimeListener({
   organizationId,
+  viewerId,
 }: {
   organizationId: string;
+  viewerId: string;
 }) {
   const router = useRouter();
   const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -44,6 +52,18 @@ export function SupportRealtimeListener({
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") scheduleRefresh();
     };
+    const handleSupportBroadcast = (event: { payload: unknown }) => {
+      if (shouldPlaySupportSoundNotification(
+        event.payload as SupportRealtimePayload,
+        {
+          preference: readSupportSoundPreference(),
+          viewerId,
+        },
+      )) {
+        void playSupportNotificationSound().catch(() => undefined);
+      }
+      scheduleRefresh();
+    };
 
     window.addEventListener("focus", scheduleRefresh);
     document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -57,7 +77,7 @@ export function SupportRealtimeListener({
           .channel(getSupportRealtimeTopic(organizationId), {
             config: { private: true },
           })
-          .on("broadcast", { event: SUPPORT_REALTIME_EVENT }, scheduleRefresh)
+          .on("broadcast", { event: SUPPORT_REALTIME_EVENT }, handleSupportBroadcast)
           .subscribe((status) => {
             if (status === "SUBSCRIBED") {
               // Fecha a janela entre o render do servidor e a assinatura, e
@@ -80,7 +100,7 @@ export function SupportRealtimeListener({
       refreshTimerRef.current = null;
       if (channel) void supabase.removeChannel(channel);
     };
-  }, [organizationId, router]);
+  }, [organizationId, router, viewerId]);
 
   return null;
 }

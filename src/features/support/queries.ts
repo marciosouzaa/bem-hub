@@ -33,6 +33,15 @@ export const supportInboxItemSchema = z.object({
     email: z.string().nullable(),
   }).nullable(),
   unreadCount: z.number().int().nonnegative(),
+  isPinned: z.boolean().default(false),
+  pinnedAt: z.string().nullable().default(null),
+  markedUnreadAt: z.string().nullable().default(null),
+  departmentId: z.string().uuid().nullable().default(null),
+  department: z.object({
+    id: z.string().uuid(),
+    name: z.string(),
+    defaultAssistantId: z.string().uuid().nullable(),
+  }).nullable().default(null),
   contact: z.object({
     id: z.string().uuid(),
     name: z.string().nullable(),

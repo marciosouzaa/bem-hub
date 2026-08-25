@@ -6,7 +6,8 @@ export type SupportInboxView =
   | "groups"
   | "mine"
   | "open"
-  | "resolved";
+  | "resolved"
+  | "unread";
 
 export type SupportInboxSort = "oldest" | "recent" | "unread";
 
@@ -82,6 +83,9 @@ export function filterSupportInbox(
 function matchesView(item: SupportInboxItem, filters: SupportInboxFilters) {
   if (filters.view === "all") return true;
   if (filters.view === "resolved") return item.status === "resolved";
+  if (filters.view === "unread") {
+    return item.status !== "resolved" && item.unreadCount > 0;
+  }
   if (filters.view === "mine") {
     return item.status !== "resolved" && Boolean(filters.viewerId) && item.assignedTo === filters.viewerId;
   }
@@ -97,6 +101,9 @@ function sortInboxItem(
   right: SupportInboxItem,
   sort: SupportInboxSort,
 ) {
+  const byPinned = Number(right.isPinned) - Number(left.isPinned);
+  if (byPinned !== 0) return byPinned;
+
   if (sort === "unread") {
     const byUnread = right.unreadCount - left.unreadCount;
     if (byUnread !== 0) return byUnread;

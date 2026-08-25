@@ -64,6 +64,59 @@ export async function markSupportConversationReadAction(
   return { ok: true as const };
 }
 
+export async function markSupportConversationUnreadAction(
+  conversationId: string,
+): Promise<SupportOperationResult> {
+  const id = z.string().uuid().safeParse(conversationId);
+  if (!id.success) {
+    return { ok: false, message: "Atendimento inválido." };
+  }
+
+  const workspace = await getRequiredWorkspace();
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.rpc("mark_support_conversation_unread", {
+    target_conversation_id: id.data,
+    target_organization_id: workspace.organization.id,
+  });
+
+  if (error) {
+    return { ok: false, message: getSupportOperatorStateError(error) };
+  }
+
+  revalidatePath("/app/support");
+  revalidatePath(`/app/support/${id.data}`);
+  return { ok: true, message: "Atendimento marcado como não lido." };
+}
+
+export async function setSupportConversationPinnedAction(
+  conversationId: string,
+  pinned: boolean,
+): Promise<SupportOperationResult> {
+  const id = z.string().uuid().safeParse(conversationId);
+  if (!id.success) {
+    return { ok: false, message: "Atendimento inválido." };
+  }
+
+  const workspace = await getRequiredWorkspace();
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.rpc("set_support_conversation_pinned", {
+    should_pin: pinned,
+    target_conversation_id: id.data,
+    target_organization_id: workspace.organization.id,
+  });
+
+  if (error) {
+    return { ok: false, message: getSupportOperatorStateError(error) };
+  }
+
+  revalidatePath("/app/support");
+  revalidatePath(`/app/support/${id.data}`);
+  return {
+    ok: true,
+    message: pinned ? "Atendimento fixado." : "Atendimento desfixado.",
+  };
+}
+
 function getSupportOperationError(error: { code?: string; message: string }) {
   if (error.code === "40001") {
     return "Atendimento alterado por outra pessoa. Estado atualizado.";
@@ -85,6 +138,16 @@ function getSupportOperationError(error: { code?: string; message: string }) {
   }
   if (error.code === "55000") {
     return "Transição não permitida para o estado atual.";
+  }
+  return "Não foi possível atualizar o atendimento.";
+}
+
+function getSupportOperatorStateError(error: { code?: string; message: string }) {
+  if (error.code === "42501") {
+    return "Você não pode alterar este atendimento.";
+  }
+  if (error.code === "P0002") {
+    return "Atendimento não encontrado.";
   }
   return "Não foi possível atualizar o atendimento.";
 }

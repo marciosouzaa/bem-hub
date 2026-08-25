@@ -1,5 +1,5 @@
 begin;
-select plan(280);
+select plan(345);
 
 select ok(
   to_regclass('public.support_events') is not null,
@@ -26,6 +26,36 @@ select is(
   ),
   true,
   'support reads have row level security enabled'
+);
+select ok(
+  exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'support_conversation_reads'
+      and column_name = 'marked_unread_at'
+  ),
+  'support reads can store manual unread state'
+);
+select ok(
+  exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'support_conversation_reads'
+      and column_name = 'pinned_at'
+  ),
+  'support reads can store per-operator pinned state'
+);
+select ok(
+  exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'support_conversation_reads'
+      and column_name = 'updated_at'
+  ),
+  'support reads record operator state updates'
 );
 select ok(
   not has_table_privilege('authenticated', 'public.support_events', 'insert'),
@@ -144,6 +174,78 @@ select is(
   'public support read RPC is security invoker'
 );
 select ok(
+  not has_function_privilege(
+    'anon',
+    'public.mark_support_conversation_unread(uuid,uuid)',
+    'execute'
+  ),
+  'anon cannot mark support conversations as manually unread'
+);
+select ok(
+  has_function_privilege(
+    'authenticated',
+    'public.mark_support_conversation_unread(uuid,uuid)',
+    'execute'
+  ),
+  'authenticated members can mark support conversations as manually unread'
+);
+select is(
+  (
+    select prosecdef
+    from pg_proc
+    where oid =
+      'public.mark_support_conversation_unread(uuid,uuid)'::regprocedure
+  ),
+  false,
+  'public support unread RPC is security invoker'
+);
+select is(
+  (
+    select prosecdef
+    from pg_proc
+    where oid =
+      'private.mark_support_conversation_unread(uuid,uuid)'::regprocedure
+  ),
+  true,
+  'private support unread implementation is security definer'
+);
+select ok(
+  not has_function_privilege(
+    'anon',
+    'public.set_support_conversation_pinned(uuid,uuid,boolean)',
+    'execute'
+  ),
+  'anon cannot pin support conversations'
+);
+select ok(
+  has_function_privilege(
+    'authenticated',
+    'public.set_support_conversation_pinned(uuid,uuid,boolean)',
+    'execute'
+  ),
+  'authenticated members can pin support conversations'
+);
+select is(
+  (
+    select prosecdef
+    from pg_proc
+    where oid =
+      'public.set_support_conversation_pinned(uuid,uuid,boolean)'::regprocedure
+  ),
+  false,
+  'public support pin RPC is security invoker'
+);
+select is(
+  (
+    select prosecdef
+    from pg_proc
+    where oid =
+      'private.set_support_conversation_pinned(uuid,uuid,boolean)'::regprocedure
+  ),
+  true,
+  'private support pin implementation is security definer'
+);
+select ok(
   has_function_privilege(
     'authenticated',
     'public.get_support_inbox_operational(uuid)',
@@ -174,9 +276,251 @@ select ok(
     select 1
     from pg_indexes
     where schemaname = 'public'
+      and indexname = 'support_conversation_reads_org_user_pinned_idx'
+  ),
+  'support operator pinned state has a user-scoped partial index'
+);
+select ok(
+  exists (
+    select 1
+    from pg_indexes
+    where schemaname = 'public'
       and indexname = 'support_events_conversation_created_idx'
   ),
   'support audit timeline has a composite lookup index'
+);
+select ok(
+  to_regclass('public.support_departments') is not null,
+  'support departments table exists'
+);
+select is(
+  (
+    select relrowsecurity
+    from pg_class
+    where oid = 'public.support_departments'::regclass
+  ),
+  true,
+  'support departments have row level security enabled'
+);
+select ok(
+  exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'support_departments'
+      and column_name = 'organization_id'
+  ),
+  'support departments are tenant-scoped'
+);
+select ok(
+  exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'support_departments'
+      and column_name = 'is_active'
+  ),
+  'support departments keep active state'
+);
+select ok(
+  exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'support_departments'
+      and column_name = 'archived_at'
+  ),
+  'support departments keep archive timestamp'
+);
+select ok(
+  exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'support_departments'
+      and column_name = 'default_assistant_id'
+  ),
+  'support departments can reference a default assistant'
+);
+select ok(
+  exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'support_departments'
+      and column_name = 'created_by'
+  ),
+  'support departments record the creator'
+);
+select ok(
+  exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'support_departments'
+      and column_name = 'updated_at'
+  ),
+  'support departments record updates'
+);
+select ok(
+  has_table_privilege('authenticated', 'public.support_departments', 'select'),
+  'authenticated members can select tenant-scoped support departments'
+);
+select ok(
+  has_table_privilege('authenticated', 'public.support_departments', 'insert'),
+  'authenticated role can reach department insert through admin RLS'
+);
+select ok(
+  has_column_privilege(
+    'authenticated',
+    'public.support_departments',
+    'name',
+    'update'
+  ),
+  'authenticated role can update department fields through admin RLS'
+);
+select ok(
+  not has_table_privilege('authenticated', 'public.support_departments', 'delete'),
+  'authenticated users cannot delete support departments'
+);
+select ok(
+  not has_function_privilege(
+    'anon',
+    'public.list_support_departments(uuid)',
+    'execute'
+  ),
+  'anon cannot list support departments'
+);
+select ok(
+  has_function_privilege(
+    'authenticated',
+    'public.list_support_departments(uuid)',
+    'execute'
+  ),
+  'authenticated members can list support departments'
+);
+select ok(
+  not has_function_privilege(
+    'anon',
+    'public.save_support_department(uuid,uuid,text,text,uuid)',
+    'execute'
+  ),
+  'anon cannot save support departments'
+);
+select ok(
+  has_function_privilege(
+    'authenticated',
+    'public.save_support_department(uuid,uuid,text,text,uuid)',
+    'execute'
+  ),
+  'authenticated admins can call department save RPC'
+);
+select ok(
+  not has_function_privilege(
+    'anon',
+    'public.archive_support_department(uuid,uuid)',
+    'execute'
+  ),
+  'anon cannot archive support departments'
+);
+select ok(
+  has_function_privilege(
+    'authenticated',
+    'public.archive_support_department(uuid,uuid)',
+    'execute'
+  ),
+  'authenticated admins can call department archive RPC'
+);
+select is(
+  (
+    select prosecdef
+    from pg_proc
+    where oid = 'public.list_support_departments(uuid)'::regprocedure
+  ),
+  false,
+  'department listing RPC is security invoker'
+);
+select is(
+  (
+    select prosecdef
+    from pg_proc
+    where oid =
+      'public.save_support_department(uuid,uuid,text,text,uuid)'::regprocedure
+  ),
+  false,
+  'department save RPC is security invoker'
+);
+select is(
+  (
+    select prosecdef
+    from pg_proc
+    where oid = 'public.archive_support_department(uuid,uuid)'::regprocedure
+  ),
+  false,
+  'department archive RPC is security invoker'
+);
+select ok(
+  exists (
+    select 1
+    from pg_indexes
+    where schemaname = 'public'
+      and indexname = 'support_departments_org_active_name_idx'
+  ),
+  'active department names are unique per organization'
+);
+select ok(
+  exists (
+    select 1
+    from pg_indexes
+    where schemaname = 'public'
+      and indexname = 'support_departments_created_by_idx'
+  ),
+  'support department creator foreign key has a partial index'
+);
+select ok(
+  exists (
+    select 1
+    from pg_indexes
+    where schemaname = 'public'
+      and indexname = 'support_message_attachments_message_fkey_idx'
+  ),
+  'support attachment message foreign key has a covering index'
+);
+select ok(
+  exists (
+    select 1
+    from pg_indexes
+    where schemaname = 'public'
+      and indexname = 'support_message_reactions_channel_connection_id_fkey_idx'
+  ),
+  'support reaction channel foreign key has a covering index'
+);
+select ok(
+  exists (
+    select 1
+    from pg_indexes
+    where schemaname = 'public'
+      and indexname = 'support_message_reactions_message_fkey_idx'
+  ),
+  'support reaction message foreign key has a covering index'
+);
+select ok(
+  exists (
+    select 1
+    from pg_indexes
+    where schemaname = 'public'
+      and indexname = 'support_messages_reply_to_message_fkey_idx'
+  ),
+  'support reply message foreign key has a covering index'
+);
+select ok(
+  exists (
+    select 1
+    from pg_constraint
+    where conrelid = 'public.assistants'::regclass
+      and conname = 'assistants_organization_id_id_key'
+  ),
+  'assistant references can be constrained by organization'
 );
 
 select ok(
@@ -1447,6 +1791,21 @@ select ok(
   ),
   'support conversation trigger publishes a private invalidation'
 );
+select ok(
+  exists (
+    select 1
+    from realtime.messages
+    where event = 'support.inbox.changed'
+      and topic = 'org:a0000000-0000-0000-0000-000000000001:support'
+      and payload ->> 'entity' = 'support_messages'
+      and payload ->> 'operation' = 'insert'
+      and payload ->> 'messageDirection' = 'inbound'
+      and payload ->> 'messageStatus' = 'received'
+      and payload ->> 'messageSource' = 'whatsapp_contact'
+      and payload ? 'conversationAssignedTo'
+  ),
+  'support message broadcast exposes sound notification eligibility fields'
+);
 
 create temporary table tenant_a_results (
   member_own boolean,
@@ -1645,6 +2004,193 @@ select is(
   ),
   0,
   'reading the conversation clears only the operator unread count'
+);
+select lives_ok(
+  $$select public.mark_support_conversation_unread(
+    'a0000000-0000-0000-0000-000000000001',
+    (
+      select id
+      from public.support_conversations
+      where organization_id = 'a0000000-0000-0000-0000-000000000001'
+      limit 1
+    )
+  )$$,
+  'member can manually mark its conversation unread'
+);
+select ok(
+  (
+    select marked_unread_at is not null and pinned_at is null
+    from public.support_conversation_reads
+    where organization_id = 'a0000000-0000-0000-0000-000000000001'
+      and user_id = '10000000-0000-0000-0000-000000000001'
+  ),
+  'manual unread marker is stored without pinning the conversation'
+);
+select is(
+  (
+    select (item ->> 'unreadCount')::integer
+    from jsonb_array_elements(
+      public.get_support_inbox_operational(
+        'a0000000-0000-0000-0000-000000000001'
+      )
+    ) item
+    limit 1
+  ),
+  1,
+  'manual unread marker makes operational inbox unread'
+);
+select ok(
+  (
+    select (item ? 'departmentId')
+      and (item ? 'department')
+      and (item ->> 'markedUnreadAt') is not null
+    from jsonb_array_elements(
+      public.get_support_inbox_operational(
+        'a0000000-0000-0000-0000-000000000001'
+      )
+    ) item
+    limit 1
+  ),
+  'operational inbox returns operator and department-ready fields'
+);
+select lives_ok(
+  $$select public.set_support_conversation_pinned(
+    'a0000000-0000-0000-0000-000000000001',
+    (
+      select id
+      from public.support_conversations
+      where organization_id = 'a0000000-0000-0000-0000-000000000001'
+      limit 1
+    ),
+    true
+  )$$,
+  'member can pin its conversation'
+);
+select ok(
+  (
+    select pinned_at is not null and marked_unread_at is not null
+    from public.support_conversation_reads
+    where organization_id = 'a0000000-0000-0000-0000-000000000001'
+      and user_id = '10000000-0000-0000-0000-000000000001'
+  ),
+  'pinning preserves manual unread state'
+);
+select ok(
+  (
+    select (item ->> 'isPinned')::boolean
+      and (item ->> 'pinnedAt') is not null
+    from jsonb_array_elements(
+      public.get_support_inbox_operational(
+        'a0000000-0000-0000-0000-000000000001'
+      )
+    ) item
+    limit 1
+  ),
+  'operational inbox returns pinned state'
+);
+select lives_ok(
+  $$select public.mark_support_conversation_read(
+    'a0000000-0000-0000-0000-000000000001',
+    (
+      select id
+      from public.support_conversations
+      where organization_id = 'a0000000-0000-0000-0000-000000000001'
+      limit 1
+    )
+  )$$,
+  'member can mark a pinned unread conversation read'
+);
+select ok(
+  (
+    select marked_unread_at is null and pinned_at is not null
+    from public.support_conversation_reads
+    where organization_id = 'a0000000-0000-0000-0000-000000000001'
+      and user_id = '10000000-0000-0000-0000-000000000001'
+  ),
+  'marking read clears manual unread state and preserves pin'
+);
+select ok(
+  (
+    select (item ->> 'unreadCount')::integer = 0
+      and (item ->> 'isPinned')::boolean
+    from jsonb_array_elements(
+      public.get_support_inbox_operational(
+        'a0000000-0000-0000-0000-000000000001'
+      )
+    ) item
+    limit 1
+  ),
+  'operational inbox clears manual unread while preserving pinned state'
+);
+select lives_ok(
+  $$select public.set_support_conversation_pinned(
+    'a0000000-0000-0000-0000-000000000001',
+    (
+      select id
+      from public.support_conversations
+      where organization_id = 'a0000000-0000-0000-0000-000000000001'
+      limit 1
+    ),
+    false
+  )$$,
+  'member can unpin its conversation'
+);
+select ok(
+  (
+    select pinned_at is null and read_at is not null
+    from public.support_conversation_reads
+    where organization_id = 'a0000000-0000-0000-0000-000000000001'
+      and user_id = '10000000-0000-0000-0000-000000000001'
+  ),
+  'unpinning preserves read state'
+);
+select throws_ok(
+  $$select public.mark_support_conversation_unread(
+    'b0000000-0000-0000-0000-000000000002',
+    (
+      select id
+      from public.support_conversations
+      where organization_id = 'b0000000-0000-0000-0000-000000000002'
+      limit 1
+    )
+  )$$,
+  '42501',
+  'organization_member_required',
+  'tenant A cannot manually mark tenant B conversation unread'
+);
+select throws_ok(
+  $$select public.set_support_conversation_pinned(
+    'b0000000-0000-0000-0000-000000000002',
+    (
+      select id
+      from public.support_conversations
+      where organization_id = 'b0000000-0000-0000-0000-000000000002'
+      limit 1
+    ),
+    true
+  )$$,
+  '42501',
+  'organization_member_required',
+  'tenant A cannot pin tenant B conversation'
+);
+select throws_ok(
+  $$insert into public.support_conversation_reads (
+      organization_id,
+      conversation_id,
+      user_id,
+      marked_unread_at
+    )
+    select
+      'a0000000-0000-0000-0000-000000000001',
+      id,
+      '10000000-0000-0000-0000-000000000001',
+      now()
+    from public.support_conversations
+    where organization_id = 'a0000000-0000-0000-0000-000000000001'
+    limit 1$$,
+  '42501',
+  'permission denied for table support_conversation_reads',
+  'authenticated users cannot directly write operator conversation state'
 );
 select throws_ok(
   $$select public.manage_support_conversation(
@@ -1922,6 +2468,124 @@ select throws_ok(
   '42501',
   'organization_admin_required',
   'tenant A cannot delete a tenant B assistant'
+);
+select lives_ok(
+  $$
+    select public.save_support_department(
+      'a0000000-0000-0000-0000-000000000001',
+      null,
+      'Atendimento',
+      'Fila principal de atendimento',
+      'a4000000-0000-0000-0000-000000000001'
+    )
+  $$,
+  'tenant A admin can create support department with default assistant'
+);
+select ok(
+  (
+    select department.is_active
+      and department.archived_at is null
+      and department.default_assistant_id =
+        'a4000000-0000-0000-0000-000000000001'::uuid
+    from public.support_departments department
+    where department.organization_id = 'a0000000-0000-0000-0000-000000000001'
+      and department.name = 'Atendimento'
+  ),
+  'saved department remains active and references tenant assistant'
+);
+select ok(
+  (
+    select (item ->> 'defaultAssistantId') =
+      'a4000000-0000-0000-0000-000000000001'
+    from jsonb_array_elements(
+      public.list_support_departments(
+        'a0000000-0000-0000-0000-000000000001'
+      )
+    ) item
+    where item ->> 'name' = 'Atendimento'
+  ),
+  'department list exposes default assistant reference'
+);
+set local request.jwt.claims =
+  '{"sub":"30000000-0000-0000-0000-000000000003","role":"authenticated"}';
+select throws_ok(
+  $$
+    select public.save_support_department(
+      'a0000000-0000-0000-0000-000000000001',
+      null,
+      'Comercial',
+      null,
+      null
+    )
+  $$,
+  '42501',
+  'organization_admin_required',
+  'non-admin member cannot save support departments'
+);
+select throws_ok(
+  $$
+    insert into public.support_departments (
+      organization_id,
+      name,
+      created_by
+    ) values (
+      'a0000000-0000-0000-0000-000000000001',
+      'Suporte',
+      '30000000-0000-0000-0000-000000000003'
+    )
+  $$,
+  '42501',
+  'new row violates row-level security policy for table "support_departments"',
+  'non-admin member cannot directly insert support departments'
+);
+set local request.jwt.claims =
+  '{"sub":"10000000-0000-0000-0000-000000000001","role":"authenticated"}';
+select throws_ok(
+  $$
+    select public.save_support_department(
+      'a0000000-0000-0000-0000-000000000001',
+      null,
+      'Financeiro',
+      null,
+      'b4000000-0000-0000-0000-000000000002'
+    )
+  $$,
+  '23503',
+  'support_department_default_assistant_not_found',
+  'tenant A cannot attach tenant B assistant to department'
+);
+select lives_ok(
+  $$
+    select public.archive_support_department(
+      'a0000000-0000-0000-0000-000000000001',
+      (
+        select id
+        from public.support_departments
+        where organization_id = 'a0000000-0000-0000-0000-000000000001'
+          and name = 'Atendimento'
+        limit 1
+      )
+    )
+  $$,
+  'tenant A admin can archive support department'
+);
+select ok(
+  (
+    select not department.is_active and department.archived_at is not null
+    from public.support_departments department
+    where department.organization_id = 'a0000000-0000-0000-0000-000000000001'
+      and department.name = 'Atendimento'
+  ),
+  'archived support department stores inactive state'
+);
+select is(
+  jsonb_array_length(
+    public.list_support_departments(
+      'a0000000-0000-0000-0000-000000000001'
+    )
+  ),
+  0,
+  'archived support departments are hidden from active list'
 );
 select lives_ok(
   $$

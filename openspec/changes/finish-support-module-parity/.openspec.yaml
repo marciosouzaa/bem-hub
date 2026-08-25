@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-08-18
+goal: Validar e planejar entrega completa do modulo de Atendimento, separando
+  paridade de produto de dependencias de backend/API WhatsApp nao oficial.

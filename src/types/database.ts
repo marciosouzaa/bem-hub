@@ -1025,6 +1025,60 @@ export type Database = {
         }
         Relationships: []
       }
+      support_departments: {
+        Row: {
+          archived_at: string | null
+          created_at: string
+          created_by: string | null
+          default_assistant_id: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          default_assistant_id?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          archived_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          default_assistant_id?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_departments_default_assistant_fkey"
+            columns: ["organization_id", "default_assistant_id"]
+            isOneToOne: false
+            referencedRelation: "assistants"
+            referencedColumns: ["organization_id", "id"]
+          },
+          {
+            foreignKeyName: "support_departments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       support_messages: {
         Row: {
           accepted_at: string | null
@@ -1537,6 +1591,21 @@ export type Database = {
         }
         Returns: Json
       }
+      mark_support_conversation_unread: {
+        Args: {
+          target_conversation_id: string
+          target_organization_id: string
+        }
+        Returns: Json
+      }
+      set_support_conversation_pinned: {
+        Args: {
+          should_pin: boolean
+          target_conversation_id: string
+          target_organization_id: string
+        }
+        Returns: Json
+      }
       ingest_channel_inbound_message: {
         Args: {
           event_type: string
@@ -1575,6 +1644,27 @@ export type Database = {
       review_support_draft: { Args: { review_decision: string; target_message_id: string; target_organization_id: string }; Returns: undefined }
       update_support_draft: { Args: { draft_content: string; target_message_id: string; target_organization_id: string }; Returns: undefined }
       list_channel_connections: { Args: { target_organization_id: string }; Returns: Json }
+      list_support_departments: {
+        Args: { target_organization_id: string }
+        Returns: Json
+      }
+      save_support_department: {
+        Args: {
+          department_default_assistant_id: string | null
+          department_description: string | null
+          department_name: string
+          target_department_id: string | null
+          target_organization_id: string
+        }
+        Returns: Json
+      }
+      archive_support_department: {
+        Args: {
+          target_department_id: string
+          target_organization_id: string
+        }
+        Returns: undefined
+      }
       claim_managed_channel_provisioning: {
         Args: {
           target_organization_id: string

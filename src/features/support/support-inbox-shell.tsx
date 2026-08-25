@@ -36,6 +36,7 @@ import {
   type SupportInboxView,
 } from "@/features/support/support-inbox-filters";
 import { SupportInboxItem } from "@/features/support/support-inbox-item";
+import { SupportSoundPreferenceButton } from "@/features/support/support-sound-preference-button";
 import { SupportStartDrawer } from "@/features/support/support-start-drawer";
 import { cn } from "@/lib/utils";
 
@@ -43,6 +44,7 @@ type VisibleSupportInboxView = Exclude<SupportInboxView, "all">;
 
 const views: Array<{ label: string; value: VisibleSupportInboxView }> = [
   { label: "Abertas", value: "open" },
+  { label: "NÃ£o lidas", value: "unread" },
   { label: "Atendidas", value: "assigned" },
   { label: "Minhas", value: "mine" },
   { label: "Grupos", value: "groups" },
@@ -135,6 +137,9 @@ export function SupportInboxShell({
       ).length,
       open: conversations.filter((item) => item.status !== "resolved").length,
       resolved: conversations.filter((item) => item.status === "resolved").length,
+      unread: conversations.filter(
+        (item) => item.status !== "resolved" && item.unreadCount > 0,
+      ).length,
     }),
     [conversations, viewerId],
   );
@@ -201,6 +206,7 @@ export function SupportInboxShell({
                 </p>
               </div>
               <div className="flex items-center gap-1.5">
+                <SupportSoundPreferenceButton />
                 <IconButton
                   label="Iniciar atendimento"
                   onClick={() => setStartDrawerOpen(true)}
