@@ -2809,3 +2809,8 @@ bloqueio de credencial ou decisao de produto.
    URL `https://bem-hub.vercel.app/auth/invite`.
 3. Revogar o convite cujo link foi exposto e enviar um novo para um e-mail sem
    conta. O resultado esperado é: convite, primeiro acesso, senha e workspace.
+
+### Smoke Confirmado
+
+- O usuário enviou novo convite, concluiu o primeiro acesso em e-mail sem conta
+  prévia, definiu a senha e entrou no workspace convidado com sucesso.
