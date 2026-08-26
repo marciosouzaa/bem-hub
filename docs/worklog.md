@@ -1,5 +1,29 @@
 # Worklog
 
+## 2026-08-25 - Smokes Atendimento E Correcao De Convites
+
+### Feito
+
+- Usuario confirmou smoke de canal conectado e de envio de midia no Atendimento.
+- Investigacao remota do convite confirmou membership ainda `invited`, sem
+  `accepted_at`; logs Auth registraram `Session not found` depois do link.
+- A RPC de aceite nao foi chamada; regra SQL atual permite owner de uma conta e
+  membro de outra. Correcao segue no aplicativo, sem migration.
+
+### Proximo Passo
+
+- Configurar `BEM_HUB_PRODUCTION_APP_URL=https://bem-hub.vercel.app/app` no
+  Vercel, publicar e repetir aceite do convite pendente com usuario owner de
+  outra conta. Confirmar workspace convidado, logout/login com seletor e duas
+  linhas em `Configuracoes > Conta`.
+
+### Verificacao Local
+
+- `bun test` focado: 8 testes passaram para URL de convite, callback/login,
+  destinos de aceite e navegacao/listagem de ambientes.
+- `bun run lint` passou.
+- `bun run build` passou com Next.js 16.2.9.
+
 Checkpoint curto para continuidade entre sessoes. Manter a entrada mais recente
 no topo. Nao substituir `docs/handoff.md`; registrar aqui o andamento operacional
 do marco ativo.
@@ -2722,3 +2746,66 @@ bloqueio de credencial ou decisao de produto.
 1. Trocar o seletor simples pelo compositor modal múltiplo, com legenda por
    mídia e inclusão contínua.
 2. Normalizar e persistir mídia recebida por webhook nos dois provedores.
+
+## 2026-08-26 - Convites E Ambientes Vinculados
+
+### Feito
+
+- Os smokes de canal conectado e de mídia foram concluídos pelo usuário antes
+  desta correção.
+- Convites pendentes passam a aparecer em `Configurações > Conta`; o usuário
+  autenticado pode aceitar o próprio convite sem depender do e-mail.
+- A tabela de ambientes vinculados permite trocar a conta ativa sem logout.
+- Usuários `member` e `admin` podem somente se desvincular do próprio acesso;
+  owners não recebem essa ação. A desvinculação da conta em uso seleciona uma
+  conta restante ou encerra a sessão quando não houver nenhuma.
+- Aplicada remotamente a migration
+  `20260826000000_account_invitation_and_membership_self_service.sql` com RPCs
+  restritas ao `auth.uid()` atual. Não houve nova variável de ambiente.
+
+### Verificação
+
+- `bun test`: 161 testes passaram.
+- `bun run lint` e `bun run build` passaram.
+- A migration remota foi aplicada com sucesso; `anon` não executa as novas
+  funções e `authenticated` recebe somente o acesso esperado.
+- O pgTAP foi adicionado em `supabase/tests/account_membership_self_service_test.sql`.
+  Sua execução local ficou pendente porque o container `supabase_db_bem-hub`
+  não está em execução.
+
+### Pendência Manual Em Produção
+
+1. Com usuário que já é owner de uma conta, confirmar convite para outra e
+   aceitar pelo card em `Configurações > Conta`.
+2. Alternar entre as duas contas pela tabela e confirmar o contexto no sidebar.
+3. Como membro ou admin, desvincular a conta convidada e confirmar que owner
+   não vê essa opção.
+
+## 2026-08-26 - Primeiro Acesso Por Convite
+
+### Feito
+
+- Corrigido o convite de usuário novo que chegava em `/auth/login` com sessão
+  no fragmento da URL. A ponte cliente persiste a sessão sem enviar tokens ao
+  servidor e segue para o aceite do membership.
+- Criada a rota `/auth/invite` para links configurados por `redirectTo`; ela
+  cobre callback PKCE e fragmento de sessão. O login mantém a mesma ponte como
+  fallback para configuração externa de Site URL.
+- Após aceitar convite de usuário criado pelo fluxo de equipe, a página mostra
+  `Primeiro acesso`, exige a definição de senha e então abre o workspace.
+- Atualizada a configuração obrigatória do Supabase Auth em
+  `docs/deployment-vercel.md`: Site URL sem path e Redirect URL para
+  `/auth/invite`.
+
+### Verificação
+
+- `bun test`: 164 testes passaram.
+- `bun run lint` e `bun run build` passaram.
+
+### Pendência Manual Em Produção
+
+1. Publicar a aplicação na Vercel.
+2. No Supabase Auth, confirmar Site URL `https://bem-hub.vercel.app` e Redirect
+   URL `https://bem-hub.vercel.app/auth/invite`.
+3. Revogar o convite cujo link foi exposto e enviar um novo para um e-mail sem
+   conta. O resultado esperado é: convite, primeiro acesso, senha e workspace.

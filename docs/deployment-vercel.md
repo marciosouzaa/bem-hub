@@ -39,6 +39,7 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 SUPABASE_SECRET_KEY=
 APP_BASE_URL=https://bem-hub.vercel.app
+BEM_HUB_PRODUCTION_APP_URL=https://bem-hub.vercel.app/app
 OPENAI_API_KEY=
 OPENAI_CHAT_MODEL=gpt-5.5
 APP_ENCRYPTION_KEY=
@@ -52,6 +53,10 @@ de canais e processamento de webhooks. Nunca use prefixo `NEXT_PUBLIC_`.
 `APP_BASE_URL` deve apontar para a origem HTTPS estável de produção, sem barra
 final. Ela é usada para registrar callbacks nos provedores de canal. Previews
 não devem substituir o webhook de produção.
+
+`BEM_HUB_PRODUCTION_APP_URL` define o destino dos convites de equipe. Use a URL
+HTTPS pública seguida de `/app`; essa origem também deve existir em Redirect URLs
+do Supabase Auth.
 
 `APP_ENCRYPTION_KEY` is required when admins save AI provider keys in the
 workspace. Keep this value stable; rotating it without re-encrypting saved
@@ -71,10 +76,19 @@ In Supabase Dashboard > Auth > URL Configuration:
 
 - Site URL: the production Vercel URL, for example
   `https://bem-hub.vercel.app`.
+- Do not include `/auth/login` or another page path in Site URL. A path there
+  makes blocked invite redirects fall back to login before the app can start
+  first access.
 - Redirect URLs:
   - `http://localhost:3000/**`
   - `https://bem-hub.vercel.app/**`
+  - `https://bem-hub.vercel.app/auth/invite`
   - Vercel preview wildcard for the team/project, if previews need auth.
+
+The Supabase Invite User email template must keep `{{ .ConfirmationURL }}` as
+the action link. BEM HUB sends `redirectTo` to `/auth/invite`, which consumes a
+browser-only invite fragment or forwards a PKCE code before starting first
+access.
 
 ## 5. First Production Check
 

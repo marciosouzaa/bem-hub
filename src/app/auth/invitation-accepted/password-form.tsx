@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { useFormStatus } from "react-dom";
+import { useRouter } from "next/navigation";
 
 import {
   updateInvitationPasswordAction,
@@ -12,11 +13,20 @@ import { Input } from "@/components/ui/input";
 
 const initialState: PasswordActionState = { ok: false, message: null };
 
-export function InvitationPasswordForm() {
+export function InvitationPasswordForm({
+  redirectAfterSave = false,
+}: {
+  redirectAfterSave?: boolean;
+}) {
+  const router = useRouter();
   const [state, action] = useActionState(
     updateInvitationPasswordAction,
     initialState,
   );
+
+  useEffect(() => {
+    if (redirectAfterSave && state.ok) router.replace("/app");
+  }, [redirectAfterSave, router, state.ok]);
 
   return (
     <form action={action} className="space-y-3">

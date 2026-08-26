@@ -6,6 +6,9 @@ import {
   ensureUserProfile,
   listUserWorkspaceOptions,
 } from "@/features/organizations/bootstrap";
+import { getWorkspaceNavigation } from "@/features/organizations/workspace-navigation";
+import { setSelectedOrganizationId } from "@/features/organizations/workspace-cookie";
+import { sanitizeInternalPath } from "@/lib/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -17,7 +20,7 @@ export default async function SelectWorkspacePage({
   searchParams,
 }: SelectWorkspacePageProps) {
   const params = await searchParams;
-  const next = sanitizeNext(params?.next);
+  const next = sanitizeInternalPath(params?.next);
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
@@ -31,11 +34,13 @@ export default async function SelectWorkspacePage({
   await ensureUserProfile(supabase, user);
   const workspaces = await listUserWorkspaceOptions(supabase, user.id);
 
-  if (workspaces.length === 0) {
+  const workspaceNavigation = getWorkspaceNavigation(workspaces);
+  if (workspaceNavigation.kind === "none") {
     redirect("/app");
   }
 
-  if (workspaces.length === 1) {
+  if (workspaceNavigation.kind === "single") {
+    await setSelectedOrganizationId(workspaceNavigation.organizationId);
     redirect(next);
   }
 
@@ -73,12 +78,4 @@ export default async function SelectWorkspacePage({
       </div>
     </main>
   );
-}
-
-function sanitizeNext(next?: string) {
-  if (!next || !next.startsWith("/") || next.startsWith("//")) {
-    return "/app";
-  }
-
-  return next;
 }

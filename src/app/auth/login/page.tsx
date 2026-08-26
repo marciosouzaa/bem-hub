@@ -1,18 +1,26 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AuthForm } from "@/app/auth/auth-form";
+import { InvitationSessionBridge } from "@/app/auth/invitation-session-bridge";
 import { login } from "@/app/auth/actions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { sanitizeInternalPath } from "@/lib/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-export default async function LoginPage() {
+type LoginPageProps = {
+  searchParams?: Promise<{ next?: string }>;
+};
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const params = await searchParams;
+  const next = sanitizeInternalPath(params?.next);
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (user) {
-    redirect("/app");
+    redirect(next);
   }
 
   return (
@@ -32,7 +40,8 @@ export default async function LoginPage() {
             </p>
           </CardHeader>
           <CardContent>
-            <AuthForm action={login} mode="login" />
+            <InvitationSessionBridge />
+            <AuthForm action={login} mode="login" next={next} />
           </CardContent>
         </Card>
       </div>

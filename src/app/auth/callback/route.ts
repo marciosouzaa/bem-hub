@@ -2,24 +2,22 @@ import { redirect } from "next/navigation";
 import { type NextRequest } from "next/server";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getLoginPath, sanitizeInternalPath } from "@/lib/navigation";
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
-  const next = sanitizeNext(requestUrl.searchParams.get("next"));
+  const next = sanitizeInternalPath(requestUrl.searchParams.get("next"));
 
-  if (code) {
-    const supabase = await createSupabaseServerClient();
-    await supabase.auth.exchangeCodeForSession(code);
+  if (!code) {
+    redirect(getLoginPath(next));
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  if (error) {
+    redirect(getLoginPath(next));
   }
 
   redirect(next);
-}
-
-function sanitizeNext(next: string | null) {
-  if (!next || !next.startsWith("/") || next.startsWith("//")) {
-    return "/app";
-  }
-
-  return next;
 }

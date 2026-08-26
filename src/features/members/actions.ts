@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { getRequiredWorkspace } from "@/features/organizations/queries";
+import { setSelectedOrganizationId } from "@/features/organizations/workspace-cookie";
 import { getInvitationRedirectToUrl } from "@/features/members/invitation-url";
 import {
   memberInviteSchema,
@@ -25,6 +26,35 @@ export type MemberMutationResult =
     };
 
 const memberIdSchema = z.string().uuid();
+
+export async function acceptPendingInvitationAction(): Promise<MemberMutationResult> {
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    return { ok: false, message: "Sua sessao expirou. Entre novamente." };
+  }
+
+  const { data: organizationId, error } = await supabase.rpc(
+    "accept_organization_member_invitation",
+  );
+
+  if (error || !organizationId) {
+    return {
+      ok: false,
+      message: error?.message.includes("member_invitation_not_found")
+        ? "Nao ha convite pendente para aceitar."
+        : "Nao foi possivel aceitar o convite.",
+    };
+  }
+
+  await setSelectedOrganizationId(organizationId);
+  revalidateMemberPaths();
+  return { ok: true, message: "Convite aceito. Esta conta esta em uso." };
+}
 
 export async function inviteMemberAction(
   input: unknown,

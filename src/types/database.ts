@@ -1480,6 +1480,20 @@ export type Database = {
         }
         Returns: undefined
       }
+      leave_organization_membership: {
+        Args: { target_organization_id: string }
+        Returns: undefined
+      }
+      list_my_pending_organization_member_invitations: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          invited_at: string | null
+          organization_id: string
+          organization_name: string
+          organization_slug: string
+          role: Database["public"]["Enums"]["organization_role"]
+        }[]
+      }
       delete_assistant: {
         Args: { target_assistant_id: string; target_organization_id: string }
         Returns: undefined

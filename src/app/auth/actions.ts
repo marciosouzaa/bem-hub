@@ -11,6 +11,8 @@ import {
   clearSelectedOrganizationId,
   setSelectedOrganizationId,
 } from "@/features/organizations/workspace-cookie";
+import { getWorkspaceNavigation } from "@/features/organizations/workspace-navigation";
+import { sanitizeInternalPath } from "@/lib/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type AuthActionState = {
@@ -48,6 +50,8 @@ export async function login(
     return { fieldErrors: parsed.error.flatten().fieldErrors };
   }
 
+  const next = sanitizeInternalPath(formData.get("next") as string | null);
+
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
 
@@ -62,15 +66,19 @@ export async function login(
   if (user) {
     await ensureUserProfile(supabase, user);
     const workspaces = await listUserWorkspaceOptions(supabase, user.id);
-    if (workspaces.length > 1) {
-      redirect("/auth/select-workspace?next=/app");
-    }
-    if (workspaces.length === 1) {
-      await setSelectedOrganizationId(workspaces[0].organization.id);
+    const workspaceNavigation = getWorkspaceNavigation(workspaces);
+
+    if (next === "/app") {
+      if (workspaceNavigation.kind === "multiple") {
+        redirect("/auth/select-workspace?next=/app");
+      }
+      if (workspaceNavigation.kind === "single") {
+        await setSelectedOrganizationId(workspaceNavigation.organizationId);
+      }
     }
   }
 
-  redirect("/app");
+  redirect(next);
 }
 
 export async function signup(

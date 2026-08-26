@@ -12,6 +12,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getEntitlements } from "@/features/billing/entitlements";
 import { IntegrationAuditForm } from "@/features/integration-audit/audit-form";
 import { parseIntegrationAudit } from "@/features/integration-audit/audit";
+import { listMyPendingOrganizationInvitations } from "@/features/members/pending-invitations";
+import { PendingInvitationsCard } from "@/features/members/pending-invitations-card";
+import { listUserWorkspaceOptions } from "@/features/organizations/bootstrap";
+import { getLinkedEnvironments } from "@/features/organizations/linked-environments";
+import { LinkedEnvironmentsTable } from "@/features/organizations/linked-environments-table";
 import { getRequiredWorkspace } from "@/features/organizations/queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -26,6 +31,11 @@ export default async function AccountSettingsPage() {
     supabase,
     workspace.organization.id,
   );
+  const linkedEnvironments = getLinkedEnvironments(
+    await listUserWorkspaceOptions(supabase, workspace.user.id),
+    workspace.organization.id,
+  );
+  const pendingInvitations = await listMyPendingOrganizationInvitations(supabase);
   const canManage = ["owner", "admin"].includes(workspace.membership.role);
   const { data: auditRecord } = await supabase.from("integrations").select("config")
     .eq("organization_id", workspace.organization.id).eq("provider", "commerce_audit")
@@ -101,6 +111,20 @@ export default async function AccountSettingsPage() {
           </CardContent>
         </Card>
       </section>
+
+      <PendingInvitationsCard invitations={pendingInvitations} />
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Ambientes vinculados</CardTitle>
+          <p className="text-sm leading-6 text-muted-strong">
+            Contas ativas que este usuario pode acessar.
+          </p>
+        </CardHeader>
+        <CardContent>
+          <LinkedEnvironmentsTable environments={linkedEnvironments} />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

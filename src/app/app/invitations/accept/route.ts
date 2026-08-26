@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { setSelectedOrganizationId } from "@/features/organizations/workspace-cookie";
+import { getInvitationAcceptanceResultPath } from "@/features/members/invitation-flow";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function GET() {
@@ -19,9 +20,10 @@ export async function GET() {
   );
 
   if (error || !organizationId) {
-    redirect("/auth/invitation-accepted?status=error");
+    redirect(getInvitationAcceptanceResultPath(false));
   }
 
   await setSelectedOrganizationId(organizationId);
-  redirect("/auth/invitation-accepted?status=accepted");
+  const isFirstAccess = user.user_metadata.invited_by_product === "BEM HUB";
+  redirect(getInvitationAcceptanceResultPath(true, isFirstAccess));
 }

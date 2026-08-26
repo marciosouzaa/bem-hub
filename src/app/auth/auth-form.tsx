@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 
 type AuthFormProps = {
   mode: "login" | "signup";
+  next?: string;
   action: (
     state: AuthActionState,
     formData: FormData,
@@ -16,12 +17,13 @@ type AuthFormProps = {
 
 const initialState: AuthActionState = {};
 
-export function AuthForm({ mode, action }: AuthFormProps) {
+export function AuthForm({ mode, action, next }: AuthFormProps) {
   const [state, formAction] = useActionState(action, initialState);
   const isSignup = mode === "signup";
 
   return (
     <form action={formAction} className="space-y-4">
+      {next ? <input name="next" type="hidden" value={next} /> : null}
       {isSignup ? (
         <>
           <Field
