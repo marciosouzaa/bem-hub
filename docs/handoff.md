@@ -1,6 +1,16 @@
 # Handoff Notes
 
-Atualizado em 2026-08-25.
+Atualizado em 2026-09-02.
+
+## Handoff 2026-09-02 - Wuzapi Hospedada Na Railway
+
+- Repositório da Wuzapi foi hospedado na Railway, em plano pago, com domínio
+  público validado.
+- A API Wuzapi não depende mais de QuickTunnel para os testes de Atendimento.
+- Um novo canal foi criado e um atendimento foi iniciado com sucesso contra a
+  instância hospedada.
+- Domínio, tokens e demais segredos permanecem somente na configuração da
+  Railway/Vercel; não registrar seus valores no repositório.
 
 ## Handoff 2026-08-25 - Equipe, Convites E Multi-conta
 

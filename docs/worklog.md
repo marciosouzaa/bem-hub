@@ -1,5 +1,20 @@
 # Worklog
 
+## 2026-09-02 - Wuzapi Hospedada Na Railway
+
+### Feito
+
+- Repositório da Wuzapi publicado na Railway, em plano pago, com domínio
+  público testado.
+- Teste de Atendimento iniciado por novo canal contra a API hospedada.
+- QuickTunnel deixa de ser requisito para manter a API Wuzapi disponível entre
+  sessões de teste.
+
+### Segurança Operacional
+
+- Não registrar domínio, tokens, chaves de criptografia ou HMAC no repositório.
+- Manter valores somente nas variáveis de ambiente da Railway e da Vercel.
+
 ## 2026-08-25 - Smokes Atendimento E Correcao De Convites
 
 ### Feito
