@@ -1,5 +1,69 @@
 # Worklog
 
+## 2026-09-03 - Atendimento Finalizado E Áudio Gravado
+
+### Feito
+
+- Textos visíveis de encerramento agora usam `Finalizado`; chave persistida
+  `resolved` permanece por compatibilidade de banco, filtros e integrações.
+- Composer ganhou gravação local pelo microfone: iniciar, cronômetro, descartar,
+  parar, prévia inline com waveform e envio direto, sem abrir o modal de anexo.
+- Gravação agora é sempre `audio/ogg`/Opus. O codificador WebAssembly local
+  suporta pausa, retomada e cancelamento; o payload Wuzapi inclui `PTT: true`
+  e MIME Opus explícito.
+- Enquanto grava ou revisa áudio, o composer fica exclusivo para essa ação.
+  Vazio mostra microfone; texto mostra somente envio textual.
+- Player de áudio com waveform é reutilizado na bolha, viewer e prévia antes do
+  envio no composer.
+
+### Verificacao
+
+- `bun run lint` passou.
+- `bun run build` passou.
+- Testes focados de suporte e adapters passaram: 35 testes.
+
+### Pendente Real
+
+- Smoke autenticado: conceder microfone, gravar, enviar pelo canal Wuzapi e
+  confirmar mensagem PTT e reprodução na bolha e no aparelho.
+
+## 2026-09-03 - UI Foundation Retomada; Atendimento Fora Da Fila Ativa
+
+### Decisao
+
+- Atendimento Wuzapi foi validado operacionalmente e deixa de ser a trilha
+  ativa. Evolution permanece pendente de dominio/API publico, mas nao bloqueia
+  os proximos marcos de produto.
+- Retomado OpenSpec `harden-ui-primitives-and-overlays`; nao iniciar novas
+  tarefas funcionais de Atendimento sem nova decisao explicita.
+
+### Feito
+
+- Criados primitives neutros `FeedbackMessage`, `StatusBadge`, `IdentityCell`
+  e `DetailList`; Knowledge passou a consumir os estados semanticos.
+- Exclusao de documento migrou de `window.confirm` para `ConfirmDialog`, com
+  erro inline acessivel e confirmacao ainda aberta quando a operacao falha.
+- `support-inbox-shell`, `support-message-composer` e `chat-workspace` foram
+  divididos por responsabilidade sem alterar contratos de dominio.
+- Rota Knowledge ficou server-side de carregamento; busca, lista, cards e
+  estados agora vivem em `src/features/knowledge-base`.
+
+### Verificacao
+
+- `bun test` focado: RAG, Knowledge, contratos de mensagem e primitives passou.
+- `bun run lint`, `bun run build` e `git diff --check` passaram.
+
+### Pendente Real
+
+- QA visual autenticado de topbar/user menu, dropdown em painel com scroll,
+  dialogs, drawers, media viewer e shell mobile. Navegador local nao recebeu
+  uma sessao autenticada reutilizavel nesta execucao.
+
+### Proximo Passo
+
+1. Abrir sessao autenticada e executar QA visual dos overlays em desktop/mobile.
+2. Se passar, concluir tasks 2.3, 3.3 e 6.3 do OpenSpec e arquivar change.
+
 ## 2026-09-02 - Wuzapi Hospedada Na Railway
 
 ### Feito

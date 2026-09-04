@@ -11,7 +11,7 @@ const maxSize = 25 * 1024 * 1024;
 const acceptedTypes = new Map<string, "audio" | "document" | "image" | "video">([
   ["image/jpeg", "image"], ["image/png", "image"], ["image/webp", "image"],
   ["video/mp4", "video"], ["audio/mpeg", "audio"], ["audio/mp4", "audio"],
-  ["audio/ogg", "audio"], ["application/pdf", "document"], ["text/plain", "document"],
+  ["audio/ogg", "audio"], ["audio/webm", "audio"], ["application/pdf", "document"], ["text/plain", "document"],
   ["text/csv", "document"], ["application/vnd.openxmlformats-officedocument.wordprocessingml.document", "document"],
 ]);
 
@@ -99,7 +99,7 @@ function safeFileName(fileName: string | null, mimeType: string, mediaType: stri
   const safeName = fileName?.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 120);
   if (safeName) return safeName;
   const extension = {
-    "audio/mpeg": "mp3", "audio/mp4": "m4a", "audio/ogg": "ogg",
+    "audio/mpeg": "mp3", "audio/mp4": "m4a", "audio/ogg": "ogg", "audio/webm": "webm",
     "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "video/mp4": "mp4",
   }[mimeType] ?? (mediaType === "document" ? "bin" : "media");
   return `midia.${extension}`;

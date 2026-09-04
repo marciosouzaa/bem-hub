@@ -18,6 +18,7 @@ const acceptedTypes = new Map<string, "audio" | "document" | "image" | "video">(
   ["audio/mpeg", "audio"],
   ["audio/mp4", "audio"],
   ["audio/ogg", "audio"],
+  ["audio/webm", "audio"],
   ["application/pdf", "document"],
   ["text/plain", "document"],
   ["text/csv", "document"],

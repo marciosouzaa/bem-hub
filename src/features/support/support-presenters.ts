@@ -12,7 +12,7 @@ export const supportStatusLabels: Record<
   open: "Aberto",
   pending: "Pendente",
   escalated: "Escalado",
-  resolved: "Resolvido",
+  resolved: "Finalizado",
 };
 
 export const supportPriorityLabels: Record<

@@ -176,7 +176,7 @@ export function SupportConversationActions({
               ) : null}
               <DropdownMenuItem onSelect={() => runOperation("resolve")}>
                 <CheckCircle2 className="size-4" />
-                Resolver atendimento
+                Finalizar atendimento
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuSub>

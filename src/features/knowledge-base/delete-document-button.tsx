@@ -4,6 +4,8 @@ import { Loader2, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { FeedbackMessage } from "@/components/ui/feedback-message";
 
 export function DeleteDocumentButton({
   documentId,
@@ -13,19 +15,12 @@ export function DeleteDocumentButton({
   documentName: string;
 }) {
   const router = useRouter();
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  async function handleDelete() {
+  async function deleteDocument() {
     if (isDeleting) {
-      return;
-    }
-
-    const confirmed = window.confirm(
-      `Excluir "${documentName}"? Esta acao remove o arquivo, os chunks e o registro da base documental.`,
-    );
-
-    if (!confirmed) {
       return;
     }
 
@@ -47,11 +42,9 @@ export function DeleteDocumentButton({
 
       router.refresh();
     } catch (deleteError) {
-      setError(
-        deleteError instanceof Error
-          ? deleteError.message
-          : "Falha ao excluir documento.",
-      );
+      throw deleteError instanceof Error
+        ? deleteError
+        : new Error("Falha ao excluir documento.");
     } finally {
       setIsDeleting(false);
     }
@@ -62,7 +55,10 @@ export function DeleteDocumentButton({
       <Button
         aria-label={`Excluir ${documentName}`}
         disabled={isDeleting}
-        onClick={handleDelete}
+        onClick={() => {
+          setError(null);
+          setConfirmOpen(true);
+        }}
         size="sm"
         type="button"
         variant="danger"
@@ -75,10 +71,26 @@ export function DeleteDocumentButton({
         Excluir
       </Button>
       {error ? (
-        <p className="max-w-72 text-left text-xs leading-5 text-danger md:text-right">
+        <FeedbackMessage className="max-w-72 text-left text-xs md:text-right" variant="error">
           {error}
-        </p>
+        </FeedbackMessage>
       ) : null}
+      <ConfirmDialog
+        confirmLabel="Excluir documento"
+        description={`Excluir "${documentName}"? Esta ação remove arquivo, chunks e registro da base documental.`}
+        onConfirm={deleteDocument}
+        onError={(deleteError) => {
+          setError(
+            deleteError instanceof Error
+              ? deleteError.message
+              : "Falha ao excluir documento.",
+          );
+        }}
+        onOpenChange={setConfirmOpen}
+        open={confirmOpen}
+        title="Excluir este documento?"
+        variant="danger"
+      />
     </div>
   );
 }

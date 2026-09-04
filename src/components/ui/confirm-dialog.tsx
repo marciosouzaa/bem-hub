@@ -19,6 +19,7 @@ type ConfirmDialogProps = {
   confirmLabel?: string;
   description: string;
   onConfirm: () => Promise<void> | void;
+  onError?: (error: unknown) => void;
   onOpenChange: (open: boolean) => void;
   open: boolean;
   title: string;
@@ -30,6 +31,7 @@ export function ConfirmDialog({
   confirmLabel = "Confirmar",
   description,
   onConfirm,
+  onError,
   onOpenChange,
   open,
   title,
@@ -42,6 +44,8 @@ export function ConfirmDialog({
     try {
       await onConfirm();
       onOpenChange(false);
+    } catch (error) {
+      onError?.(error);
     } finally {
       setIsPending(false);
     }

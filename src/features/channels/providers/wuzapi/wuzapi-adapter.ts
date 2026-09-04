@@ -261,6 +261,9 @@ export function createWuzapiAdapter(
                 },
               }
               : {}),
+            ...(input.mediaType === "audio"
+              ? { PTT: true, mimetype: "audio/ogg; codecs=opus" }
+              : {}),
             [mediaField]: input.dataUrl,
             Id: messageId,
             Phone: onlyDigits(input.recipient),

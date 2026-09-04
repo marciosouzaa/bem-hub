@@ -672,7 +672,9 @@ describe("Wuzapi adapter", () => {
     expect(JSON.parse(String(request.init?.body))).toEqual({
       Audio: "data:audio/ogg;base64,dGVzdGU=",
       Id: "AUDIO001",
+      PTT: true,
       Phone: "5521999999999",
+      mimetype: "audio/ogg; codecs=opus",
     });
     expect(result).toEqual({ externalMessageId: "AUDIO001" });
   });

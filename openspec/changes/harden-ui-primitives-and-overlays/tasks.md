@@ -18,16 +18,16 @@
 ## 4. Primitive Hardening
 
 - [x] 4.1 Add a global bottom-center `FeedbackToastProvider` primitive for success, error, warning, and info notifications
-- [ ] 4.2 Add or refine remaining global primitives for inline feedback, semantic status badges, identity cells, detail lists, and media/control affordances where repeated patterns exist
-- [ ] 4.3 Replace `window.confirm` in knowledge document deletion with the shared confirmation dialog
-- [ ] 4.4 Add tests or structural checks for overlay primitives and destructive confirmation behavior where practical
+- [x] 4.2 Add or refine remaining global primitives for inline feedback, semantic status badges, identity cells, detail lists, and media/control affordances where repeated patterns exist
+- [x] 4.3 Replace `window.confirm` in knowledge document deletion with the shared confirmation dialog
+- [x] 4.4 Add tests or structural checks for overlay primitives and destructive confirmation behavior where practical
 
 ## 5. Component Boundary Refactors
 
-- [ ] 5.1 Split `support-inbox-shell.tsx` into toolbar, filter, tab, list, and layout coordinator components after isolating current support work
-- [ ] 5.2 Split `support-message-composer.tsx` into text composer, reply context, media dialog, preview helpers, and send hook
-- [ ] 5.3 Split `chat-workspace.tsx` into conversation rail, message list, message bubble, prompt composer, and citation components
-- [ ] 5.4 Move knowledge page document list/search/cards from route file into `src/features/knowledge-base`
+- [x] 5.1 Split `support-inbox-shell.tsx` into toolbar, filter, tab, list, and layout coordinator components after isolating current support work
+- [x] 5.2 Split `support-message-composer.tsx` into text composer, reply context, media dialog, preview helpers, and send hook
+- [x] 5.3 Split `chat-workspace.tsx` into conversation rail, message list, message bubble, prompt composer, and citation components
+- [x] 5.4 Move knowledge page document list/search/cards from route file into `src/features/knowledge-base`
 
 ## 6. Verification
 

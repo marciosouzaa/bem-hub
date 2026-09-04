@@ -162,7 +162,7 @@ function getSupportOperationSuccess(
     pending: "Atendimento marcado como pendente.",
     release: "Atendimento devolvido à fila.",
     reopen: "Atendimento reaberto.",
-    resolve: "Atendimento resolvido.",
+    resolve: "Atendimento finalizado.",
     set_priority: "Prioridade atualizada.",
     take: "Atendimento assumido.",
   };

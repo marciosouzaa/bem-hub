@@ -76,7 +76,7 @@ function mapBeginError(error: { code?: string; message: string }) {
       );
     }
     return new SupportMessageSendError(
-      "Atendimento não encontrado ou já resolvido.",
+      "Atendimento não encontrado ou já finalizado.",
       404,
     );
   }
