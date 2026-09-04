@@ -1,5 +1,24 @@
 # Worklog
 
+## 2026-09-03 - Cursor Global Para Ações Interativas
+
+### Feito
+
+- Auditados 75 handlers `onClick` e os botões nativos fora do primitive.
+- `button` ativo e elementos com `role="button"` agora mostram cursor pointer
+  globalmente; estados desabilitados mostram cursor not-allowed.
+- O primitive `Button` aplica a mesma regra, incluindo usos por `IconButton`.
+
+### Verificação
+
+- `bun run lint` e `bun run build` passaram.
+- `git diff --check` passou.
+
+### Próximo Passo
+
+- Retomar QA visual autenticado de overlays do OpenSpec; é o próximo critério
+  ainda pendente e exige uma sessão autenticada no navegador.
+
 ## 2026-09-03 - Atendimento Finalizado E Áudio Gravado
 
 ### Feito
